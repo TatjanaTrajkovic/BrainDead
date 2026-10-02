@@ -72,11 +72,19 @@ mysql -u <användare> -p < backend/schema.sql
 
 ### 3. Miljövariabler
 
-<!-- TODO: fyll i när .env-hantering är på plats -->
+Skapa din egen `.env` från mallen och fyll i dina värden. Filen committas aldrig.
 
-| Variabel | Beskrivning |
-| -------- | ----------- |
-|          |             |
+```sh
+cd backend
+cp .env.example .env
+```
+
+| Variabel      | Beskrivning                         |
+| ------------- | ----------------------------------- |
+| `DB_HOST`     | Databasens adress, oftast localhost |
+| `DB_USER`     | Ditt MySQL-användarnamn             |
+| `DB_PASSWORD` | Ditt MySQL-lösenord                 |
+| `DB_NAME`     | Databasens namn, `BrainDead`        |
 
 ### 4. Backend
 
