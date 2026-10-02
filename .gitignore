@@ -1,5 +1,6 @@
 
 backend/node_modules
+.env
 
 .vscode/*
 !.vscode/settings.json
