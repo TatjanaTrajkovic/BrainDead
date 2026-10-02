@@ -6,13 +6,16 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "prettier": "prettier --write src/",
+    "prettier:check": "prettier --check src/"
   },
   "dependencies": {
     "vue": "^3.5.42"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.8",
+    "prettier": "^3.9.9",
     "vite": "^8.2.2",
     "vite-plugin-vue-devtools": "^8.2.1"
   },
