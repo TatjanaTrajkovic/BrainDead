@@ -1,22 +1,22 @@
 CREATE DATABASE IF NOT EXISTS BrainDead;
 
-use BrainDead;
+USE BrainDead;
 
 CREATE TABLE users(
     user_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) NOT NULL UNIQUE,
     email VARCHAR(255) NOT NULL UNIQUE,
-    password_hash VARCHAR(50) NOT NULL,
-    status VARCHAR(50) NOT NULL,
-    role VARCHAR(50) NOT NULL DEFAULT 'PLAYER',
+    password_hash VARCHAR(255) NOT NULL,
+    status ENUM('ACTIVE', 'INACTIVE', 'BANNED') DEFAULT 'ACTIVE' NOT NULL,
+    role ENUM('PLAYER', 'ADMIN') DEFAULT 'PLAYER' NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE game_session(
     session_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
-    current_health INT NOT NULL DEFAULT 1,
-    status VARCHAR(50) DEFAULT 'ACTIVE',
+    current_health DECIMAL(3, 2) NOT NULL DEFAULT 1,
+    status ENUM('ACTIVE', 'COMPLETED', 'PAUSED'),
     started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     finished_at TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(user_id)
@@ -27,7 +27,7 @@ CREATE TABLE question(
     scenario VARCHAR(500) NOT NULL,
     text VARCHAR(255) NOT NULL,
     position INT NOT NULL,
-    status VARCHAR(50) DEFAULT 'ACTIVE'
+    status ENUM('ACTIVE', 'INACTIVE') DEFAULT 'ACTIVE' NOT NULL
 );
 
 CREATE TABLE answer(
