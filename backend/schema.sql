@@ -1,4 +1,4 @@
-CREATE DATABASE BrainDead;
+CREATE DATABASE IF NOT EXISTS BrainDead;
 
 use BrainDead;
 
