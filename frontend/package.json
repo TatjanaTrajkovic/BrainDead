@@ -7,8 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "prettier": "prettier --write src/",
-    "prettier:check": "prettier --check src/",
+    "prettier": "prettier --write .",
+    "prettier:check": "prettier --check .",
     "lint": "eslint ."
   },
   "dependencies": {

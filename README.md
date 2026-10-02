@@ -18,6 +18,7 @@ Det enda som står mellan dig och dem är det som finns kvar i ditt huvud. Varje
 - [Tech stack](#tech-stack)
 - [Projektstruktur](#projektstruktur)
 - [Kom igång](#kom-igång)
+- [Kodstil och linting](#kodstil-och-linting)
 - [Databasmodell](#databasmodell)
 - [API](#api)
 - [Arbetssätt](#arbetssätt)
@@ -98,6 +99,33 @@ npm run dev
 
 Appen körs på http://localhost:5173.
 
+## Kodstil och linting
+
+Prettier och ESLint har tydligt uppdelade ansvarsområden:
+
+- **Prettier formaterar.** All formatering styrs av `.prettierrc.json` i projektroten – en gemensam konfiguration för både backend och frontend.
+- **ESLint hittar fel.** ESLint letar efter buggar och felaktig Vue-kod, t.ex. `vue/no-mutating-props` och `vue/require-v-for-key`. Den har inga åsikter om formatering.
+
+Uppdelningen görs av `eslint-config-prettier`, som ligger **sist** i både `backend/eslint.config.js` och `frontend/eslint.config.js` och stänger av alla ESLint-regler som överlappar Prettier. Lägg därför aldrig till regler efter den – då börjar ESLint och Prettier skriva över varandra.
+
+### Kommandon
+
+Kör i `backend/` eller `frontend/`:
+
+```sh
+npm run prettier         # formatera om alla filer
+npm run prettier:check   # kontrollera formatering utan att ändra något
+npm run lint             # kör ESLint
+```
+
+### VS Code
+
+Installera de rekommenderade tilläggen när VS Code frågar (Prettier, ESLint och Volar – se `.vscode/extensions.json`). `.vscode/settings.json` är redan inställd så att Prettier formaterar vid varje sparning och ESLint autofixar samtidigt, så i praktiken behöver du inte köra kommandona ovan manuellt.
+
+### CI
+
+Vid push och pull request mot `main` kör [CI-flödet](.github/workflows/ci.yaml) `npm run lint` och `npm run prettier:check` i båda paketen, plus `npm run build` för frontend. Kör `npm run prettier` innan du pushar om formateringskontrollen klagar.
+
 ## Databasmodell
 
 | Tabell             | Beskrivning                                         |
@@ -122,7 +150,7 @@ Appen körs på http://localhost:5173.
 
 - **Brancher:** Ny branch för varje feature (feat/) och (fix/).
 - **Pull requests:** följ [PR-mallen](pull_request_template.md) och dess Definition of Done. Minst en annan gruppmedlem ska granska och godkänna.
-- **Kodstil:** koden formateras med Prettier.
+- **Kodstil:** Prettier formaterar, ESLint hittar fel – se [Kodstil och linting](#kodstil-och-linting).
 
 ## Team
 <!-- TODO: länka till github -->
