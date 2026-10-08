@@ -1,3 +1,5 @@
+USE BrainDead;
+
 INSERT INTO question (scenario, text, position, status) VALUES
 ('Du sprang ut genom Lisebergs grindar och hann knappt vända dig om innan du stod vid spårvagnshållplatsen. Spårvagn 4 står kvar med dörrarna öppna, precis som ryktet sa. Västtrafik-appen visar fortfarande Försenad 2 min - som om det spelade någon roll längre.', 'Vad gör du?', 1, 'ACTIVE'),
 ('Du har tagit dig genom halva stan utan att stanna, och till slut blir det grönska runt dig istället för asfalt. Du är framme vid Slottsskogen. Djurparkens hägn gapar tomma -sälarna är ute. Inte simmande, inte dykande. Stapplande, över gräsmattan, med ögon som inte borde glimma så där. En säl tuggar lugnt på något som en gång var en joggingsko. Med foten fortfarande i.', 'Vad gör du?', 2, 'ACTIVE'),

@@ -1,7 +1,7 @@
 const database = require('../connectionMySQL');
 
 async function getAllQuestions() {
-  const [rows] = await database.query('SELECT * FROM questions');
+  const [rows] = await database.query('SELECT * FROM question');
   return rows;
 }
 
