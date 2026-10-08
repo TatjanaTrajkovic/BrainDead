@@ -10,8 +10,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 const questionRoute = require('./routes/questionRoute');
+const sessionRoute = require('./routes/sessionRoute');
 
 app.use(questionRoute);
+app.use(sessionRoute);
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
