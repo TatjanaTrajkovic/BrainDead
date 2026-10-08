@@ -45,4 +45,17 @@ async function getNextQuestion(sessionId) {
   return { ...question, answers };
 }
 
-module.exports = { createSession, getNextQuestion };
+async function answerQuestion(sessionId, answerId) {
+  const question = await getNextQuestion(sessionId);
+  if (!question) {
+    return null;
+  }
+  const [answers] = await database.query(
+    `SELECT health_multiplier, feedback
+      FROM answer 
+      WHERE answer_id = ? AND question_id = ?`,
+    [answerId, question.question_id],
+  );
+}
+
+module.exports = { createSession, getNextQuestion, answerQuestion };
