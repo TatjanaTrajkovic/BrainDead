@@ -82,3 +82,6 @@ INSERT INTO answer (question_id, text, health_multiplier, feedback) VALUES
 (10, 'Du tycker något känns fel och bestämmer dig för att prata med kocken.', 0.00, 'Kocken vänder sig långsamt om. Hans ögon är grumliga och han mumlar "ät... ät...". Innan du hinner backa rycker han åt sig din arm.'),
 (10, 'Du springer till kylrummet för att se vad som finns där inne.', 1.00, 'Du slänger upp kylrumsdörren och ett tjugotal överlevare vräker ut. Kocken hade låst in dem för att göra dem till nästa omgång köttbullar. Tillsammans övermannar ni den smittade kocken och barrikaderar köket. Ni har klarat er, men köttbullarna lämnar ni orörda. Grattis, du har överlevt apokalypsen!'),
 (10, 'Du vänder och går raskt mot utgången, kanske finns det överlevare på BAUHAUS?', 0.00, 'Du lämnar IKEA och styr mot BAUHAUS. Där finns inga överlevare, bara zombies beväpnade med verktyg till vettiga priser.');
+
+INSERT INTO users (username, email, password_hash) VALUES
+('testuser', 'testemail@email.com', 'testpassword');
