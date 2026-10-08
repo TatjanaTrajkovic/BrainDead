@@ -1,4 +1,3 @@
-
 <script setup>
 import { ref } from 'vue';
 import FeedbackCard from './components/FeedbackCard.vue';
@@ -16,9 +15,7 @@ async function loadFeedback(answerId) {
   loading.value = true;
 
   try {
-    const response = await fetch(
-      `http://localhost:3000/api/answers/${answerId}/feedback`,
-    );
+    const response = await fetch(`http://localhost:3000/api/answers/${answerId}/feedback`);
 
     if (!response.ok) {
       throw new Error('Kunde inte hämta feedback');
@@ -39,6 +36,10 @@ function handleAnswerSelected(answerId) {
   loadFeedback(answerId);
 }
 
+defineExpose({
+  handleAnswerSelected,
+});
+
 // TODO: Koppla till frågeflödet när nästa fråga kan hämtas.
 function handleNextQuestion() {
   feedback.value = '';
@@ -58,16 +59,9 @@ function handleNextQuestion() {
 
     <p v-if="error">{{ error }}</p>
 
-    <FeedbackCard
-      v-if="feedback"
-      :feedback="feedback"
-      @next-question="handleNextQuestion"
-    />
+    <FeedbackCard v-if="feedback" :feedback="feedback" @next-question="handleNextQuestion" />
   </main>
 </template>
-
-
-
 
 <!-- <script setup>
 import HelloWorld from './components/HelloWorld.vue';
