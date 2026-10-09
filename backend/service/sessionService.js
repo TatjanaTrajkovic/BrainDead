@@ -56,6 +56,15 @@ async function answerQuestion(sessionId, answerId) {
       WHERE answer_id = ? AND question_id = ?`,
     [answerId, question.question_id],
   );
+  if (answers.length === 0) {
+    return null;
+  }
+  const answer = answers[0];
+
+  await database.query(
+    `INSERT INTO session_question (session_id, question_id, answer_id) VALUES (?, ?, ?)`,
+    [sessionId, question.question_id, answerId],
+  );
 }
 
 module.exports = { createSession, getNextQuestion, answerQuestion };
