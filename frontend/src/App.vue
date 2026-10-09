@@ -6,23 +6,39 @@ const feedback = ref('');
 const error = ref('');
 const selectedAnswerId = ref(null);
 const loading = ref(false);
+const sessionId = ref(null);
+const currentHealth = ref(1);
 
-// Hämtar feedback för det svar som spelaren har valt.
+// ANNIKAS POST-endpoint ska hit
+// Skickar spelarens val till backend och hämtar feedback.
 async function loadFeedback(answerId) {
+  if (!sessionId.value) {
+    error.value = 'Ingen aktiv spelomgång finns';
+    return;
+  }
+
   selectedAnswerId.value = answerId;
   feedback.value = '';
   error.value = '';
   loading.value = true;
 
   try {
-    const response = await fetch(`http://localhost:3000/api/answers/${answerId}/feedback`);
+    const response = await fetch(`http://localhost:3000/api/sessions/${sessionId.value}/answer`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ answerId }),
+    });
 
     if (!response.ok) {
-      throw new Error('Kunde inte hämta feedback');
+      throw new Error('Kunde inte skicka svaret');
     }
 
     const data = await response.json();
+
     feedback.value = data.feedback;
+    currentHealth.value = data.current_health;
   } catch (err) {
     error.value = err.message;
   } finally {
