@@ -20,8 +20,8 @@ async function createSession(userId) {
   };
 }
 
-async function getNextQuestion(sessionId) {
-  const [questions] = await database.query(
+async function getNextQuestion(sessionId, db = database) {
+  const [questions] = await db.query(
     `SELECT question_id, scenario, text, position
      FROM question
      WHERE status = 'ACTIVE'
@@ -37,10 +37,9 @@ async function getNextQuestion(sessionId) {
   }
 
   const question = questions[0];
-  const [answers] = await database.query(
-    'SELECT answer_id, text FROM answer WHERE question_id = ?',
-    [question.question_id],
-  );
+  const [answers] = await db.query('SELECT answer_id, text FROM answer WHERE question_id = ?', [
+    question.question_id,
+  ]);
 
   return { ...question, answers };
 }
