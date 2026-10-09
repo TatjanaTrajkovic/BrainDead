@@ -24,3 +24,19 @@ exports.getNextQuestion = async (req, res) => {
     res.status(500).json({ error: 'Kunde inte hämta frågan' });
   }
 };
+
+exports.answerQuestion = async (req, res) => {
+  const { answerId } = req.body;
+  const { sessionId } = req.params;
+  try {
+    const result = await sessionService.answerQuestion(sessionId, answerId);
+    if (result) {
+      res.status(200).json(result);
+    } else {
+      res.status(400).json({ error: 'Ogiltig svar' });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Kunde inte spara svaret' });
+  }
+};
