@@ -11,3 +11,16 @@ exports.createSession = async (req, res) => {
     res.status(500).json({ error: 'Kunde inte starta omgången' });
   }
 };
+
+exports.getNextQuestion = async (req, res) => {
+  try {
+    const question = await sessionService.getNextQuestion(req.params.sessionId);
+    if (!question) {
+      return res.status(200).json({ finished: true });
+    }
+    res.status(200).json(question);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Kunde inte hämta frågan' });
+  }
+};
