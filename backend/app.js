@@ -11,11 +11,9 @@ app.use(express.urlencoded({ extended: true }));
 
 const questionRoute = require('./routes/questionRoute');
 const sessionRoute = require('./routes/sessionRoute');
-const feedbackRoute = require('./routes/feedbackRoute');
 
 app.use('/admin', questionRoute);
 app.use('/api', sessionRoute);
-app.use('/api/answers', feedbackRoute);
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
