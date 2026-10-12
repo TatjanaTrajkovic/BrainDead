@@ -158,6 +158,17 @@ Vid push och pull request mot `main` kör [CI-flödet](.github/workflows/ci.yaml
 | POST  | `/api/sessions/:sessionId/answer`   | Sparar ett svar. Body: `{ "answerId": 1 }`                                             |
 | GET   | `/admin/questions`                  | Hämtar alla frågor                                                                     |
 
+### Felsvar
+
+Fel från `/api/sessions`-endpoints returneras som `{ "error": "..." }`.
+
+| Status | När                                                   |
+| ------ | ----------------------------------------------------- |
+| 400    | Svaret hör inte till den aktuella frågan              |
+| 404    | Omgången finns inte                                   |
+| 409    | Omgången är redan avslutad (gäller `POST .../answer`) |
+| 500    | Serverfel                                             |
+
 ## Arbetssätt
 
 - **Brancher:** Ny branch för varje feature (feat/) och (fix/).
