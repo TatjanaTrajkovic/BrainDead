@@ -119,4 +119,15 @@ async function answerQuestion(sessionId, answerId) {
   }
 }
 
-module.exports = { createSession, getNextQuestion, answerQuestion };
+async function getSession(sessionId) {
+  const [rows] = await database.query(
+    'SELECT session_id, current_health, status, started_at, finished_at FROM game_session WHERE session_id = ?',
+    [sessionId],
+  );
+  if (rows.length > 0) {
+    return rows[0];
+  }
+  return null;
+}
+
+module.exports = { createSession, getNextQuestion, answerQuestion, getSession };
