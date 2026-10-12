@@ -9,6 +9,7 @@ const selectedAnswerId = ref(null);
 const loading = ref(false);
 const sessionId = ref(null);
 const currentHealth = ref(1);
+const previousHealth = ref(1);
 
 // ANNIKAS POST-endpoint ska hit
 // Skickar spelarens val till backend och hämtar feedback.
@@ -27,6 +28,9 @@ async function loadFeedback(answerId) {
     const data = await answerQuestion(sessionId.value, answerId);
 
     feedback.value = data.feedback;
+
+    previousHealth.value = currentHealth.value;
+
     currentHealth.value = data.session.current_health;
   } catch (err) {
     error.value = err.message;
@@ -64,6 +68,12 @@ function handleNextQuestion() {
 
     <p v-if="error">{{ error }}</p>
 
-    <FeedbackCard v-if="feedback" :feedback="feedback" @next-question="handleNextQuestion" />
+    <FeedbackCard
+      v-if="feedback"
+      :feedback="feedback"
+      :health-before="previousHealth"
+      :health-after="currentHealth"
+      @next-question="handleNextQuestion"
+    />
   </main>
 </template>
