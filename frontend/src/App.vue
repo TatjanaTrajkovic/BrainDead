@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 import FeedbackCard from './components/FeedbackCard.vue';
+import { answerQuestion } from './api/gameApi';
 
 const feedback = ref('');
 const error = ref('');
@@ -23,22 +24,10 @@ async function loadFeedback(answerId) {
   loading.value = true;
 
   try {
-    const response = await fetch(`http://localhost:3000/api/sessions/${sessionId.value}/answer`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ answerId }),
-    });
-
-    if (!response.ok) {
-      throw new Error('Kunde inte skicka svaret');
-    }
-
-    const data = await response.json();
+    const data = await answerQuestion(sessionId.value, answerId);
 
     feedback.value = data.feedback;
-    currentHealth.value = data.current_health;
+    currentHealth.value = data.session.current_health;
   } catch (err) {
     error.value = err.message;
   } finally {
@@ -78,51 +67,3 @@ function handleNextQuestion() {
     <FeedbackCard v-if="feedback" :feedback="feedback" @next-question="handleNextQuestion" />
   </main>
 </template>
-
-<!-- <script setup>
-import HelloWorld from './components/HelloWorld.vue';
-import TheWelcome from './components/TheWelcome.vue';
-</script>
-
-<template>
-  <header>
-    <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
-
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-    </div>
-  </header>
-
-  <main>
-    <TheWelcome />
-  </main>
-</template>
-
-<style scoped>
-header {
-  line-height: 1.5;
-}
-
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
-}
-
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-}
-</style> -->
