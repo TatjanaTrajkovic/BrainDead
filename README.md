@@ -86,6 +86,7 @@ cp .env.example .env
 | `DB_USER`     | Ditt MySQL-användarnamn             |
 | `DB_PASSWORD` | Ditt MySQL-lösenord                 |
 | `DB_NAME`     | Databasens namn, `BrainDead`        |
+| `Vite_API_URL`| Adress till backend-API:t, oftast `http://localhost:3000/api`|
 
 ### 4. Backend
 
