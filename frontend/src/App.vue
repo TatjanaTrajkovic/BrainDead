@@ -1,128 +1,65 @@
 <script setup>
-import { ref } from 'vue';
+import { onMounted } from 'vue';
 import FeedbackCard from './components/FeedbackCard.vue';
+import { useGame } from './composables/useGame';
 
-const feedback = ref('');
-const error = ref('');
-const selectedAnswerId = ref(null);
-const loading = ref(false);
-const sessionId = ref(null);
-const currentHealth = ref(1);
+const {
+  phase,
+  question,
+  feedback,
+  health,
+  previousHealth,
+  error,
+  submitting,
+  isAlive,
+  start,
+  resume,
+  answer,
+  next,
+} = useGame();
 
-// ANNIKAS POST-endpoint ska hit
-// Skickar spelarens val till backend och hämtar feedback.
-async function loadFeedback(answerId) {
-  if (!sessionId.value) {
-    error.value = 'Ingen aktiv spelomgång finns';
-    return;
-  }
-
-  selectedAnswerId.value = answerId;
-  feedback.value = '';
-  error.value = '';
-  loading.value = true;
-
-  try {
-    const response = await fetch(`http://localhost:3000/api/sessions/${sessionId.value}/answer`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ answerId }),
-    });
-
-    if (!response.ok) {
-      throw new Error('Kunde inte skicka svaret');
-    }
-
-    const data = await response.json();
-
-    feedback.value = data.feedback;
-    currentHealth.value = data.current_health;
-  } catch (err) {
-    error.value = err.message;
-  } finally {
-    loading.value = false;
-  }
-}
-
-// TODO: Koppla denna funktion till frågekomponentens svarsalternativ.
-// Anropas med answer_id när spelaren väljer ett svar.
-function handleAnswerSelected(answerId) {
-  loadFeedback(answerId);
-}
-
-defineExpose({
-  handleAnswerSelected,
-});
-
-// TODO: Koppla till frågeflödet när nästa fråga kan hämtas.
-function handleNextQuestion() {
-  feedback.value = '';
-  selectedAnswerId.value = null;
-  error.value = '';
-
-  // Här ska nästa fråga visas.
-}
+onMounted(resume);
 </script>
 
 <template>
   <main>
-    <!-- TODO: Visa frågekomponenten här och koppla spelarens val
-         till handleAnswerSelected(answerId). -->
-
-    <p v-if="loading">Hämtar feedback...</p>
-
     <p v-if="error">{{ error }}</p>
 
-    <FeedbackCard v-if="feedback" :feedback="feedback" @next-question="handleNextQuestion" />
+    <!-- TODO: ersätt med en riktig startskärm -->
+    <button v-if="phase === 'idle'" type="button" @click="start">Starta</button>
+
+    <p v-if="phase === 'loading'">Laddar...</p>
+
+    <!-- TODO: ersätt med en riktig hälsomätare -->
+    <p v-if="phase === 'question'">Hälsa: {{ Math.round(health * 100) }}%</p>
+
+    <!-- TODO: ersätt med QuestionCard när feat/14-question-card är mergad -->
+    <section v-if="phase === 'question'">
+      <p>{{ question.scenario }}</p>
+      <h2>{{ question.text }}</h2>
+      <button
+        v-for="option in question.answers"
+        :key="option.answer_id"
+        type="button"
+        :disabled="submitting"
+        @click="answer(option.answer_id)"
+      >
+        {{ option.text }}
+      </button>
+    </section>
+
+    <FeedbackCard
+      v-if="phase === 'feedback'"
+      :feedback="feedback"
+      :health-before="previousHealth"
+      :health-after="health"
+      @next-question="next"
+    />
+
+    <!-- TODO: ersätt med en riktig slutskärm -->
+    <section v-if="phase === 'finished'">
+      <h2>{{ isAlive ? 'Du klarade dig till IKEA!' : 'Hjärndöd.' }}</h2>
+      <p>Hälsa kvar: {{ Math.round(health * 100) }}%</p>
+    </section>
   </main>
 </template>
-
-<!-- <script setup>
-import HelloWorld from './components/HelloWorld.vue';
-import TheWelcome from './components/TheWelcome.vue';
-</script>
-
-<template>
-  <header>
-    <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
-
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-    </div>
-  </header>
-
-  <main>
-    <TheWelcome />
-  </main>
-</template>
-
-<style scoped>
-header {
-  line-height: 1.5;
-}
-
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
-}
-
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-}
-</style> -->

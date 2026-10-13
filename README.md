@@ -21,6 +21,7 @@ Det enda som står mellan dig och dem är det som finns kvar i ditt huvud. Varje
 - [Kodstil och linting](#kodstil-och-linting)
 - [Databasmodell](#databasmodell)
 - [API](#api)
+- [Spelflöde i frontend](#spelflöde-i-frontend)
 - [Arbetssätt](#arbetssätt)
 - [Team](#team)
 
@@ -86,6 +87,7 @@ cp .env.example .env
 | `DB_USER`     | Ditt MySQL-användarnamn             |
 | `DB_PASSWORD` | Ditt MySQL-lösenord                 |
 | `DB_NAME`     | Databasens namn, `BrainDead`        |
+| `Vite_API_URL`| Adress till backend-API:t, oftast `http://localhost:3000/api`|
 
 ### 4. Backend
 
@@ -157,6 +159,41 @@ Vid push och pull request mot `main` kör [CI-flödet](.github/workflows/ci.yaml
 | GET   | `/api/sessions/:sessionId/question` | Hämtar nästa fråga med svarsalternativ, eller `{ "finished": true }` när inga återstår |
 | POST  | `/api/sessions/:sessionId/answer`   | Sparar ett svar. Body: `{ "answerId": 1 }`                                             |
 | GET   | `/admin/questions`                  | Hämtar alla frågor                                                                     |
+
+### Felsvar
+
+Fel från `/api/sessions`-endpoints returneras som `{ "error": "..." }`.
+
+| Status | När                                                   |
+| ------ | ----------------------------------------------------- |
+| 400    | Svaret hör inte till den aktuella frågan              |
+| 404    | Omgången finns inte                                   |
+| 409    | Omgången är redan avslutad (gäller `POST .../answer`) |
+| 500    | Serverfel                                             |
+
+## Spelflöde i frontend
+
+All spellogik ligger i composablen `frontend/src/composables/useGame.js`. Komponenterna visar bara state och skickar vidare spelarens val, och ingen komponent anropar API:t direkt.
+
+`phase` styr vad som visas:
+
+```
+idle → loading → question ⇄ feedback → finished
+```
+
+| Funktion           | Vad den gör                                                                                         |
+| ------------------ | --------------------------------------------------------------------------------------------------- |
+| `start()`          | Startar en omgång (eller återupptar den aktiva) och hämtar första frågan                            |
+| `answer(answerId)` | Skickar svaret och sätter `feedback`, `health` och `previousHealth`. Nästa fråga sparas från svaret |
+| `next()`           | Visar nästa fråga, eller går till `finished` om det inte finns fler eller hälsan är slut            |
+| `resume()`         | Körs vid sidladdning och återupptar omgången som sparats i `localStorage` via `getSession`          |
+
+Använd den så här i `App.vue` (eller i en vy senare):
+
+```js
+const { phase, question, feedback, health, previousHealth, submitting, start, answer, next } =
+  useGame();
+```
 
 ## Arbetssätt
 

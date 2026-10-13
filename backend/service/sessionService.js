@@ -52,21 +52,25 @@ async function answerQuestion(sessionId, answerId) {
     // Omgången måste finnas och vara aktiv. FOR UPDATE låser raden, så ett dubbelklick
     // inte kan räknas två gånger.
     const [sessions] = await connection.query(
-      `SELECT current_health
+      `SELECT current_health, status
        FROM game_session
-       WHERE session_id = ? AND status = 'ACTIVE'
+       WHERE session_id = ?
        FOR UPDATE`,
       [sessionId],
     );
     if (sessions.length === 0) {
       await connection.rollback();
-      return null;
+      return { error: 'SESSION_NOT_FOUND' };
+    }
+    if (sessions[0].status !== 'ACTIVE') {
+      await connection.rollback();
+      return { error: 'SESSION_NOT_ACTIVE' };
     }
 
     const question = await getNextQuestion(sessionId, connection);
     if (!question) {
       await connection.rollback();
-      return null;
+      return { error: 'SESSION_NOT_ACTIVE' };
     }
     const [answers] = await connection.query(
       `SELECT health_multiplier, feedback
@@ -76,7 +80,7 @@ async function answerQuestion(sessionId, answerId) {
     );
     if (answers.length === 0) {
       await connection.rollback();
-      return null;
+      return { error: 'INVALID_ANSWER' };
     }
     const answer = answers[0];
 
