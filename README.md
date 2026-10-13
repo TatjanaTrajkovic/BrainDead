@@ -150,9 +150,24 @@ Vid push och pull request mot `main` kör [CI-flödet](.github/workflows/ci.yaml
 
 <!-- TODO: fylls på i takt med att routes byggs -->
 
-| Metod | Endpoint | Beskrivning |
-| ----- | -------- | ----------- |
-|       |          |             |
+| Metod | Endpoint                            | Beskrivning                                                                            |
+| ----- | ----------------------------------- | -------------------------------------------------------------------------------------- |
+| POST  | `/api/sessions`                     | Startar en ny omgång, eller returnerar den pågående om en redan finns                  |
+| GET   | `/api/sessions/:sessionId`          | Hämtar en pågående eller avslutad omgång                                               |
+| GET   | `/api/sessions/:sessionId/question` | Hämtar nästa fråga med svarsalternativ, eller `{ "finished": true }` när inga återstår |
+| POST  | `/api/sessions/:sessionId/answer`   | Sparar ett svar. Body: `{ "answerId": 1 }`                                             |
+| GET   | `/admin/questions`                  | Hämtar alla frågor                                                                     |
+
+### Felsvar
+
+Fel från `/api/sessions`-endpoints returneras som `{ "error": "..." }`.
+
+| Status | När                                                   |
+| ------ | ----------------------------------------------------- |
+| 400    | Svaret hör inte till den aktuella frågan              |
+| 404    | Omgången finns inte                                   |
+| 409    | Omgången är redan avslutad (gäller `POST .../answer`) |
+| 500    | Serverfel                                             |
 
 ## Arbetssätt
 
