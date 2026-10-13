@@ -1,79 +1,46 @@
 <script setup>
-import { ref } from 'vue';
 import FeedbackCard from './components/FeedbackCard.vue';
-import { answerQuestion } from './api/gameApi';
+import { useGame } from './composables/useGame';
 
-const feedback = ref('');
-const error = ref('');
-const selectedAnswerId = ref(null);
-const loading = ref(false);
-const sessionId = ref(null);
-const currentHealth = ref(1);
-const previousHealth = ref(1);
-
-// ANNIKAS POST-endpoint ska hit
-// Skickar spelarens val till backend och hämtar feedback.
-async function loadFeedback(answerId) {
-  if (!sessionId.value) {
-    error.value = 'Ingen aktiv spelomgång finns';
-    return;
-  }
-
-  selectedAnswerId.value = answerId;
-  feedback.value = '';
-  error.value = '';
-  loading.value = true;
-
-  try {
-    const data = await answerQuestion(sessionId.value, answerId);
-
-    feedback.value = data.feedback;
-
-    previousHealth.value = currentHealth.value;
-
-    currentHealth.value = data.session.current_health;
-  } catch (err) {
-    error.value = err.message;
-  } finally {
-    loading.value = false;
-  }
-}
-
-// TODO: Koppla denna funktion till frågekomponentens svarsalternativ.
-// Anropas med answer_id när spelaren väljer ett svar.
-function handleAnswerSelected(answerId) {
-  loadFeedback(answerId);
-}
-
-defineExpose({
-  handleAnswerSelected,
-});
-
-// TODO: Koppla till frågeflödet när nästa fråga kan hämtas.
-function handleNextQuestion() {
-  feedback.value = '';
-  selectedAnswerId.value = null;
-  error.value = '';
-
-  // Här ska nästa fråga visas.
-}
+const { phase, question, feedback, health, error, submitting, isAlive, start, answer, next } =
+  useGame();
 </script>
 
 <template>
   <main>
-    <!-- TODO: Visa frågekomponenten här och koppla spelarens val
-         till handleAnswerSelected(answerId). -->
-
-    <p v-if="loading">Hämtar feedback...</p>
-
     <p v-if="error">{{ error }}</p>
 
-    <FeedbackCard
-      v-if="feedback"
-      :feedback="feedback"
-      :health-before="previousHealth"
-      :health-after="currentHealth"
-      @next-question="handleNextQuestion"
-    />
+    <!-- TODO: ersätt med en riktig startskärm -->
+    <button v-if="phase === 'idle'" type="button" @click="start">Starta</button>
+
+    <p v-if="phase === 'loading'">Laddar...</p>
+
+    <!-- TODO: ersätt med en riktig hälsomätare -->
+    <p v-if="phase === 'question' || phase === 'feedback'">
+      Hälsa: {{ Math.round(health * 100) }}%
+    </p>
+
+    <!-- TODO: ersätt med QuestionCard när feat/14-question-card är mergad -->
+    <section v-if="phase === 'question'">
+      <p>{{ question.scenario }}</p>
+      <h2>{{ question.text }}</h2>
+      <button
+        v-for="option in question.answers"
+        :key="option.answer_id"
+        type="button"
+        :disabled="submitting"
+        @click="answer(option.answer_id)"
+      >
+        {{ option.text }}
+      </button>
+    </section>
+
+    <FeedbackCard v-if="phase === 'feedback'" :feedback="feedback" @next-question="next" />
+
+    <!-- TODO: ersätt med en riktig slutskärm -->
+    <section v-if="phase === 'finished'">
+      <h2>{{ isAlive ? 'Du klarade dig till IKEA!' : 'Hjärndöd.' }}</h2>
+      <p>Hälsa kvar: {{ Math.round(health * 100) }}%</p>
+    </section>
   </main>
 </template>
