@@ -4,11 +4,25 @@ const testUserId = 1; // TODO: byt mot req.user.id när inloggningen finns
 
 exports.createSession = async (req, res) => {
   try {
-    const { session, created } = await sessionService.createSession(testUserId);
+    const forceNew = req.body?.forceNew === true;
+    const { session, created } = await sessionService.createSession(testUserId, forceNew);
     res.status(created ? 201 : 200).json(session);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Kunde inte starta omgången' });
+  }
+};
+
+exports.getActiveSession = async (req, res) => {
+  try {
+    const session = await sessionService.getActiveSession(testUserId);
+    if (!session) {
+      return res.status(404).json({ error: 'Ingen pågående omgång' });
+    }
+    return res.status(200).json(session);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Kunde inte hämta pågående omgång' });
   }
 };
 
