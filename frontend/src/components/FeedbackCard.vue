@@ -14,6 +14,11 @@ const props = defineProps({
     type: Number,
     required: true,
   },
+  // true när omgången är slut, då leder knappen till slutskärmen i stället för nästa fråga
+  isLastQuestion: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 // Hälsan kommer som 0–1 från backend, visas som procent
@@ -35,7 +40,9 @@ function goToNextQuestion() {
 
     <p class="health">Hjärnkapacitet: {{ before }} % → {{ after }} %</p>
 
-    <button type="button" @click="goToNextQuestion">Nästa fråga</button>
+    <button type="button" @click="goToNextQuestion">
+      {{ isLastQuestion ? 'Se resultat' : 'Nästa fråga' }}
+    </button>
   </section>
 </template>
 
