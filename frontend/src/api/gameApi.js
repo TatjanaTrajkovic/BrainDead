@@ -17,6 +17,8 @@ export function startSession() {
   return request('/sessions', { method: 'POST' });
 }
 
+//ny push mot pr
+
 export function getNextQuestion(sessionId) {
   return request(`/sessions/${sessionId}/question`);
 }
