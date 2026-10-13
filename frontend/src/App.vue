@@ -2,6 +2,7 @@
 import { onMounted } from 'vue';
 import EndCard from './components/EndCard.vue';
 import FeedbackCard from './components/FeedbackCard.vue';
+import QuestionCard from './components/QuestionCard.vue';
 import { useGame } from './composables/useGame';
 
 const {
@@ -35,20 +36,12 @@ onMounted(resume);
     <!-- TODO: ersätt med en riktig hälsomätare -->
     <p v-if="phase === 'question'">Hälsa: {{ Math.round(health * 100) }}%</p>
 
-    <!-- TODO: ersätt med QuestionCard när feat/14-question-card är mergad -->
-    <section v-if="phase === 'question'">
-      <p>{{ question.scenario }}</p>
-      <h2>{{ question.text }}</h2>
-      <button
-        v-for="option in question.answers"
-        :key="option.answer_id"
-        type="button"
-        :disabled="submitting"
-        @click="answer(option.answer_id)"
-      >
-        {{ option.text }}
-      </button>
-    </section>
+    <QuestionCard
+      v-if="phase === 'question'"
+      :question="question"
+      :disabled="submitting"
+      @answer-selected="answer"
+    />
 
     <FeedbackCard
       v-if="phase === 'feedback'"
