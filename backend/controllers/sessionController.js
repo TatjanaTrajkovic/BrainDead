@@ -14,6 +14,14 @@ exports.createSession = async (req, res) => {
 
 exports.getNextQuestion = async (req, res) => {
   try {
+    const session = await sessionService.getSession(req.params.sessionId);
+    if (!session) {
+      return res.status(404).json({ error: 'Ingen session hittad' });
+    }
+    if (session.status === 'COMPLETED') {
+      return res.status(200).json({ finished: true });
+    }
+
     const question = await sessionService.getNextQuestion(req.params.sessionId);
     if (!question) {
       return res.status(200).json({ finished: true });
@@ -31,11 +39,16 @@ exports.answerQuestion = async (req, res) => {
   const { sessionId } = req.params;
   try {
     const result = await sessionService.answerQuestion(sessionId, answerId);
-    if (result) {
-      res.status(200).json(result);
-    } else {
-      res.status(400).json({ error: 'Ogiltig svar' });
+    if (result.error === 'SESSION_NOT_FOUND') {
+      return res.status(404).json({ error: 'Ingen session hittad' });
     }
+    if (result.error === 'SESSION_NOT_ACTIVE') {
+      return res.status(409).json({ error: 'Omgången är redan avslutad' });
+    }
+    if (result.error === 'INVALID_ANSWER') {
+      return res.status(400).json({ error: 'Svaret hör inte till den aktuella frågan' });
+    }
+    res.status(200).json(result);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Kunde inte spara svaret' });
