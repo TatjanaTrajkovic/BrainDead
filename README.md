@@ -147,6 +147,8 @@ Vid push och pull request mot `main` kör [CI-flödet](.github/workflows/ci.yaml
 | `answer`           | Svarsalternativ med hälsomultiplikator och feedback |
 | `session_question` | Vilket svar spelaren valde på en fråga i en session |
 
+Notera: finished_at i game_session är tiden när omgången lämnat aktivt läge. Sätts både vid COMPLETED och PAUSED, tolkas tillsammans med status.
+
 <!-- TODO: lägg till ER-diagram -->
 
 ## API
