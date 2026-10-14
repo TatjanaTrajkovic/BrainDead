@@ -1,23 +1,35 @@
 const database = require('../connectionMySQL');
 
-async function createSession(userId) {
-  const [existing] = await database.query(
-    `SELECT session_id, current_health, status
-     FROM game_session
-     WHERE user_id = ? AND status = 'ACTIVE'
-     LIMIT 1`,
-    [userId],
-  );
-  if (existing.length > 0) {
-    return { session: existing[0], created: false };
+async function createSession(userId, forceNew = false) {
+  const existing = await getActiveSession(userId);
+  if (existing && !forceNew) {
+    return { session: existing, created: false };
   }
-
+  if (existing) {
+    await database.query(
+      `UPDATE game_session
+       SET status = 'PAUSED', finished_at = NOW()
+       WHERE session_id = ?`,
+      [existing.session_id],
+    );
+  }
   const [result] = await database.query('INSERT INTO game_session (user_id) VALUES (?)', [userId]);
-
   return {
     session: { session_id: result.insertId, current_health: 1, status: 'ACTIVE' },
     created: true,
   };
+}
+
+async function getActiveSession(userId, db = database) {
+  const [rows] = await db.query(
+    `SELECT session_id, current_health, status, started_at
+     FROM game_session
+     WHERE user_id = ? AND status = 'ACTIVE'
+    ORDER BY started_at DESC
+     LIMIT 1`,
+    [userId],
+  );
+  return rows.length > 0 ? rows[0] : null;
 }
 
 async function getNextQuestion(sessionId, db = database) {
@@ -134,4 +146,4 @@ async function getSession(sessionId) {
   return null;
 }
 
-module.exports = { createSession, getNextQuestion, answerQuestion, getSession };
+module.exports = { createSession, getNextQuestion, answerQuestion, getSession, getActiveSession };

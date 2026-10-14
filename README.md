@@ -2,11 +2,12 @@
 
 BrainDead är ett webbaserat zombiespel där spelaren ställs inför vägval och väljer mellan olika alternativ för att ta sig vidare och överleva.
 
-## Storyline: 
+## Storyline:
+
 Du kommer aldrig minnas exakt när det vände. Bara att du stod i kö till Balder på Lisebergs säsongsavslutning, telefonen i handen, och tänkte att kvällen inte kunde bli sämre.
-Den kunde det. Vid glasskiosken bredvid körde en sommarvikarie den sista satsen mjukglass för säsongen på en maskin som stått på för länge. 
+Den kunde det. Vid glasskiosken bredvid körde en sommarvikarie den sista satsen mjukglass för säsongen på en maskin som stått på för länge.
 Han brydde sig inte – skiftet slutade om tjugo minuter. Det tog en kvart innan folk omkring dig bara stirrade, tomma, som om någon stängt av dem.
-Du sprang. Ut genom grindarna, förbi en spårvagn som stod övergiven med dörrarna öppna på Örgrytevägen – föraren borta, en sko kvar på trappsteget. 
+Du sprang. Ut genom grindarna, förbi en spårvagn som stod övergiven med dörrarna öppna på Örgrytevägen – föraren borta, en sko kvar på trappsteget.
 Mot Avenyn hördes släpande steg och ett lågt, hest stönande som inte kom från en enda strupe utan från dussintals, allt närmare. Nu, timmar senare, är hela stan nere – Hisingen, Majorna, Haga, allt – och ingen hann fatta vad som hände förrän det redan var för sent.
 
 Ett rykte sprider sig ändå, från röst till röst: IKEA i Bäckebol står fortfarande. Inga fönster, en planlösning ingen någonsin lyckats ta sig ut ur på första försöket, och köttbullar så långt ögat når. Dit är du på väg.
@@ -81,13 +82,13 @@ cd backend
 cp .env.example .env
 ```
 
-| Variabel      | Beskrivning                         |
-| ------------- | ----------------------------------- |
-| `DB_HOST`     | Databasens adress, oftast localhost |
-| `DB_USER`     | Ditt MySQL-användarnamn             |
-| `DB_PASSWORD` | Ditt MySQL-lösenord                 |
-| `DB_NAME`     | Databasens namn, `BrainDead`        |
-| `Vite_API_URL`| Adress till backend-API:t, oftast `http://localhost:3000/api`|
+| Variabel       | Beskrivning                                                   |
+| -------------- | ------------------------------------------------------------- |
+| `DB_HOST`      | Databasens adress, oftast localhost                           |
+| `DB_USER`      | Ditt MySQL-användarnamn                                       |
+| `DB_PASSWORD`  | Ditt MySQL-lösenord                                           |
+| `DB_NAME`      | Databasens namn, `BrainDead`                                  |
+| `Vite_API_URL` | Adress till backend-API:t, oftast `http://localhost:3000/api` |
 
 ### 4. Backend
 
@@ -146,19 +147,22 @@ Vid push och pull request mot `main` kör [CI-flödet](.github/workflows/ci.yaml
 | `answer`           | Svarsalternativ med hälsomultiplikator och feedback |
 | `session_question` | Vilket svar spelaren valde på en fråga i en session |
 
+Notera: finished_at i game_session är tiden när omgången lämnat aktivt läge. Sätts både vid COMPLETED och PAUSED, tolkas tillsammans med status.
+
 <!-- TODO: lägg till ER-diagram -->
 
 ## API
 
 <!-- TODO: fylls på i takt med att routes byggs -->
 
-| Metod | Endpoint                            | Beskrivning                                                                            |
-| ----- | ----------------------------------- | -------------------------------------------------------------------------------------- |
-| POST  | `/api/sessions`                     | Startar en ny omgång, eller returnerar den pågående om en redan finns                  |
-| GET   | `/api/sessions/:sessionId`          | Hämtar en pågående eller avslutad omgång                                               |
-| GET   | `/api/sessions/:sessionId/question` | Hämtar nästa fråga med svarsalternativ, eller `{ "finished": true }` när inga återstår |
-| POST  | `/api/sessions/:sessionId/answer`   | Sparar ett svar. Body: `{ "answerId": 1 }`                                             |
-| GET   | `/admin/questions`                  | Hämtar alla frågor                                                                     |
+| Metod | Endpoint                            | Beskrivning                                                                                                                                        |
+| ----- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| POST  | `/api/sessions`                     | Startar en ny omgång, eller returnerar den pågående om en redan finns. Body `{ "forceNew": true }` pausar den pågående omgången och startar en ny. |
+| GET   | `/api/sessions/active`              | Hämtar användarens pågående omgång, 404 om ingen finns. Skapar aldrig något.                                                                       |
+| GET   | `/api/sessions/:sessionId`          | Hämtar en pågående eller avslutad omgång                                                                                                           |
+| GET   | `/api/sessions/:sessionId/question` | Hämtar nästa fråga med svarsalternativ, eller `{ "finished": true }` när inga återstår                                                             |
+| POST  | `/api/sessions/:sessionId/answer`   | Sparar ett svar. Body: `{ "answerId": 1 }`                                                                                                         |
+| GET   | `/admin/questions`                  | Hämtar alla frågor                                                                                                                                 |
 
 ### Felsvar
 
@@ -202,9 +206,10 @@ const { phase, question, feedback, health, previousHealth, submitting, start, an
 - **Kodstil:** Prettier formaterar, ESLint hittar fel – se [Kodstil och linting](#kodstil-och-linting).
 
 ## Team
+
 <!-- TODO: länka till github -->
+
 - **Mattias Hagström** -
 - **Dennis Seldén** -
 - **Tatjana Trajkovic** -
 - **Annika Holmqvist** -
-
