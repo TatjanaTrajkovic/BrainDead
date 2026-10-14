@@ -2,6 +2,7 @@
 import { onMounted } from 'vue';
 import EndCard from './components/EndCard.vue';
 import FeedbackCard from './components/FeedbackCard.vue';
+import LockAnswerButton from './components/LockAnswerButton.vue';
 import QuestionCard from './components/QuestionCard.vue';
 import { useGame } from './composables/useGame';
 
@@ -19,6 +20,8 @@ const {
   resume,
   answer,
   next,
+  selectedAnswerId,
+  select,
 } = useGame();
 
 onMounted(resume);
@@ -40,7 +43,14 @@ onMounted(resume);
       v-if="phase === 'question'"
       :question="question"
       :disabled="submitting"
-      @answer-selected="answer"
+      @answer-selected="select"
+    />
+
+    <LockAnswerButton
+      v-if="phase === 'question'"
+      :has-selection="selectedAnswerId !== null"
+      :submitting="submitting"
+      @lock="answer"
     />
 
     <FeedbackCard
