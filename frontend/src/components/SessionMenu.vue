@@ -32,13 +32,17 @@ const emit = defineEmits(['start-new', 'resume', 'show-played']);
 
 button {
   padding: var(--space-3, 12px);
-  background: var(--color-story-bg, #4b2d6b);
-  border: 3px solid var(--color-border-light, #e8dfb0);
+  background: var(--color-bg-purple, #5c2b78);
+  border: 3px solid var(--color-border-outer, #c7bc90);
   border-radius: 6px;
-  color: var(--color-text-light, #f3eedc);
-  font-family: var(--font-typewriter, 'Courier New', monospace);
+  color: var(--color-text, #e7dcaa);
+  font-family: var(--font-main, 'Special Elite', monospace);
   text-transform: uppercase;
   cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  filter: brightness(1.2);
 }
 
 button:disabled {
