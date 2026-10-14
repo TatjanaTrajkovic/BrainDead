@@ -111,6 +111,14 @@ export function useGame() {
     }
   }
 
+  // Markerar ett alternativ utan att skicka det. Går att byta fram till att svaret låses
+  function select(answerId) {
+    if (phase.value !== 'question' || submitting.value) {
+      return;
+    }
+    selectedAnswerId.value = answerId;
+  }
+
   async function answer(answerId) {
     if (phase.value !== 'question' || submitting.value) {
       return;
