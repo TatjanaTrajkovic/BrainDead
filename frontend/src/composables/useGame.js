@@ -42,6 +42,7 @@ export function useGame() {
   const submitting = ref(false);
   // true när senaste svaret avslutade omgången, så att FeedbackCard kan visa "Se resultat"
   const isLastQuestion = ref(false);
+  const selectedAnswer = ref(null);
 
   // Nästa fråga kommer med i svaret från POST .../answer, så vi slipper ett extra anrop
   let nextQuestion = null;
@@ -49,6 +50,9 @@ export function useGame() {
   const isAlive = computed(() => health.value > 0);
 
   function showQuestion(data) {
+    function showQuestion(data) {
+      selectedAnswer.value = null;
+    }
     // GET .../question svarar { finished: true } när inga frågor återstår
     if (!data || data.finished) {
       question.value = null;
