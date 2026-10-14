@@ -41,4 +41,11 @@ watch(
     }
   },
 );
+
+const label = computed(() => {
+  if (props.locked) {
+    return props.isLastQuestion ? 'Se resultat ' : 'Nästa fråga > ';
+  }
+  return props.submitting ? 'Låser...' : 'Lås svar';
+});
 </script>
