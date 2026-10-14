@@ -1,5 +1,6 @@
 <script setup>
 import { onMounted } from 'vue';
+import EndCard from './components/EndCard.vue';
 import FeedbackCard from './components/FeedbackCard.vue';
 import QuestionCard from './components/QuestionCard.vue';
 import { useGame } from './composables/useGame';
@@ -12,6 +13,7 @@ const {
   previousHealth,
   error,
   submitting,
+  isLastQuestion,
   isAlive,
   start,
   resume,
@@ -46,13 +48,10 @@ onMounted(resume);
       :feedback="feedback"
       :health-before="previousHealth"
       :health-after="health"
+      :is-last-question="isLastQuestion"
       @next-question="next"
     />
 
-    <!-- TODO: ersätt med en riktig slutskärm -->
-    <section v-if="phase === 'finished'">
-      <h2>{{ isAlive ? 'Du klarade dig till IKEA!' : 'Hjärndöd.' }}</h2>
-      <p>Hälsa kvar: {{ Math.round(health * 100) }}%</p>
-    </section>
+    <EndCard v-if="phase === 'finished'" :health="health" :is-alive="isAlive" @play-again="start" />
   </main>
 </template>

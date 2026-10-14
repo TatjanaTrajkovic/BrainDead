@@ -40,6 +40,8 @@ export function useGame() {
   const previousHealth = ref(1);
   const error = ref('');
   const submitting = ref(false);
+  // true när senaste svaret avslutade omgången, så att FeedbackCard kan visa "Se resultat"
+  const isLastQuestion = ref(false);
 
   // Nästa fråga kommer med i svaret från POST .../answer, så vi slipper ett extra anrop
   let nextQuestion = null;
@@ -119,6 +121,7 @@ export function useGame() {
       previousHealth.value = health.value;
       health.value = Number(data.session.current_health);
       nextQuestion = data.session.status === 'COMPLETED' ? null : data.next_question;
+      isLastQuestion.value = !nextQuestion;
       phase.value = 'feedback';
     } catch (err) {
       error.value = err.message;
@@ -145,6 +148,7 @@ export function useGame() {
     previousHealth,
     error,
     submitting,
+    isLastQuestion,
     isAlive,
     start,
     resume,
