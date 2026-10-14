@@ -13,8 +13,17 @@ async function request(path, options = {}) {
   return data;
 }
 
-export function startSession() {
-  return request('/sessions', { method: 'POST' });
+// forceNew: true pausar en pågående omgång och startar en ny (se README, POST /api/sessions)
+export function startSession(forceNew = false) {
+  return request('/sessions', {
+    method: 'POST',
+    body: JSON.stringify({ forceNew }),
+  });
+}
+
+// Hämtar pågående omgång. Backend svarar 404 om ingen finns, då kastar request() ett fel.
+export function getActiveSession() {
+  return request('/sessions/active');
 }
 
 export function getNextQuestion(sessionId) {

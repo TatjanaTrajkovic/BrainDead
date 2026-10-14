@@ -4,6 +4,7 @@ import EndCard from './components/EndCard.vue';
 import FeedbackCard from './components/FeedbackCard.vue';
 import QuestionCard from './components/QuestionCard.vue';
 import { useGame } from './composables/useGame';
+import SessionMenu from './components/SessionMenu.vue';
 
 const {
   phase,
@@ -19,17 +20,24 @@ const {
   resume,
   answer,
   next,
+  hasActiveSession,
+  checkActiveSession,
 } = useGame();
 
-onMounted(resume);
+// onMounted(resume); spelaren hoppar in direkt i spelet
+onMounted(checkActiveSession); //här får spelaren välja i menyn i stället
 </script>
 
 <template>
   <main>
     <p v-if="error">{{ error }}</p>
 
-    <!-- TODO: ersätt med en riktig startskärm -->
-    <button v-if="phase === 'idle'" type="button" @click="start">Starta</button>
+    <SessionMenu
+      v-if="phase === 'idle'"
+      :has-active-session="hasActiveSession"
+      @start-new="start(true)"
+      @resume="resume"
+    />
 
     <p v-if="phase === 'loading'">Laddar...</p>
 
