@@ -48,4 +48,13 @@ const label = computed(() => {
   }
   return props.submitting ? 'Låser...' : 'Lås svar';
 });
+
+const isDisabled = computed(() => !props.locked && (!props.hasSelection || props.submitting));
+
+function handleClick() {
+  if (justLocked.value) {
+    return;
+  }
+  emit(props.locked ? 'next' : 'lock');
+}
 </script>
