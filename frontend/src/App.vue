@@ -2,6 +2,7 @@
 import { onMounted } from 'vue';
 import EndCard from './components/EndCard.vue';
 import FeedbackCard from './components/FeedbackCard.vue';
+import LockAnswerButton from './components/LockAnswerButton.vue';
 import QuestionCard from './components/QuestionCard.vue';
 import { useGame } from './composables/useGame';
 import SessionMenu from './components/SessionMenu.vue';
@@ -11,6 +12,7 @@ const {
   question,
   feedback,
   health,
+  
   previousHealth,
   error,
   submitting,
@@ -22,6 +24,8 @@ const {
   next,
   hasActiveSession,
   checkActiveSession,
+  selectedAnswerId,
+  select,
 } = useGame();
 
 // onMounted(resume); spelaren hoppar in direkt i spelet
@@ -56,7 +60,14 @@ function handleStartNew() {
       v-if="phase === 'question'"
       :question="question"
       :disabled="submitting"
-      @answer-selected="answer"
+      @answer-selected="select"
+    />
+
+    <LockAnswerButton
+      v-if="phase === 'question'"
+      :has-selection="selectedAnswerId !== null"
+      :submitting="submitting"
+      @lock="answer"
     />
 
     <FeedbackCard

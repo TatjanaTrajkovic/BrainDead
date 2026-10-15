@@ -50,6 +50,8 @@ export function useGame() {
   const hasActiveSession = ref(false);
   // true när senaste svaret avslutade omgången, så att FeedbackCard kan visa "Se resultat"
   const isLastQuestion = ref(false);
+  // Svaret spelaren markerat men inte låst än. null = inget valt
+  const selectedAnswerId = ref(null);
 
   // Nästa fråga kommer med i svaret från POST .../answer, så vi slipper ett extra anrop
   let nextQuestion = null;
@@ -57,6 +59,7 @@ export function useGame() {
   const isAlive = computed(() => health.value > 0);
 
   function showQuestion(data) {
+    selectedAnswerId.value = null;
     // GET .../question svarar { finished: true } när inga frågor återstår
     if (!data || data.finished) {
       question.value = null;
@@ -132,8 +135,8 @@ export function useGame() {
     }
   }
 
-  async function answer(answerId) {
-    if (phase.value !== 'question' || submitting.value) {
+  async function answer() {
+    if (phase.value !== 'question' || submitting.value || selectedAnswerId.value === null) {
       return;
     }
 
@@ -141,7 +144,7 @@ export function useGame() {
     submitting.value = true;
 
     try {
-      const data = await answerQuestion(sessionId.value, answerId);
+      const data = await answerQuestion(sessionId.value, selectedAnswerId.value);
       feedback.value = data.feedback;
       previousHealth.value = health.value;
       health.value = Number(data.session.current_health);
@@ -179,7 +182,12 @@ export function useGame() {
     resume,
     answer,
     next,
+<<<<<<< HEAD
     hasActiveSession,
     checkActiveSession,
+=======
+    selectedAnswerId,
+    select,
+>>>>>>> 71c332b8df5dadf0a5732eba0cd7a926852f23db
   };
 }
