@@ -1,28 +1,64 @@
 :root {
   --color-bg: #000000;
-  --color-text: #e7dcaa; /* --color-text-light */
-  --color-bg-purple: #5c2b78; /* --color-story-bg */
+  --color-text: #e7dcaa;
+  --color-bg-purple: #5c2b78;
   --color-bg-gray: #22201f;
   --color-border-outer: #c7bc90;
-  --color-border-inner: #22201f; /* --color-border-light */
-  --font-main: 'Special Elite', monospace; /* --font-typewriter; */
+  --color-border-inner: #22201f;
+  --font-main: 'Special Elite', monospace;
   --font-handwritten: 'Reenie Beanie', cursive;
+}
+
+.content-card {
+  font-family: var(--font-main);
+  color: var(--color-text);
+  border-radius: 1.5rem;
+  padding: 0.7rem;
+  background-color: var(--color-bg-purple);
+  --border: 6px;
+  border: var(--border) solid var(--color-border-outer);
+  box-shadow: inset 0 0 0 var(--border) var(--color-border-inner);
+}
+
+button {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
 }
 
 .btn {
   font-family: var(--font-main);
-  font-size: 1.25rem;
   color: var(--color-text);
-  border-radius: 24px;
-  padding: 28px 12px 20px 20px;
+  border-radius: 12px;
+  padding: 18px 12px 14px 20px;
+  text-align: center;
   cursor: pointer;
-  border: var(--btn-border) solid var(--color-border-outer); /* yttre ram */
-  --btn-border: 6px;
+  border: var(--btn-border) solid var(--color-border-outer);
+  --btn-border: 4px;
+  --btn-border-large: 6px;
+}
+
+.btn-large {
+  font-family: var(--font-main);
+  font-size: 4rem;
+  text-align: center;
+  width: 320px;
+  height: 176px;
+  border-radius: 20px;
+  padding: 28px 20px 14px 20px;
+  cursor: pointer;
+  background-color: var(--color-bg-purple);
+  border: var(--btn-border-large) solid var(--color-border-outer);
+  box-shadow: inset 0 0 0 var(--btn-border-large) var(--color-border-inner);
 }
 
 .btn-purple {
   background-color: var(--color-bg-purple);
-  box-shadow: inset 0 0 0 var(--btn-border) var(--color-border-inner); /* inre ram */
+  box-shadow: inset 0 0 0 var(--btn-border) var(--color-border-inner);
 }
 
 .btn-gray {
@@ -34,7 +70,7 @@
 }
 
 .btn:active {
-  filter: brightness(1.15); /* ljusare än vila, nära hover */
+  filter: brightness(1.15);
   transform: translateY(2px);
 }
 
@@ -55,8 +91,14 @@
 body {
   min-height: 100vh;
   color: var(--color-text);
-  background: var(--color-bg) url('./images/background.webp') center / cover no-repeat fixed;
+  background: var(--color-bg) url('./images/background.webp') center bottom / cover no-repeat;
   font-family: 'Special Elite', system-ui, sans-serif;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+}
+
+@media (min-width: 768px) {
+  .content-card {
+    padding: 1rem;
+  }
 }
