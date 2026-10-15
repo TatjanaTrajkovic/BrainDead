@@ -26,6 +26,14 @@ const {
 
 // onMounted(resume); spelaren hoppar in direkt i spelet
 onMounted(checkActiveSession); //här får spelaren välja i menyn i stället
+
+// Fråga först om spelaren har en pågående omgång, eftersom forceNew pausar den
+function handleStartNew() {
+  if (hasActiveSession.value && !window.confirm('Du har en pågående omgång. Vill du börja om?')) {
+    return;
+  }
+  start(true);
+}
 </script>
 
 <template>
@@ -35,7 +43,7 @@ onMounted(checkActiveSession); //här får spelaren välja i menyn i stället
     <SessionMenu
       v-if="phase === 'idle'"
       :has-active-session="hasActiveSession"
-      @start-new="start(true)"
+      @start-new="handleStartNew"
       @resume="resume"
     />
 

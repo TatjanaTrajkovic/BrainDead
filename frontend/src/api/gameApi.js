@@ -8,7 +8,9 @@ async function request(path, options = {}) {
   const data = await response.json().catch(() => null);
 
   if (!response.ok) {
-    throw new Error(data?.error || 'Något gick fel mot servern');
+    const err = new Error(data?.error || 'Något gick fel mot servern');
+    err.status = response.status;
+    throw err;
   }
   return data;
 }

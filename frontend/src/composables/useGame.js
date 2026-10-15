@@ -117,13 +117,18 @@ export function useGame() {
 
   // Frågar backend om det finns en pågående omgång, så att menyn vet om "Återuppta" ska gå att klicka på
   async function checkActiveSession() {
+    error.value = '';
     try {
       const session = await getActiveSession();
       hasActiveSession.value = true;
       saveSessionId(session.session_id); // befintliga resume() hittar rätt omgång när spelaren klickar "Återuppta"
-    } catch {
-      // 404 betyder att ingen omgång pågår
+    } catch (err) {
       hasActiveSession.value = false;
+      // 404 betyder att ingen omgång pågår. Allt annat är ett riktigt fel som spelaren ska se.
+      if (err.status !== 404) {
+        // Är servern helt nere kastar fetch ett fel utan status
+        error.value = err.status ? err.message : 'Kunde inte nå servern';
+      }
     }
   }
 
