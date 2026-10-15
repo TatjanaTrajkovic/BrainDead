@@ -194,6 +194,7 @@ idle → loading → question ⇄ feedback → finished
 | `next()`               | Visar nästa fråga, eller går till `finished` om det inte finns fler eller hälsan är slut                                |
 | `resume()`             | Körs när spelaren klickar "Återuppta omgång" och fortsätter omgången som sparats i `localStorage`                       |
 | `checkActiveSession()` | Körs vid sidladdning och sätter `hasActiveSession` så att menyn vet om "Återuppta" går att klicka på                    |
+| `quit()`               | Avbryter och går tillbaka till menyn. Omgången ligger kvar så den kan återupptas                                        |
 
 `totalQuestions` och `answeredCount` kommer från den aktuella frågan och styr `ProgressDots`. De uppdateras när nästa fråga visas och stämmer även efter omladdning.
 

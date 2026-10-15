@@ -139,6 +139,23 @@ export function useGame() {
     }
   }
 
+  // Avbryter omgången och går tillbaka till menyn. Omgången ligger kvar som pågående i backend,
+  // så spelaren kan fortsätta med "Återuppta omgång".
+  async function quit() {
+    if (submitting.value) {
+      return;
+    }
+
+    question.value = null;
+    feedback.value = '';
+    selectedAnswerId.value = null;
+    nextQuestion = null;
+    phase.value = 'idle';
+
+    // Kollar med backend om omgången fortfarande pågår (den är avslutad om sista frågan var besvarad)
+    await checkActiveSession();
+  }
+
   // Markerar ett alternativ utan att skicka det. Går att byta fram till att svaret låses
   function select(answerId) {
     if (phase.value !== 'question' || submitting.value) {
@@ -198,6 +215,7 @@ export function useGame() {
     checkActiveSession,
     selectedAnswerId,
     select,
+    quit,
     totalQuestions,
     answeredCount,
   };

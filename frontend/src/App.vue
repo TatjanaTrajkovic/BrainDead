@@ -7,6 +7,7 @@ import ProgressDots from './components/ProgressDots.vue';
 import QuestionCard from './components/QuestionCard.vue';
 import { useGame } from './composables/useGame';
 import SessionMenu from './components/SessionMenu.vue';
+import QuitButton from './components/QuitButton.vue';
 
 const {
   phase,
@@ -24,6 +25,7 @@ const {
   next,
   hasActiveSession,
   checkActiveSession,
+  quit,
   selectedAnswerId,
   select,
   totalQuestions,
@@ -59,6 +61,12 @@ function handleStartNew() {
       />
 
       <p v-if="phase === 'loading'">Laddar...</p>
+
+      <QuitButton
+        v-if="phase === 'question' || phase === 'feedback'"
+        :disabled="submitting"
+        @quit="quit"
+      />
 
       <!-- TODO: ersätt med en riktig hälsomätare -->
       <p v-if="phase === 'question'">Hälsa: {{ Math.round(health * 100) }}%</p>
