@@ -160,7 +160,7 @@ Notera: finished_at i game_session är tiden när omgången lämnat aktivt läge
 | POST  | `/api/sessions`                     | Startar en ny omgång, eller returnerar den pågående om en redan finns. Body `{ "forceNew": true }` pausar den pågående omgången och startar en ny. |
 | GET   | `/api/sessions/active`              | Hämtar användarens pågående omgång, 404 om ingen finns. Skapar aldrig något.                                                                       |
 | GET   | `/api/sessions/:sessionId`          | Hämtar en pågående eller avslutad omgång                                                                                                           |
-| GET   | `/api/sessions/:sessionId/question` | Hämtar nästa fråga med svarsalternativ, eller `{ "finished": true }` när inga återstår                                                             |
+| GET   | `/api/sessions/:sessionId/question` | Hämtar nästa fråga med svarsalternativ, `total_questions` och `answered_count`, eller `{ "finished": true }` när inga återstår                  |
 | POST  | `/api/sessions/:sessionId/answer`   | Sparar ett svar. Body: `{ "answerId": 1 }`                                                                                                         |
 | GET   | `/admin/questions`                  | Hämtar alla frågor                                                                                                                                 |
 
@@ -195,10 +195,12 @@ idle → loading → question ⇄ feedback → finished
 | `resume()`             | Körs när spelaren klickar "Återuppta omgång" och fortsätter omgången som sparats i `localStorage`                       |
 | `checkActiveSession()` | Körs vid sidladdning och sätter `hasActiveSession` så att menyn vet om "Återuppta" går att klicka på                    |
 
+`totalQuestions` och `answeredCount` kommer från den aktuella frågan och styr `ProgressDots`. De uppdateras när nästa fråga visas och stämmer även efter omladdning.
+
 Använd den så här i `App.vue` (eller i en vy senare):
 
 ```js
-const { phase, question, feedback, health, previousHealth, submitting, selectedAnswerId, start, select, answer, next } =
+const { phase, question, feedback, health, previousHealth, submitting, selectedAnswerId, totalQuestions, answeredCount, start, select, answer, next } =
   useGame();
 ```
 

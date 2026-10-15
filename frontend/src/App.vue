@@ -3,6 +3,7 @@ import { onMounted } from 'vue';
 import EndCard from './components/EndCard.vue';
 import FeedbackCard from './components/FeedbackCard.vue';
 import LockAnswerButton from './components/LockAnswerButton.vue';
+import ProgressDots from './components/ProgressDots.vue';
 import QuestionCard from './components/QuestionCard.vue';
 import { useGame } from './composables/useGame';
 import SessionMenu from './components/SessionMenu.vue';
@@ -25,6 +26,8 @@ const {
   checkActiveSession,
   selectedAnswerId,
   select,
+  totalQuestions,
+  answeredCount,
 } = useGame();
 
 // onMounted(resume); spelaren hoppar in direkt i spelet
@@ -59,6 +62,9 @@ function handleStartNew() {
 
       <!-- TODO: ersätt med en riktig hälsomätare -->
       <p v-if="phase === 'question'">Hälsa: {{ Math.round(health * 100) }}%</p>
+
+      <!-- TODO: flytta till #progress-sloten i QuizLayout (#64) -->
+      <ProgressDots v-if="phase === 'question'" :total="totalQuestions" :answered="answeredCount" />
 
       <QuestionCard
         v-if="phase === 'question'"

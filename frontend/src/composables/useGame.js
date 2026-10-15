@@ -58,6 +58,10 @@ export function useGame() {
 
   const isAlive = computed(() => health.value > 0);
 
+  // Till ProgressDots. Följer med varje fråga från backend, så de stämmer även efter omladdning
+  const totalQuestions = computed(() => question.value?.total_questions ?? 0);
+  const answeredCount = computed(() => question.value?.answered_count ?? 0);
+
   function showQuestion(data) {
     selectedAnswerId.value = null;
     // GET .../question svarar { finished: true } när inga frågor återstår
@@ -194,5 +198,7 @@ export function useGame() {
     checkActiveSession,
     selectedAnswerId,
     select,
+    totalQuestions,
+    answeredCount,
   };
 }
