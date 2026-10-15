@@ -48,41 +48,47 @@ function handleStartNew() {
     <div class="content-wrapper">
       <p v-if="error">{{ error }}</p>
 
-    <SessionMenu
-      v-if="phase === 'idle'"
-      :has-active-session="hasActiveSession"
-      @start-new="handleStartNew"
-      @resume="resume"
-    />
+      <SessionMenu
+        v-if="phase === 'idle'"
+        :has-active-session="hasActiveSession"
+        @start-new="handleStartNew"
+        @resume="resume"
+      />
 
       <p v-if="phase === 'loading'">Laddar...</p>
 
       <!-- TODO: ersätt med en riktig hälsomätare -->
       <p v-if="phase === 'question'">Hälsa: {{ Math.round(health * 100) }}%</p>
 
-    <QuestionCard
-      v-if="phase === 'question'"
-      :question="question"
-      :disabled="submitting"
-      @answer-selected="select"
-    />
+      <QuestionCard
+        v-if="phase === 'question'"
+        :question="question"
+        :disabled="submitting"
+        @answer-selected="select"
+      />
 
-    <LockAnswerButton
-      v-if="phase === 'question'"
-      :has-selection="selectedAnswerId !== null"
-      :submitting="submitting"
-      @lock="answer"
-    />
+      <LockAnswerButton
+        v-if="phase === 'question'"
+        :has-selection="selectedAnswerId !== null"
+        :submitting="submitting"
+        @lock="answer"
+      />
 
-    <FeedbackCard
-      v-if="phase === 'feedback'"
-      :feedback="feedback"
-      :health-before="previousHealth"
-      :health-after="health"
-      :is-last-question="isLastQuestion"
-      @next-question="next"
-    />
+      <FeedbackCard
+        v-if="phase === 'feedback'"
+        :feedback="feedback"
+        :health-before="previousHealth"
+        :health-after="health"
+        :is-last-question="isLastQuestion"
+        @next-question="next"
+      />
 
-    <EndCard v-if="phase === 'finished'" :health="health" :is-alive="isAlive" @play-again="start" />
+      <EndCard
+        v-if="phase === 'finished'"
+        :health="health"
+        :is-alive="isAlive"
+        @play-again="start"
+      />
+    </div>
   </main>
 </template>
