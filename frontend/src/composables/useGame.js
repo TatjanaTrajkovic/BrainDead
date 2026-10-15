@@ -135,6 +135,14 @@ export function useGame() {
     }
   }
 
+  // Markerar ett alternativ utan att skicka det. Går att byta fram till att svaret låses
+  function select(answerId) {
+    if (phase.value !== 'question' || submitting.value) {
+      return;
+    }
+    selectedAnswerId.value = answerId;
+  }
+
   async function answer() {
     if (phase.value !== 'question' || submitting.value || selectedAnswerId.value === null) {
       return;
@@ -182,12 +190,9 @@ export function useGame() {
     resume,
     answer,
     next,
-<<<<<<< HEAD
     hasActiveSession,
     checkActiveSession,
-=======
     selectedAnswerId,
     select,
->>>>>>> 71c332b8df5dadf0a5732eba0cd7a926852f23db
   };
 }
