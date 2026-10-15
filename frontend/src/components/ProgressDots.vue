@@ -5,7 +5,7 @@ defineProps({
     type: Number,
     default: 0,
   },
-  // Antal besvarade frågor, så många prickar blir ifyllda
+  // Antal besvarade frågor. Pricken efter dem är frågan spelaren är på
   answered: {
     type: Number,
     default: 0,
@@ -14,12 +14,12 @@ defineProps({
 </script>
 
 <template>
-  <div class="progress-dots" role="img" :aria-label="`${answered} av ${total} frågor besvarade`">
+  <div class="progress-dots" role="img" :aria-label="`Fråga ${answered + 1} av ${total}`">
     <span
       v-for="n in total"
       :key="n"
       class="dot"
-      :class="{ filled: n <= answered }"
+      :class="{ done: n <= answered, current: n === answered + 1 }"
       aria-hidden="true"
     ></span>
   </div>
@@ -32,6 +32,7 @@ defineProps({
   --dot-border: 3px;
   --dot-empty: rgba(162, 162, 162, 0.4);
   --dot-filled: var(--color-progress, #5c2b78);
+  --dot-current: var(--color-text, #e7dcaa);
 
   display: flex;
   /* Fråga 1 längst ned, så att prickarna fylls nedifrån och upp mot IKEA */
@@ -51,9 +52,16 @@ defineProps({
   border-radius: 50%;
 }
 
-.dot.filled {
+.dot.done {
   background: var(--dot-filled);
   border-color: var(--dot-filled);
+}
+
+/* Frågan spelaren är på, ifylld i krämgult med ett svagt sken */
+.dot.current {
+  background: var(--dot-current);
+  border-color: var(--dot-current);
+  box-shadow: 0 0 8px var(--dot-current);
 }
 
 /* Streck ned till pricken under. Den nedersta (fråga 1) har ingen under sig */
@@ -68,7 +76,9 @@ defineProps({
   background: var(--dot-empty);
 }
 
-.dot.filled::after {
+/* Strecket ned från en besvarad eller pågående fråga leder till en besvarad prick */
+.dot.done::after,
+.dot.current::after {
   background: var(--dot-filled);
 }
 </style>
