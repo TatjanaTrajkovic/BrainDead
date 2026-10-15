@@ -41,7 +41,12 @@ function handleStartNew() {
 
 <template>
   <main>
-    <p v-if="error">{{ error }}</p>
+    <header>
+      <img src="./assets/images/logo.webp" alt="BrainDead" class="logo" />
+    </header>
+
+    <div class="content-wrapper">
+      <p v-if="error">{{ error }}</p>
 
     <SessionMenu
       v-if="phase === 'idle'"
@@ -50,10 +55,10 @@ function handleStartNew() {
       @resume="resume"
     />
 
-    <p v-if="phase === 'loading'">Laddar...</p>
+      <p v-if="phase === 'loading'">Laddar...</p>
 
-    <!-- TODO: ersätt med en riktig hälsomätare -->
-    <p v-if="phase === 'question'">Hälsa: {{ Math.round(health * 100) }}%</p>
+      <!-- TODO: ersätt med en riktig hälsomätare -->
+      <p v-if="phase === 'question'">Hälsa: {{ Math.round(health * 100) }}%</p>
 
     <QuestionCard
       v-if="phase === 'question'"
