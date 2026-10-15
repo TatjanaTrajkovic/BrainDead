@@ -41,43 +41,54 @@ function handleStartNew() {
 
 <template>
   <main>
-    <p v-if="error">{{ error }}</p>
+    <header>
+      <img src="./assets/images/logo.webp" alt="BrainDead" class="logo" />
+    </header>
 
-    <SessionMenu
-      v-if="phase === 'idle'"
-      :has-active-session="hasActiveSession"
-      @start-new="handleStartNew"
-      @resume="resume"
-    />
+    <div class="content-wrapper">
+      <p v-if="error">{{ error }}</p>
 
-    <p v-if="phase === 'loading'">Laddar...</p>
+      <SessionMenu
+        v-if="phase === 'idle'"
+        :has-active-session="hasActiveSession"
+        @start-new="handleStartNew"
+        @resume="resume"
+      />
 
-    <!-- TODO: ersätt med en riktig hälsomätare -->
-    <p v-if="phase === 'question'">Hälsa: {{ Math.round(health * 100) }}%</p>
+      <p v-if="phase === 'loading'">Laddar...</p>
 
-    <QuestionCard
-      v-if="phase === 'question'"
-      :question="question"
-      :disabled="submitting"
-      @answer-selected="select"
-    />
+      <!-- TODO: ersätt med en riktig hälsomätare -->
+      <p v-if="phase === 'question'">Hälsa: {{ Math.round(health * 100) }}%</p>
 
-    <LockAnswerButton
-      v-if="phase === 'question'"
-      :has-selection="selectedAnswerId !== null"
-      :submitting="submitting"
-      @lock="answer"
-    />
+      <QuestionCard
+        v-if="phase === 'question'"
+        :question="question"
+        :disabled="submitting"
+        @answer-selected="select"
+      />
 
-    <FeedbackCard
-      v-if="phase === 'feedback'"
-      :feedback="feedback"
-      :health-before="previousHealth"
-      :health-after="health"
-      :is-last-question="isLastQuestion"
-      @next-question="next"
-    />
+      <LockAnswerButton
+        v-if="phase === 'question'"
+        :has-selection="selectedAnswerId !== null"
+        :submitting="submitting"
+        @lock="answer"
+      />
 
-    <EndCard v-if="phase === 'finished'" :health="health" :is-alive="isAlive" @play-again="start" />
+      <FeedbackCard
+        v-if="phase === 'feedback'"
+        :feedback="feedback"
+        :health-before="previousHealth"
+        :health-after="health"
+        :is-last-question="isLastQuestion"
+        @next-question="next"
+      />
+
+      <EndCard
+        v-if="phase === 'finished'"
+        :health="health"
+        :is-alive="isAlive"
+        @play-again="start"
+      />
+    </div>
   </main>
 </template>
