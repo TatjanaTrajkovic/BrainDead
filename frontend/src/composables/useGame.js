@@ -1,5 +1,11 @@
 import { computed, ref } from 'vue';
-import { answerQuestion, getNextQuestion, getSession, startSession } from '../api/gameApi';
+import {
+  answerQuestion,
+  getActiveSession,
+  getNextQuestion,
+  getSession,
+  startSession,
+} from '../api/gameApi';
 
 const STORAGE_KEY = 'braindead.sessionId';
 
@@ -40,6 +46,8 @@ export function useGame() {
   const previousHealth = ref(1);
   const error = ref('');
   const submitting = ref(false);
+  // Sant när backend har en pågående omgång som spelaren kan återuppta
+  const hasActiveSession = ref(false);
   // true när senaste svaret avslutade omgången, så att FeedbackCard kan visa "Se resultat"
   const isLastQuestion = ref(false);
   // Svaret spelaren markerat men inte låst än. null = inget valt
@@ -66,14 +74,14 @@ export function useGame() {
     phase.value = 'question';
   }
 
-  // Startar en ny omgång, eller återupptar den pågående om en redan finns
-  async function start() {
+  // Startar en ny omgång. Med forceNew = true pausas en pågående omgång först.
+  async function start(forceNew = false) {
     error.value = '';
     feedback.value = '';
     phase.value = 'loading';
 
     try {
-      const session = await startSession();
+      const session = await startSession(forceNew);
       sessionId.value = session.session_id;
       saveSessionId(session.session_id);
       health.value = Number(session.current_health);
@@ -111,6 +119,23 @@ export function useGame() {
       clearSessionId();
       sessionId.value = null;
       phase.value = 'idle';
+    }
+  }
+
+  // Frågar backend om det finns en pågående omgång, så att menyn vet om "Återuppta" ska gå att klicka på
+  async function checkActiveSession() {
+    error.value = '';
+    try {
+      const session = await getActiveSession();
+      hasActiveSession.value = true;
+      saveSessionId(session.session_id); // befintliga resume() hittar rätt omgång när spelaren klickar "Återuppta"
+    } catch (err) {
+      hasActiveSession.value = false;
+      // 404 betyder att ingen omgång pågår. Allt annat är ett riktigt fel som spelaren ska se.
+      if (err.status !== 404) {
+        // Är servern helt nere kastar fetch ett fel utan status
+        error.value = err.status ? err.message : 'Kunde inte nå servern';
+      }
     }
   }
 
@@ -169,6 +194,8 @@ export function useGame() {
     resume,
     answer,
     next,
+    hasActiveSession,
+    checkActiveSession,
     selectedAnswerId,
     select,
     totalQuestions,

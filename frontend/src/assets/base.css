@@ -1,86 +1,102 @@
-/* color palette from <https://github.com/vuejs/theme> */
 :root {
-  --vt-c-white: #ffffff;
-  --vt-c-white-soft: #f8f8f8;
-  --vt-c-white-mute: #f2f2f2;
-
-  --vt-c-black: #181818;
-  --vt-c-black-soft: #222222;
-  --vt-c-black-mute: #282828;
-
-  --vt-c-indigo: #2c3e50;
-
-  --vt-c-divider-light-1: rgba(60, 60, 60, 0.29);
-  --vt-c-divider-light-2: rgba(60, 60, 60, 0.12);
-  --vt-c-divider-dark-1: rgba(84, 84, 84, 0.65);
-  --vt-c-divider-dark-2: rgba(84, 84, 84, 0.48);
-
-  --vt-c-text-light-1: var(--vt-c-indigo);
-  --vt-c-text-light-2: rgba(60, 60, 60, 0.66);
-  --vt-c-text-dark-1: var(--vt-c-white);
-  --vt-c-text-dark-2: rgba(235, 235, 235, 0.64);
+  --color-bg: #000000;
+  --color-text: #e7dcaa;
+  --color-bg-purple: #5c2b78;
+  --color-bg-gray: #22201f;
+  --color-border-outer: #c7bc90;
+  --color-border-inner: #22201f;
+  --font-main: 'Special Elite', monospace;
+  --font-handwritten: 'Reenie Beanie', cursive;
 }
 
-/* semantic color variables for this project */
-:root {
-  --color-background: var(--vt-c-white);
-  --color-background-soft: var(--vt-c-white-soft);
-  --color-background-mute: var(--vt-c-white-mute);
-
-  --color-border: var(--vt-c-divider-light-2);
-  --color-border-hover: var(--vt-c-divider-light-1);
-
-  --color-heading: var(--vt-c-text-light-1);
-  --color-text: var(--vt-c-text-light-1);
-
-  --section-gap: 160px;
+.content-card {
+  font-family: var(--font-main);
+  color: var(--color-text);
+  border-radius: 1.5rem;
+  padding: 0.7rem;
+  background-color: var(--color-bg-purple);
+  --border: 6px;
+  border: var(--border) solid var(--color-border-outer);
+  box-shadow: inset 0 0 0 var(--border) var(--color-border-inner);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-background: var(--vt-c-black);
-    --color-background-soft: var(--vt-c-black-soft);
-    --color-background-mute: var(--vt-c-black-mute);
-
-    --color-border: var(--vt-c-divider-dark-2);
-    --color-border-hover: var(--vt-c-divider-dark-1);
-
-    --color-heading: var(--vt-c-text-dark-1);
-    --color-text: var(--vt-c-text-dark-2);
-  }
+button {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
 }
 
+.btn {
+  font-family: var(--font-main);
+  color: var(--color-text);
+  border-radius: 12px;
+  padding: 18px 12px 14px 20px;
+  text-align: center;
+  cursor: pointer;
+  border: var(--btn-border) solid var(--color-border-outer);
+  --btn-border: 4px;
+  --btn-border-large: 6px;
+}
+
+.btn-large {
+  font-family: var(--font-main);
+  font-size: 4rem;
+  width: 320px;
+  height: 176px;
+  border-radius: 20px;
+  padding: 28px 20px 14px 20px;
+  background-color: var(--color-bg-purple);
+  border: var(--btn-border-large) solid var(--color-border-outer);
+  box-shadow: inset 0 0 0 var(--btn-border-large) var(--color-border-inner);
+}
+
+.btn-purple {
+  background-color: var(--color-bg-purple);
+  box-shadow: inset 0 0 0 var(--btn-border) var(--color-border-inner);
+}
+
+.btn-gray {
+  background-color: var(--color-bg-gray);
+}
+
+.btn:hover {
+  filter: brightness(1.4);
+}
+
+.btn:active {
+  filter: brightness(1.15);
+  transform: translateY(2px);
+}
+
+.btn:focus-visible {
+  outline: 3px solid var(--color-text);
+  outline-offset: 3px;
+}
+
+/* Reset: nollställer webbläsarnas standardmarginaler och låter padding/border
+   räknas inom elementets width, ger förutsägbara storlekar överallt */
 *,
 *::before,
 *::after {
   box-sizing: border-box;
   margin: 0;
-  font-weight: normal;
 }
 
 body {
   min-height: 100vh;
   color: var(--color-text);
-  background: var(--color-background);
-  transition:
-    color 0.5s,
-    background-color 0.5s;
-  line-height: 1.6;
-  font-family:
-    Inter,
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    Oxygen,
-    Ubuntu,
-    Cantarell,
-    'Fira Sans',
-    'Droid Sans',
-    'Helvetica Neue',
-    sans-serif;
-  font-size: 15px;
+  background: var(--color-bg) url('./images/background.webp') center bottom / cover no-repeat;
+  font-family: 'Special Elite', system-ui, sans-serif;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (min-width: 768px) {
+  .content-card {
+    padding: 1rem;
+  }
 }

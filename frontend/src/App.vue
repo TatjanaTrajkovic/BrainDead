@@ -6,6 +6,7 @@ import LockAnswerButton from './components/LockAnswerButton.vue';
 import ProgressDots from './components/ProgressDots.vue';
 import QuestionCard from './components/QuestionCard.vue';
 import { useGame } from './composables/useGame';
+import SessionMenu from './components/SessionMenu.vue';
 
 const {
   phase,
@@ -21,53 +22,79 @@ const {
   resume,
   answer,
   next,
+  hasActiveSession,
+  checkActiveSession,
   selectedAnswerId,
   select,
   totalQuestions,
   answeredCount,
 } = useGame();
 
-onMounted(resume);
+// onMounted(resume); spelaren hoppar in direkt i spelet
+onMounted(checkActiveSession); //här får spelaren välja i menyn i stället
+
+// Fråga först om spelaren har en pågående omgång, eftersom forceNew pausar den
+function handleStartNew() {
+  if (hasActiveSession.value && !window.confirm('Du har en pågående omgång. Vill du börja om?')) {
+    return;
+  }
+  start(true);
+}
 </script>
 
 <template>
   <main>
-    <p v-if="error">{{ error }}</p>
+    <header>
+      <img src="./assets/images/logo.webp" alt="BrainDead" class="logo" />
+    </header>
 
-    <!-- TODO: ersätt med en riktig startskärm -->
-    <button v-if="phase === 'idle'" type="button" @click="start">Starta</button>
+    <div class="content-wrapper">
+      <p v-if="error">{{ error }}</p>
 
-    <p v-if="phase === 'loading'">Laddar...</p>
+      <SessionMenu
+        v-if="phase === 'idle'"
+        :has-active-session="hasActiveSession"
+        @start-new="handleStartNew"
+        @resume="resume"
+      />
 
-    <!-- TODO: ersätt med en riktig hälsomätare -->
-    <p v-if="phase === 'question'">Hälsa: {{ Math.round(health * 100) }}%</p>
+      <p v-if="phase === 'loading'">Laddar...</p>
 
-    <!-- TODO: flytta till #progress-sloten i QuizLayout (#64) -->
-    <ProgressDots v-if="phase === 'question'" :total="totalQuestions" :answered="answeredCount" />
+      <!-- TODO: ersätt med en riktig hälsomätare -->
+      <p v-if="phase === 'question'">Hälsa: {{ Math.round(health * 100) }}%</p>
 
-    <QuestionCard
-      v-if="phase === 'question'"
-      :question="question"
-      :disabled="submitting"
-      @answer-selected="select"
-    />
+      <!-- TODO: flytta till #progress-sloten i QuizLayout (#64) -->
+      <ProgressDots v-if="phase === 'question'" :total="totalQuestions" :answered="answeredCount" />
 
-    <LockAnswerButton
-      v-if="phase === 'question'"
-      :has-selection="selectedAnswerId !== null"
-      :submitting="submitting"
-      @lock="answer"
-    />
+      <QuestionCard
+        v-if="phase === 'question'"
+        :question="question"
+        :disabled="submitting"
+        @answer-selected="select"
+      />
 
-    <FeedbackCard
-      v-if="phase === 'feedback'"
-      :feedback="feedback"
-      :health-before="previousHealth"
-      :health-after="health"
-      :is-last-question="isLastQuestion"
-      @next-question="next"
-    />
+      <LockAnswerButton
+        v-if="phase === 'question'"
+        :has-selection="selectedAnswerId !== null"
+        :submitting="submitting"
+        @lock="answer"
+      />
 
-    <EndCard v-if="phase === 'finished'" :health="health" :is-alive="isAlive" @play-again="start" />
+      <FeedbackCard
+        v-if="phase === 'feedback'"
+        :feedback="feedback"
+        :health-before="previousHealth"
+        :health-after="health"
+        :is-last-question="isLastQuestion"
+        @next-question="next"
+      />
+
+      <EndCard
+        v-if="phase === 'finished'"
+        :health="health"
+        :is-alive="isAlive"
+        @play-again="start"
+      />
+    </div>
   </main>
 </template>
