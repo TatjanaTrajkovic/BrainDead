@@ -12,7 +12,6 @@ const {
   question,
   feedback,
   health,
-  
   previousHealth,
   error,
   submitting,
