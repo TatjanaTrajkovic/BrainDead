@@ -185,13 +185,15 @@ All spellogik ligger i composablen `frontend/src/composables/useGame.js`. Kompon
 idle → loading → question ⇄ feedback → finished
 ```
 
-| Funktion           | Vad den gör                                                                                         |
-| ------------------ | --------------------------------------------------------------------------------------------------- |
-| `start()`          | Startar en omgång (eller återupptar den aktiva) och hämtar första frågan                            |
-| `select(answerId)` | Markerar ett svar utan att skicka det. Går att byta tills svaret är låst                             |
-| `answer()`         | Låser och skickar det valda svaret och sätter `feedback`, `health` och `previousHealth`. Nästa fråga sparas från svaret |
-| `next()`           | Visar nästa fråga, eller går till `finished` om det inte finns fler eller hälsan är slut            |
-| `resume()`         | Körs vid sidladdning och återupptar omgången som sparats i `localStorage` via `getSession`          |
+
+| Funktion               | Vad den gör                                                                                                             |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `start(forceNew)`      | Startar en omgång och hämtar första frågan. `forceNew = true` pausar en pågående omgång först                           |
+| `select(answerId)`     | Markerar ett svar utan att skicka det. Går att byta tills svaret är låst                                                |
+| `answer()`             | Låser och skickar det valda svaret och sätter `feedback`, `health` och `previousHealth`. Nästa fråga sparas från svaret |
+| `next()`               | Visar nästa fråga, eller går till `finished` om det inte finns fler eller hälsan är slut                                |
+| `resume()`             | Körs när spelaren klickar "Återuppta omgång" och fortsätter omgången som sparats i `localStorage`                       |
+| `checkActiveSession()` | Körs vid sidladdning och sätter `hasActiveSession` så att menyn vet om "Återuppta" går att klicka på                    |
 
 Använd den så här i `App.vue` (eller i en vy senare):
 
