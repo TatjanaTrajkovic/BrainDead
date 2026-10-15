@@ -10,6 +10,7 @@ import ScenarioBox from './components/ScenarioBox.vue';
 import QuestionBox from './components/QuestionBox.vue';
 import AnswerBox from './components/AnswerBox.vue';
 import HealthMeter from './components/HealthMeter.vue';
+import QuizLayout from './components/QuizLayout.vue';
 
 const {
   phase,
@@ -54,11 +55,7 @@ function handleStartNew() {
     <div class="content-wrapper">
       <QuizLayout v-if="phase === 'feedback' || phase === 'question'">
         <template #progress>
-          <ProgressDots
-            v-if="phase === 'question'"
-            :total="totalQuestions"
-            :answered="answeredCount"
-          />
+          <ProgressDots :total="totalQuestions" :answered="answeredCount" />
         </template>
         <template #story>
           <ScenarioBox :text="phase === 'feedback' ? feedback : question.scenario" />

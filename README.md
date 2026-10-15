@@ -198,12 +198,37 @@ idle → loading → question ⇄ feedback → finished
 
 `totalQuestions` och `answeredCount` kommer från den aktuella frågan och styr `ProgressDots`. De uppdateras när nästa fråga visas och stämmer även efter omladdning.
 
-Använd den så här i `App.vue` (eller i en vy senare):
+### Spelskärmen
 
-```js
-const { phase, question, feedback, health, previousHealth, submitting, selectedAnswerId, totalQuestions, answeredCount, start, select, answer, next } =
-  useGame();
+Under `question` och `feedback` visas spelet i `QuizLayout`. Den är bara ett rutnät med namngivna slots, och `App.vue` bestämmer vad som läggs i varje slot. Den mörka panelen runt omkring är `.content-wrapper` i `main.css`.
+
 ```
++--------------+-----------------------------+---------------+
+|              |  #story     ScenarioBox     |               |
+|              +-----------------------------+               |
+|  #progress   |  #question  QuestionBox     |  #health      |
+|              +--------------+--------------+               |
+|  Progress-   |  #answers    |              |  HealthMeter  |
+|  Dots        |  AnswerBox   |  AnswerBox   |               |
+|              +--------------+--------------+               |
+|              |  AnswerBox   |  AnswerBox   |               |
+|              +--------------+--------------+               |
+|              |  #submit    LockAnswerButton|               |
++--------------+-----------------------------+---------------+
+```
+
+Samma komponenter används i båda faserna, `phase` styr vad de visar:
+
+| Slot        | Komponent          | `question`                    | `feedback`                            |
+| ----------- | ------------------ | ----------------------------- | ------------------------------------- |
+| `#progress` | `ProgressDots`     | Besvarade frågor av totalt    | Samma                                 |
+| `#story`    | `ScenarioBox`      | Scenariot                     | Feedbacken på svaret                  |
+| `#question` | `QuestionBox`      | Frågan                        | Samma fråga                           |
+| `#answers`  | `AnswerBox` × 4    | Klickbara, valt svar markeras | Spärrade, valt svar syns kvar         |
+| `#submit`   | `LockAnswerButton` | "Lås svar"                    | "Nästa fråga >" / "Se resultat"       |
+| `#health`   | `HealthMeter`      | Nuvarande hälsa               | Hälsan efter svaret, pluppar tonas ut |
+
+`AnswerBox` läggs med `v-for` direkt i `#answers`, så att varje knapp blir en egen cell i 2×2-rutnätet. `QuitButton` ligger under panelen och tar spelaren tillbaka till menyn.
 
 ## Arbetssätt
 
