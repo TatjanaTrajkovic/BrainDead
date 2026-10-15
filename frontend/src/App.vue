@@ -1,20 +1,22 @@
 <script setup>
 import { onMounted } from 'vue';
 import EndCard from './components/EndCard.vue';
-import FeedbackCard from './components/FeedbackCard.vue';
 import LockAnswerButton from './components/LockAnswerButton.vue';
 import ProgressDots from './components/ProgressDots.vue';
-import QuestionCard from './components/QuestionCard.vue';
 import { useGame } from './composables/useGame';
 import SessionMenu from './components/SessionMenu.vue';
 import QuitButton from './components/QuitButton.vue';
+import ScenarioBox from './components/ScenarioBox.vue';
+import QuestionBox from './components/QuestionBox.vue';
+import AnswerBox from './components/AnswerBox.vue';
+import HealthMeter from './components/HealthMeter.vue';
+import QuizLayout from './components/QuizLayout.vue';
 
 const {
   phase,
   question,
   feedback,
   health,
-  previousHealth,
   error,
   submitting,
   isLastQuestion,
@@ -52,6 +54,40 @@ function handleStartNew() {
 
     <div class="content-wrapper">
       <p v-if="error">{{ error }}</p>
+      <QuizLayout v-if="phase === 'feedback' || phase === 'question'">
+        <template #progress>
+          <ProgressDots :total="totalQuestions" :answered="answeredCount" />
+        </template>
+        <template #story>
+          <ScenarioBox :text="phase === 'feedback' ? feedback : question.scenario" />
+        </template>
+        <template #question>
+          <QuestionBox :text="question.text" />
+        </template>
+        <template #answers>
+          <AnswerBox
+            v-for="answer in question.answers"
+            :key="answer.answer_id"
+            :text="answer.text"
+            :selected="answer.answer_id === selectedAnswerId"
+            :disabled="submitting || phase === 'feedback'"
+            @select="select(answer.answer_id)"
+          />
+        </template>
+        <template #submit>
+          <LockAnswerButton
+            :has-selection="selectedAnswerId !== null"
+            :submitting="submitting"
+            :locked="phase === 'feedback'"
+            :is-last-question="isLastQuestion"
+            @lock="answer"
+            @next="next"
+          />
+        </template>
+        <template #health>
+          <HealthMeter :health="health" />
+        </template>
+      </QuizLayout>
 
       <SessionMenu
         v-if="phase === 'idle'"
@@ -66,35 +102,6 @@ function handleStartNew() {
         v-if="phase === 'question' || phase === 'feedback'"
         :disabled="submitting"
         @quit="quit"
-      />
-
-      <!-- TODO: ersätt med en riktig hälsomätare -->
-      <p v-if="phase === 'question'">Hälsa: {{ Math.round(health * 100) }}%</p>
-
-      <!-- TODO: flytta till #progress-sloten i QuizLayout (#64) -->
-      <ProgressDots v-if="phase === 'question'" :total="totalQuestions" :answered="answeredCount" />
-
-      <QuestionCard
-        v-if="phase === 'question'"
-        :question="question"
-        :disabled="submitting"
-        @answer-selected="select"
-      />
-
-      <LockAnswerButton
-        v-if="phase === 'question'"
-        :has-selection="selectedAnswerId !== null"
-        :submitting="submitting"
-        @lock="answer"
-      />
-
-      <FeedbackCard
-        v-if="phase === 'feedback'"
-        :feedback="feedback"
-        :health-before="previousHealth"
-        :health-after="health"
-        :is-last-question="isLastQuestion"
-        @next-question="next"
       />
 
       <EndCard

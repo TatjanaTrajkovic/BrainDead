@@ -1,8 +1,8 @@
 <script setup>
 import { computed } from 'vue';
-import brain1 from '@/assets/brain/brain1.webp';
-import brain2 from '@/assets/brain/brain2.webp';
-import brain3 from '@/assets/brain/brain3.webp';
+import brain1 from '@/assets/images/brain1.webp';
+import brain2 from '@/assets/images/brain2.webp';
+import brain3 from '@/assets/images/brain3.webp';
 
 const props = defineProps({
   health: { type: Number, required: true },

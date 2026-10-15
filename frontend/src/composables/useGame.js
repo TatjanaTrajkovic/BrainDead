@@ -42,13 +42,11 @@ export function useGame() {
   const question = ref(null);
   const feedback = ref('');
   const health = ref(1);
-  // Hälsan innan senaste svaret, så att FeedbackCard kan visa förändringen
   const previousHealth = ref(1);
   const error = ref('');
   const submitting = ref(false);
   // Sant när backend har en pågående omgång som spelaren kan återuppta
   const hasActiveSession = ref(false);
-  // true när senaste svaret avslutade omgången, så att FeedbackCard kan visa "Se resultat"
   const isLastQuestion = ref(false);
   // Svaret spelaren markerat men inte låst än. null = inget valt
   const selectedAnswerId = ref(null);
