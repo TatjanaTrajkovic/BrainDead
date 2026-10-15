@@ -27,20 +27,48 @@ defineProps({
 
 <style scoped>
 .progress-dots {
+  --dot-size: 32px;
+  --dot-gap: 16px;
+  --dot-border: 3px;
+  --dot-empty: rgba(162, 162, 162, 0.4);
+  --dot-filled: var(--color-progress, #5c2b78);
+
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  /* Fråga 1 längst ned, så att prickarna fylls nedifrån och upp mot IKEA */
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: var(--dot-gap);
+  width: 48px;
+  height: 100%;
 }
 
 .dot {
-  width: 12px;
-  height: 12px;
+  position: relative;
+  width: var(--dot-size);
+  height: var(--dot-size);
   box-sizing: border-box;
-  border: 2px solid var(--color-border-outer, #c7bc90);
+  border: var(--dot-border) solid var(--dot-empty);
   border-radius: 50%;
 }
 
 .dot.filled {
-  background: var(--color-border-outer, #c7bc90);
+  background: var(--dot-filled);
+  border-color: var(--dot-filled);
+}
+
+/* Streck ned till pricken under. Den nedersta (fråga 1) har ingen under sig */
+.dot:not(:first-child)::after {
+  content: '';
+  position: absolute;
+  top: calc(100% + var(--dot-border));
+  left: 50%;
+  transform: translateX(-50%);
+  width: var(--dot-border);
+  height: var(--dot-gap);
+  background: var(--dot-empty);
+}
+
+.dot.filled::after {
+  background: var(--dot-filled);
 }
 </style>
