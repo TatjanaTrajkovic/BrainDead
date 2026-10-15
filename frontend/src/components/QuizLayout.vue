@@ -23,10 +23,6 @@
   /* Fast höjd så att panelen inte ändrar storlek mellan frågor; story-raden tar resten av höjden */
   height: var(--quiz-panel-height, 520px);
   padding: var(--space-4, 16px);
-  max-width: 640px;
-  margin: 0 auto;
-  background: rgba(0, 0, 0, 0.35);
-  border-radius: 16px;
 }
 .progress {
   grid-area: progress;
