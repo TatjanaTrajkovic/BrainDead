@@ -188,14 +188,15 @@ idle → loading → question ⇄ feedback → finished
 | Funktion           | Vad den gör                                                                                         |
 | ------------------ | --------------------------------------------------------------------------------------------------- |
 | `start()`          | Startar en omgång (eller återupptar den aktiva) och hämtar första frågan                            |
-| `answer(answerId)` | Skickar svaret och sätter `feedback`, `health` och `previousHealth`. Nästa fråga sparas från svaret |
+| `select(answerId)` | Markerar ett svar utan att skicka det. Går att byta tills svaret är låst                             |
+| `answer()`         | Låser och skickar det valda svaret och sätter `feedback`, `health` och `previousHealth`. Nästa fråga sparas från svaret |
 | `next()`           | Visar nästa fråga, eller går till `finished` om det inte finns fler eller hälsan är slut            |
 | `resume()`         | Körs vid sidladdning och återupptar omgången som sparats i `localStorage` via `getSession`          |
 
 Använd den så här i `App.vue` (eller i en vy senare):
 
 ```js
-const { phase, question, feedback, health, previousHealth, submitting, start, answer, next } =
+const { phase, question, feedback, health, previousHealth, submitting, selectedAnswerId, start, select, answer, next } =
   useGame();
 ```
 

@@ -42,6 +42,8 @@ export function useGame() {
   const submitting = ref(false);
   // true när senaste svaret avslutade omgången, så att FeedbackCard kan visa "Se resultat"
   const isLastQuestion = ref(false);
+  // Svaret spelaren markerat men inte låst än. null = inget valt
+  const selectedAnswerId = ref(null);
 
   // Nästa fråga kommer med i svaret från POST .../answer, så vi slipper ett extra anrop
   let nextQuestion = null;
@@ -49,6 +51,7 @@ export function useGame() {
   const isAlive = computed(() => health.value > 0);
 
   function showQuestion(data) {
+    selectedAnswerId.value = null;
     // GET .../question svarar { finished: true } när inga frågor återstår
     if (!data || data.finished) {
       question.value = null;
@@ -107,8 +110,16 @@ export function useGame() {
     }
   }
 
-  async function answer(answerId) {
+  // Markerar ett alternativ utan att skicka det. Går att byta fram till att svaret låses
+  function select(answerId) {
     if (phase.value !== 'question' || submitting.value) {
+      return;
+    }
+    selectedAnswerId.value = answerId;
+  }
+
+  async function answer() {
+    if (phase.value !== 'question' || submitting.value || selectedAnswerId.value === null) {
       return;
     }
 
@@ -116,7 +127,7 @@ export function useGame() {
     submitting.value = true;
 
     try {
-      const data = await answerQuestion(sessionId.value, answerId);
+      const data = await answerQuestion(sessionId.value, selectedAnswerId.value);
       feedback.value = data.feedback;
       previousHealth.value = health.value;
       health.value = Number(data.session.current_health);
@@ -154,5 +165,7 @@ export function useGame() {
     resume,
     answer,
     next,
+    selectedAnswerId,
+    select,
   };
 }
