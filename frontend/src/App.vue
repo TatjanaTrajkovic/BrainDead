@@ -53,6 +53,7 @@ function handleStartNew() {
     </header>
 
     <div class="content-wrapper">
+      <p v-if="error">{{ error }}</p>
       <QuizLayout v-if="phase === 'feedback' || phase === 'question'">
         <template #progress>
           <ProgressDots :total="totalQuestions" :answered="answeredCount" />
@@ -87,7 +88,6 @@ function handleStartNew() {
           <HealthMeter :health="health" />
         </template>
       </QuizLayout>
-      <p v-if="error">{{ error }}</p>
 
       <SessionMenu
         v-if="phase === 'idle'"
