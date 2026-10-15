@@ -52,8 +52,19 @@ async function getNextQuestion(sessionId, db = database) {
   const [answers] = await db.query('SELECT answer_id, text FROM answer WHERE question_id = ?', [
     question.question_id,
   ]);
+  const [counts] = await db.query(
+    `SELECT
+  (SELECT COUNT(*) FROM question WHERE status = 'ACTIVE') AS total_questions,
+  (SELECT COUNT(*) FROM session_question WHERE session_id = ?) AS answered_count`,
+    [sessionId],
+  );
 
-  return { ...question, answers };
+  return {
+    ...question,
+    answers,
+    total_questions: Number(counts[0].total_questions),
+    answered_count: Number(counts[0].answered_count),
+  };
 }
 
 async function answerQuestion(sessionId, answerId) {
