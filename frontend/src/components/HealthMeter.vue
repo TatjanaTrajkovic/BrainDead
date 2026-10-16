@@ -1,37 +1,38 @@
 <script setup>
 import { computed } from 'vue';
-import brain1 from '@/assets/images/brain1.webp';
-import brain2 from '@/assets/images/brain2.webp';
-import brain3 from '@/assets/images/brain3.webp';
+import brain1 from '@/assets/images/brains/brain1.webp';
+import brain2 from '@/assets/images/brains/brain2.webp';
+import brain3 from '@/assets/images/brains/brain3.webp';
+import brain4 from '@/assets/images/brains/brain4.webp';
+import brain5 from '@/assets/images/brains/brain5.webp';
 
 const props = defineProps({
   health: { type: Number, required: true },
-  totalBlobs: { type: Number, default: 15 },
+  totalBlobs: { type: Number, default: 16 },
 });
 
 const filled = computed(() => Math.ceil(Math.max(0, Math.min(1, props.health)) * props.totalBlobs));
 
-function blobClass(i) {
-  if (i > filled.value) return 'blob--empty';
-  if (i <= 3) return 'blob--red';
-  if (i <= 7) return 'blob--orange';
-  if (i <= 11) return 'blob--yellow';
-  return 'blob--green';
-}
-
-const brainImg = computed(() => {
-  if (props.health > 0.7) return brain1;
-  if (props.health > 0.2) return brain2;
-  return brain3;
+const level = computed(() => {
+  if (props.health > 3 / 4) return { color: 'green', img: brain1 };
+  if (props.health > 2 / 4) return { color: 'yellow', img: brain2 };
+  if (props.health > 1 / 4) return { color: 'orange', img: brain3 };
+  if (props.health > 0) return { color: 'red', img: brain4 };
+  return { color: 'red', img: brain5 };
 });
 </script>
 
 <template>
   <div class="meter">
     <div class="blobs">
-      <div v-for="i in totalBlobs" :key="i" class="blob" :class="blobClass(i)"></div>
+      <div
+        v-for="i in totalBlobs"
+        :key="i"
+        class="blob"
+        :class="i > filled ? 'blob--empty' : `blob--${level.color}`"
+      ></div>
     </div>
-    <img :src="brainImg" class="icon" :alt="`Hjärnkapacitet ${Math.round(health * 100)} %`" />
+    <img :src="level.img" class="icon" :alt="`Hjärnkapacitet ${Math.round(health * 100)} %`" />
   </div>
 </template>
 
@@ -42,8 +43,7 @@ const brainImg = computed(() => {
   align-items: center;
   width: 64px;
   height: 100%;
-  padding: 8px;
-  gap: 6px;
+  padding: 8px 0;
   background: #221e1b;
   border: 3px solid #cbb98a;
   border-radius: 16px;
@@ -52,6 +52,7 @@ const brainImg = computed(() => {
   display: flex;
   flex-direction: column-reverse;
   gap: 8px;
+  padding: 8px;
   width: 100%;
   flex: 1;
 }
@@ -78,7 +79,7 @@ const brainImg = computed(() => {
   opacity: 0;
 } /* eller en mörk "tom" färg om du vill se platsen */
 .icon {
-  width: 40px;
+  width: 100%;
   aspect-ratio: 720 / 530; /* samma proportioner som bilderna, så höjden är känd innan bilden laddats */
   flex-shrink: 0;
   object-fit: contain;
