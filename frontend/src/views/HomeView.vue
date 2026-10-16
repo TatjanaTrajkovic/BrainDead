@@ -5,6 +5,7 @@ import { useGame } from '@/composables/useGame';
 import SessionMenu from '@/components/SessionMenu.vue';
 import HandbookOpen from '@/components/HandbookOpen.vue';
 import { handbookPages } from '@/data/handbook';
+import LoginCard from '@/components/LoginCard.vue';
 
 const router = useRouter();
 const { error, start, resume, hasActiveSession, checkActiveSession } = useGame();
@@ -54,7 +55,7 @@ function handleResume() {
       </button>
     </div>
     <div class="area-prolog placeholder">Prolog</div>
-    <div class="area-id placeholder">ID-kort</div>
+    <LoginCard class="area-id" />
     <div class="area-start placeholder">
       <!-- Tillfällig knapp tills StartButton finns -->
       <button type="button" class="btn btn-purple" @click="openMenu">Starta spelet</button>
@@ -79,7 +80,7 @@ function handleResume() {
 <style scoped>
 .home {
   display: grid;
-  grid-template-columns: 1fr 1fr 0.8fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.8fr);
   grid-template-rows: auto 1fr;
   grid-template-areas:
     'handbook prolog id'

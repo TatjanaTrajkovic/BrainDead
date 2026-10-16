@@ -211,7 +211,9 @@ Routern ligger i `frontend/src/router/router.js` och vyerna i `frontend/src/view
 
 `GameView` skickar själv tillbaka spelaren till `/` när `phase` blir `idle`, alltså när omgången avbryts eller en start misslyckas. Laddas `/game` om försöker den återuppta omgången, och finns ingen omgång skickas spelaren till `/`.
 
-Startsidan är ett rutnät med ytorna `area-handbook`, `area-prolog`, `area-id` och `area-start`. Just nu innehåller de platshållare. Ersätt en platshållare med komponenten och behåll klassen, så hamnar komponenten på rätt plats.
+Startsidan är ett rutnät med ytorna `area-handbook`, `area-prolog`, `area-id` och `area-start`. `area-id` innehåller `LoginCard`, de andra innehåller platshållare än så länge. Ersätt en platshållare med komponenten och behåll klassen, så hamnar komponenten på rätt plats. Komponenten ska fylla sin cell med `width: 100%`, det är rutnätet som bestämmer storleken.
+
+Kolumnerna är `minmax(0, 1fr)` i stället för `1fr`. Med bara `1fr` får en kolumn aldrig bli smalare än sitt innehåll, och ID-kortets `aspect-ratio` blåste upp den högra kolumnen så att de andra trycktes ihop.
 
 ### Spelskärmen
 
@@ -255,6 +257,21 @@ Samma komponenter används i båda faserna, `phase` styr vad de visar:
 - Visar två sidor per uppslag, och en sida i taget på skärmar smalare än 768px
 
 Just nu öppnas den med en tillfällig knapp i ytan `area-handbook` i `HomeView`. Knappen ersätts av den stängda handboken.
+
+### ID-kortet
+
+`LoginCard` visar spelarens ID-kort på startsidan och förbereder inloggningen. Komponenten visar bara det den får och skickar events uppåt, så den behöver inte ändras när inloggningen byggs.
+
+| Prop / event | Gör                                                                        |
+| ------------ | -------------------------------------------------------------------------- |
+| `player`     | Den inloggade spelaren, t.ex. `{ username }`. `null` visar "OIDENTIFIERAD" |
+| `@identify`  | Skickas när spelaren klickar "Identifiera". Ska öppna inloggningen         |
+| `@signup`    | Skickas när spelaren klickar "Ny identitet". Ska öppna registreringen      |
+| `@logout`    | Skickas när en inloggad spelare klickar "Stämpla ut"                       |
+
+Bakgrunden är bilden `logincard.webp` med papperet och fotot, och texten ligger som HTML ovanpå. Kortet är en container (`container-type: inline-size`) och textstorlekarna anges i `cqw`, procent av kortets bredd. Därför behåller texten sina proportioner när kortet ändrar storlek.
+
+Det finns ingen inloggning än, så `@identify`, `@signup` och `@logout` har ingen mottagare i `HomeView`.
 
 ## Arbetssätt
 
