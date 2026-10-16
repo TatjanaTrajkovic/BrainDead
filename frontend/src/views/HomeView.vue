@@ -5,6 +5,7 @@ import { useGame } from '@/composables/useGame';
 import SessionMenu from '@/components/SessionMenu.vue';
 import HandbookOpen from '@/components/HandbookOpen.vue';
 import { handbookPages } from '@/data/handbook';
+import HighScoreOverlay from '@/components/HighScoreOverlay.vue';
 
 const router = useRouter();
 const { error, start, resume, hasActiveSession, checkActiveSession } = useGame();
@@ -15,6 +16,9 @@ const menu = ref(null);
 
 // Styr om den uppslagna handboken visas
 const isHandbookOpen = ref(false);
+
+// Styr om topplistan visas
+const isHighScoreOpen = ref(false);
 
 onMounted(checkActiveSession);
 
@@ -48,6 +52,10 @@ function handleResume() {
 
   <div class="home">
     <div class="area-handbook placeholder">
+      <!-- Tillfällig knapp tills fliken ovanför handboken finns -->
+      <button type="button" class="btn btn-gray" @click="isHighScoreOpen = true">
+        Öppna topplista
+      </button>
       <!-- Tillfällig knapp tills den stängda handboken finns -->
       <button type="button" class="btn btn-gray" @click="isHandbookOpen = true">
         Öppna handbok
@@ -62,6 +70,8 @@ function handleResume() {
   </div>
 
   <HandbookOpen v-if="isHandbookOpen" :pages="handbookPages" @close="isHandbookOpen = false" />
+
+  <HighScoreOverlay v-if="isHighScoreOpen" @close="isHighScoreOpen = false" />
 
   <!-- Klick på bakgrunden träffar själva dialogen, innehållet ligger i .menu-content -->
   <dialog ref="menu" class="menu-overlay" @click.self="closeMenu">
