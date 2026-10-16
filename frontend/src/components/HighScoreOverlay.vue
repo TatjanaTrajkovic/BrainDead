@@ -1,8 +1,10 @@
 <script setup>
-import { onMounted, onUnmounted } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
 import HighScoreBoard from '@/components/HighScoreBoard.vue';
 
 const emit = defineEmits(['close']);
+
+const closeButton = ref(null);
 
 function handleKeydown(event) {
   if (event.key === 'Escape') {
@@ -11,7 +13,10 @@ function handleKeydown(event) {
 }
 
 // Lyssnaren ligger på window och lever längre än komponenten, så den måste tas bort vid stängning
-onMounted(() => window.addEventListener('keydown', handleKeydown));
+onMounted(() => {
+  window.addEventListener('keydown', handleKeydown);
+  closeButton.value.focus();
+});
 onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
 </script>
 
@@ -21,7 +26,13 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
       <div class="sheet" role="dialog" aria-modal="true" aria-label="Topplista">
         <HighScoreBoard />
 
-        <button type="button" class="close" aria-label="Stäng topplistan" @click="emit('close')">
+        <button
+          ref="closeButton"
+          type="button"
+          class="close"
+          aria-label="Stäng topplistan"
+          @click="emit('close')"
+        >
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <circle cx="12" cy="12" r="10" />
             <path d="M8 8 L16 16 M16 8 L8 16" />
@@ -56,6 +67,8 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
   top: 3%;
   right: 10%;
   width: 7%;
+  /* På mobil blir 7% bara ca 23px, för litet att träffa med fingret */
+  min-width: 2rem;
   color: var(--color-ink);
   opacity: 0.6;
 }
