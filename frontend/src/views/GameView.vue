@@ -60,12 +60,12 @@ onMounted(checkActiveSession);
         </template>
         <template #answers>
           <AnswerBox
-            v-for="answer in question.answers"
-            :key="answer.answer_id"
-            :text="answer.text"
-            :selected="answer.answer_id === selectedAnswerId"
+            v-for="a in question.answers"
+            :key="a.answer_id"
+            :text="a.text"
+            :selected="a.answer_id === selectedAnswerId"
             :disabled="submitting || phase === 'feedback'"
-            @select="select(answer.answer_id)"
+            @select="select(a.answer_id)"
           />
         </template>
         <template #submit>
