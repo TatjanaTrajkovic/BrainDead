@@ -230,6 +230,17 @@ Samma komponenter används i båda faserna, `phase` styr vad de visar:
 
 `AnswerBox` läggs med `v-for` direkt i `#answers`, så att varje knapp blir en egen cell i 2×2-rutnätet. `QuitButton` ligger under panelen och tar spelaren tillbaka till menyn.
 
+### Handboken
+
+`HandbookOpen` visar den uppslagna handboken som en modal ovanpå sidan. Innehållet ligger i `frontend/src/data/handbook.js` som en lista med sidor (`{ title, text }`), så texten kan ändras utan att röra komponenten.
+
+- Föräldern styr när boken visas med `v-if` och stänger den när komponenten skickar `close`
+- Stängs med X, Esc eller klick utanför boken
+- Bläddras med pilarna eller ← → på tangentbordet
+- Visar två sidor per uppslag, och en sida i taget på skärmar smalare än 768px
+
+Just nu öppnas den med en tillfällig knapp i `GameView`. Den ersätts av den stängda handboken på startsidan.
+
 ## Arbetssätt
 
 - **Brancher:** Ny branch för varje feature (feat/) och (fix/).
