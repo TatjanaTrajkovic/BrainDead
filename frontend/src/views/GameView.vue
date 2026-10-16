@@ -58,7 +58,10 @@ onMounted(checkActiveSession);
           <ProgressDots :total="totalQuestions" :answered="answeredCount" />
         </template>
         <template #story>
-          <ScenarioBox :text="phase === 'feedback' ? feedback : question.scenario" />
+          <ScenarioBox
+            :text="phase === 'feedback' ? feedback : question.scenario"
+            :is-feedback="phase === 'feedback'"
+          />
         </template>
         <template #question>
           <QuestionBox :text="question.text" />
