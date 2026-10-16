@@ -42,3 +42,7 @@ export function answerQuestion(sessionId, answerId) {
 export function getSession(sessionId) {
   return request(`/sessions/${sessionId}`);
 }
+
+export function getHighScores() {
+  return request('/highscores');
+}
