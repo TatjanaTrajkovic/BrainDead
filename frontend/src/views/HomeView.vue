@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, useTemplateRef } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useGame } from '@/composables/useGame';
 import SessionMenu from '@/components/SessionMenu.vue';
@@ -7,8 +7,9 @@ import SessionMenu from '@/components/SessionMenu.vue';
 const router = useRouter();
 const { error, start, resume, hasActiveSession, checkActiveSession } = useGame();
 
-// <dialog> ger bakgrund, stängning med Esc och håller fokus i menyn
-const menu = useTemplateRef('menu');
+// <dialog> på rad 55 ger bakgrund, stängning med Esc och håller fokus i menyn.
+// Variabelnamnet matchar ref="menu" i templaten, så Vue lägger elementet här efter rendering
+const menu = ref(null);
 
 onMounted(checkActiveSession);
 
