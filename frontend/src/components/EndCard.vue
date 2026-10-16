@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue';
-import brainAlive from '@/assets/images/brain1.webp';
-import brainDead from '@/assets/images/brain3.webp';
+import brainAlive from '@/assets/images/brains/brain1.webp';
+import brainDead from '@/assets/images/brains/brain5.webp';
 
 const props = defineProps({
   // Sluthälsan, 0–1 från backend
