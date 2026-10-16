@@ -56,11 +56,13 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
   top: 3%;
   right: 10%;
   width: 7%;
-  color: #8b1a1a;
+  color: var(--color-ink);
+  opacity: 0.6;
 }
 
 .close:hover {
-  filter: brightness(1.4);
+  opacity: 1;
+  filter: brightness(1.6);
 }
 
 .close:focus-visible {
@@ -75,5 +77,6 @@ svg {
   stroke: currentColor;
   stroke-width: 2.5;
   stroke-linecap: round;
+  stroke-linejoin: round;
 }
 </style>
