@@ -1,5 +1,5 @@
 <script setup>
-import GameView from './views/GameView.vue';
+import { RouterView } from 'vue-router';
 </script>
 
 <template>
@@ -7,6 +7,6 @@ import GameView from './views/GameView.vue';
     <header>
       <img src="./assets/images/logo.webp" alt="BrainDead" class="logo" />
     </header>
-    <GameView />
+    <RouterView />
   </main>
 </template>
