@@ -78,18 +78,24 @@ onUnmounted(() => {
     <!-- .self: stäng bara vid klick på själva bakgrunden, inte på boken -->
     <div class="overlay" @click.self="emit('close')">
       <section class="handbook" role="dialog" aria-modal="true" aria-label="Handbok för överlevare">
+        <!-- :key ändras vid bläddring, så Vue ser texten som ett nytt element och kör toningen.
+             out-in: gamla texten tonas ut helt innan den nya tonas in -->
         <div class="page page-left">
-          <template v-if="leftPage">
-            <h2>{{ leftPage.title }}</h2>
-            <p>{{ leftPage.text }}</p>
-          </template>
+          <Transition name="page-fade" mode="out-in">
+            <div v-if="leftPage" :key="firstPageIndex">
+              <h2>{{ leftPage.title }}</h2>
+              <p>{{ leftPage.text }}</p>
+            </div>
+          </Transition>
         </div>
 
         <div v-if="!isSinglePage" class="page page-right">
-          <template v-if="rightPage">
-            <h2>{{ rightPage.title }}</h2>
-            <p>{{ rightPage.text }}</p>
-          </template>
+          <Transition name="page-fade" mode="out-in">
+            <div v-if="rightPage" :key="firstPageIndex + 1">
+              <h2>{{ rightPage.title }}</h2>
+              <p>{{ rightPage.text }}</p>
+            </div>
+          </Transition>
         </div>
 
         <button type="button" class="close" aria-label="Stäng handboken" @click="emit('close')">
@@ -176,6 +182,25 @@ onUnmounted(() => {
 .page p {
   font-size: max(1.25rem, 3cqi);
   line-height: 1.2;
+}
+
+/* Klasserna sätts av <Transition name="page-fade">: -enter när texten kommer in, -leave när den går */
+.page-fade-enter-active,
+.page-fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.page-fade-enter-from,
+.page-fade-leave-to {
+  opacity: 0;
+}
+
+/* Respektera spelare som stängt av animationer i operativsystemet */
+@media (prefers-reduced-motion: reduce) {
+  .page-fade-enter-active,
+  .page-fade-leave-active {
+    transition: none;
+  }
 }
 
 .close {
