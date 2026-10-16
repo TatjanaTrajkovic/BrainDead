@@ -68,7 +68,6 @@ h2 {
   text-transform: uppercase;
 }
 
-
 .health {
   font-family: var(--font-handwritten);
   font-size: 1.8rem;
