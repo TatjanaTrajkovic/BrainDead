@@ -34,26 +34,27 @@ function clearSessionId() {
   }
 }
 
-// Samlar spelloopen: starta omgång → fråga → svar → feedback → nästa fråga → slut.
+// Delat state: ligger utanför useGame() så att alla vyer som anropar den ser samma spel,
+// och så att spelet finns kvar när man byter vy.
 // phase styr vad som visas: 'idle' | 'loading' | 'question' | 'feedback' | 'finished'
+const phase = ref('idle');
+const sessionId = ref(null);
+const question = ref(null);
+const feedback = ref('');
+const health = ref(1);
+const previousHealth = ref(1);
+const error = ref('');
+const submitting = ref(false);
+// Sant när backend har en pågående omgång som spelaren kan återuppta
+const hasActiveSession = ref(false);
+const isLastQuestion = ref(false);
+// Svaret spelaren markerat men inte låst än. null = inget valt
+const selectedAnswerId = ref(null);
+
+// Nästa fråga kommer med i svaret från POST .../answer, så vi slipper ett extra anrop
+let nextQuestion = null;
+
 export function useGame() {
-  const phase = ref('idle');
-  const sessionId = ref(null);
-  const question = ref(null);
-  const feedback = ref('');
-  const health = ref(1);
-  const previousHealth = ref(1);
-  const error = ref('');
-  const submitting = ref(false);
-  // Sant när backend har en pågående omgång som spelaren kan återuppta
-  const hasActiveSession = ref(false);
-  const isLastQuestion = ref(false);
-  // Svaret spelaren markerat men inte låst än. null = inget valt
-  const selectedAnswerId = ref(null);
-
-  // Nästa fråga kommer med i svaret från POST .../answer, så vi slipper ett extra anrop
-  let nextQuestion = null;
-
   const isAlive = computed(() => health.value > 0);
 
   // Till ProgressDots. Följer med varje fråga från backend, så de stämmer även efter omladdning
