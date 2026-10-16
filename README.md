@@ -158,6 +158,7 @@ Notera: finished_at i game_session är tiden när omgången lämnat aktivt läge
 | Metod | Endpoint                            | Beskrivning                                                                                                                                        |
 | ----- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | POST  | `/api/sessions`                     | Startar en ny omgång, eller returnerar den pågående om en redan finns. Body `{ "forceNew": true }` pausar den pågående omgången och startar en ny. |
+| GET   | `/api/highscores`                   | Hämtar topp 10: varje spelares bästa avslutade omgång med hälsa över 0, som `{ username, score }`. Vid lika poäng vinner den som blev klar först   |
 | GET   | `/api/sessions/active`              | Hämtar användarens pågående omgång, 404 om ingen finns. Skapar aldrig något.                                                                       |
 | GET   | `/api/sessions/:sessionId`          | Hämtar en pågående eller avslutad omgång                                                                                                           |
 | GET   | `/api/sessions/:sessionId/question` | Hämtar nästa fråga med svarsalternativ, `total_questions` och `answered_count`, eller `{ "finished": true }` när inga återstår                     |
@@ -210,7 +211,7 @@ Routern ligger i `frontend/src/router/router.js` och vyerna i `frontend/src/view
 
 `GameView` skickar själv tillbaka spelaren till `/` när `phase` blir `idle`, alltså när omgången avbryts eller en start misslyckas. Laddas `/game` om försöker den återuppta omgången, och finns ingen omgång skickas spelaren till `/`.
 
-Startsidan är ett rutnät med ytorna `area-handbook`, `area-prolog`, `area-id` och `area-start`. Just nu innehåller de platshållare. Ersätt en platshållare med komponenten och behåll klassen, så hamnar komponenten på rätt plats.
+Startsidan är ett rutnät med ytorna `area-handbook`, `area-prolog`, `area-id` och `area-start`. `area-prolog` visar prologen, de andra innehåller än så länge platshållare. Ersätt en platshållare med komponenten och behåll klassen, så hamnar komponenten på rätt plats.
 
 ### Spelskärmen
 
@@ -233,16 +234,18 @@ Under `question` och `feedback` visas spelet i `QuizLayout`. Den är bara ett ru
 
 Samma komponenter används i båda faserna, `phase` styr vad de visar:
 
-| Slot        | Komponent          | `question`                    | `feedback`                            |
-| ----------- | ------------------ | ----------------------------- | ------------------------------------- |
-| `#progress` | `ProgressDots`     | Besvarade frågor av totalt    | Samma                                 |
-| `#story`    | `ScenarioBox`      | Scenariot                     | Feedbacken på svaret                  |
-| `#question` | `QuestionBox`      | Frågan                        | Samma fråga                           |
-| `#answers`  | `AnswerBox` × 4    | Klickbara, valt svar markeras | Spärrade, valt svar syns kvar         |
-| `#submit`   | `LockAnswerButton` | "Lås svar"                    | "Nästa fråga >" / "Se resultat"       |
-| `#health`   | `HealthMeter`      | Nuvarande hälsa               | Hälsan efter svaret, pluppar tonas ut |
+| Slot        | Komponent          | `question`                    | `feedback`                                                            |
+| ----------- | ------------------ | ----------------------------- | --------------------------------------------------------------------- |
+| `#progress` | `ProgressDots`     | Besvarade frågor av totalt    | Samma                                                                 |
+| `#story`    | `ScenarioBox`      | Scenariot                     | Feedbacken under rubriken "Vad hände?" på grå bakgrund (`isFeedback`) |
+| `#question` | `QuestionBox`      | Frågan                        | Samma fråga                                                           |
+| `#answers`  | `AnswerBox` × 4    | Klickbara, valt svar markeras | Spärrade, valt svar syns kvar                                         |
+| `#submit`   | `LockAnswerButton` | "Lås svar"                    | "Nästa fråga >" / "Se resultat"                                       |
+| `#health`   | `HealthMeter`      | Nuvarande hälsa               | Hälsan efter svaret, pluppar tonas ut                                 |
 
 `AnswerBox` läggs med `v-for` direkt i `#answers`, så att varje knapp blir en egen cell i 2×2-rutnätet. `QuitButton` ligger under panelen och tar spelaren tillbaka till startsidan.
+
+När `phase` blir `finished` visas `EndCard` i stället för rutnätet. Den visar en levande eller död hjärna beroende på `isAlive`, hur mycket hjärnkapacitet som finns kvar och knappen "Spela igen". Knappen skickar `play-again`, och `GameView` startar då en ny omgång.
 
 ### Handboken
 
@@ -254,6 +257,29 @@ Samma komponenter används i båda faserna, `phase` styr vad de visar:
 - Visar två sidor per uppslag, och en sida i taget på skärmar smalare än 768px
 
 Just nu öppnas den med en tillfällig knapp i ytan `area-handbook` i `HomeView`. Knappen ersätts av den stängda handboken.
+
+### Prologen
+
+`PrologueNotebook` visar prologen som ett anteckningsblock i ytan `area-prolog` på startsidan. Texten ligger i `frontend/src/data/prologue.js` som en lista med strängar, en per sida, så texten kan ändras utan att röra komponenten.
+
+- Tar emot sidorna via propen `pages`
+- Bläddras med pilarna. Uppåtpilen visas inte på första sidan och nedåtpilen inte på sista
+- Sidnumret visas med romerska siffror, till exempel II/VII
+- Radbrytningar i texten (`\n`) syns som nya stycken
+
+### Gemensamma stilar
+
+Färger och typsnitt ligger som CSS-variabler i `frontend/src/assets/base.css`, till exempel `--color-text`, `--color-bg-purple`, `--font-main` och `--font-handwritten`. Där finns också klasser som alla komponenter kan använda:
+
+| Klass           | Används till                                      |
+| --------------- | ------------------------------------------------- |
+| `.content-card` | Ram och bakgrund för kort, till exempel `EndCard` |
+| `.btn`          | Grundstil för alla knappar                        |
+| `.btn-purple`   | Lila knapp med inre kant                          |
+| `.btn-gray`     | Grå knapp                                         |
+| `.btn-large`    | Stor knapp                                        |
+
+Bilder går inte att markera eller dra iväg, det styrs av `img`-regeln längst ner i `base.css`.
 
 ## Arbetssätt
 
