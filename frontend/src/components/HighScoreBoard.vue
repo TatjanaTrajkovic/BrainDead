@@ -21,9 +21,10 @@ onMounted(loadHighScores);
 
 <template>
   <section class="highscore-board" aria-label="Topplista">
-    <p v-if="isLoading">Hämtar topplistan…</p>
-    <p v-else-if="error">{{ error }}</p>
-    <p v-else-if="entries.length === 0">Ingen har tagit sig till IKEA än.</p>
+    <!-- Statustexterna skrivs på första raden, som en lapp på det tomma pappret -->
+    <p v-if="isLoading" class="status loading">Hämtar topplistan…</p>
+    <p v-else-if="error" class="status error" role="alert">{{ error }}</p>
+    <p v-else-if="entries.length === 0" class="status">Ingen har tagit sig till IKEA än.</p>
 
     <ol v-else>
       <li v-for="entry in entries" :key="entry.username">
@@ -48,17 +49,43 @@ onMounted(loadHighScores);
   color: var(--color-ink);
   font-family: var(--font-handwritten);
 }
-ol {
+
+/* Listan och statustexterna delar samma yta på pappret */
+ol,
+.status {
   position: absolute;
   top: 35.3%; /* 548 / 1552: rubriklinjen */
   left: 12.6%; /* 155 / 1232: där "Användare" börjar */
   right: 15.4%; /* (1232 - 1042) / 1232: där "Poäng" slutar */
+  margin: 0;
+}
+
+ol {
   height: 46.4%; /* (1268 - 548) / 1552: tio rader */
   display: grid;
   grid-template-rows: repeat(10, 1fr);
-  margin: 0;
   padding: 0;
   list-style: none;
+}
+
+.status {
+  height: 4.64%; /* en rad, en tiondel av listans höjd */
+  display: flex;
+  align-items: flex-end;
+  font-size: 5cqw;
+  line-height: 1;
+  padding-bottom: 0.3cqw;
+  text-align: left;
+}
+
+/* Blyertsgrått, som något som inte är färdigskrivet */
+.loading {
+  opacity: 0.6;
+}
+
+/* Samma röda bläck som rubriken "Topplista" i bilden */
+.error {
+  color: #8b1a1a;
 }
 
 li {
