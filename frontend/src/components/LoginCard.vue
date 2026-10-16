@@ -4,7 +4,7 @@ defineProps({
   player: { type: Object, default: null },
 });
 
-const emit = defineEmits(['identify', 'logout']);
+const emit = defineEmits(['identify', 'logout', 'signup']);
 </script>
 
 <template>
@@ -15,10 +15,11 @@ const emit = defineEmits(['identify', 'logout']);
       <p class="status" :class="{ known: player }">
         {{ player ? player.username : 'OIDENTIFIERAD' }}
       </p>
-      <button v-if="!player" type="button" class="stamp" @click="emit('identify')">
-        IDENTIFIERA
-      </button>
-      <button v-else type="button" class="stamp" @click="emit('logout')">STÄMPLA UT</button>
+      <div v-if="!player" class="actions">
+        <button type="button" class="stamp" @click="emit('identify')">IDENTIFIERA</button>
+        <button type="button" class="stamp new-id" @click="emit('signup')">NY IDENTITET</button>
+      </div>
+      <button v-else type="button" class="stamp logout" @click="emit('logout')">STÄMPLA UT</button>
     </div>
   </section>
 </template>
@@ -67,14 +68,29 @@ h2 {
   color: #5f0069;
 }
 
-.stamp {
+/* Knapparna skjuts ner till kortets nederkant tillsammans */
+.actions {
   margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5cqw;
+}
+
+.logout {
+  margin-top: auto;
+}
+
+.stamp {
   padding: 2cqw;
   font-size: 5cqw;
   background: rgb(255 255 255 / 25%);
   border: 2px solid #c9a227;
   border-radius: 1cqw;
   cursor: pointer;
+}
+
+.new-id {
+  font-size: 4cqw;
 }
 
 .stamp:hover {
