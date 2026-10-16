@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted } from 'vue';
+import { onMounted, ref } from 'vue';
 import QuizLayout from '@/components/QuizLayout.vue';
 import EndCard from '../components/EndCard.vue';
 import LockAnswerButton from '../components/LockAnswerButton.vue';
@@ -11,6 +11,11 @@ import ScenarioBox from '../components/ScenarioBox.vue';
 import QuestionBox from '../components/QuestionBox.vue';
 import AnswerBox from '../components/AnswerBox.vue';
 import HealthMeter from '../components/HealthMeter.vue';
+import HandbookOpen from '../components/HandbookOpen.vue';
+import { handbookPages } from '../data/handbook';
+
+// Styr om den uppslagna handboken visas. Sätts till true när spelaren klickar på handboken på startsidan
+const isHandbookOpen = ref(false);
 
 // Fråga först om spelaren har en pågående omgång, eftersom forceNew pausar den
 function handleStartNew() {
@@ -89,6 +94,13 @@ onMounted(checkActiveSession);
         @start-new="handleStartNew"
         @resume="resume"
       />
+
+      <!-- TODO: tillfällig knapp tills den stängda handboken på startsidan finns -->
+      <button v-if="phase === 'idle'" type="button" @click="isHandbookOpen = true">
+        Öppna handbok
+      </button>
+
+      <HandbookOpen v-if="isHandbookOpen" :pages="handbookPages" @close="isHandbookOpen = false" />
 
       <p v-if="phase === 'loading'">Laddar...</p>
 
