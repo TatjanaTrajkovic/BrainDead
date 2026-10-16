@@ -3,6 +3,8 @@ import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useGame } from '@/composables/useGame';
 import SessionMenu from '@/components/SessionMenu.vue';
+import HandbookOpen from '@/components/HandbookOpen.vue';
+import { handbookPages } from '@/data/handbook';
 
 const router = useRouter();
 const { error, start, resume, hasActiveSession, checkActiveSession } = useGame();
@@ -10,6 +12,9 @@ const { error, start, resume, hasActiveSession, checkActiveSession } = useGame()
 // <dialog> på rad 55 ger bakgrund, stängning med Esc och håller fokus i menyn.
 // Variabelnamnet matchar ref="menu" i templaten, så Vue lägger elementet här efter rendering
 const menu = ref(null);
+
+// Styr om den uppslagna handboken visas
+const isHandbookOpen = ref(false);
 
 onMounted(checkActiveSession);
 
@@ -42,7 +47,12 @@ function handleResume() {
   <p v-if="error">{{ error }}</p>
 
   <div class="home">
-    <div class="area-handbook placeholder">Handbok</div>
+    <div class="area-handbook placeholder">
+      <!-- Tillfällig knapp tills den stängda handboken finns -->
+      <button type="button" class="btn btn-gray" @click="isHandbookOpen = true">
+        Öppna handbok
+      </button>
+    </div>
     <div class="area-prolog placeholder">Prolog</div>
     <div class="area-id placeholder">ID-kort</div>
     <div class="area-start placeholder">
@@ -50,6 +60,8 @@ function handleResume() {
       <button type="button" class="btn btn-purple" @click="openMenu">Starta spelet</button>
     </div>
   </div>
+
+  <HandbookOpen v-if="isHandbookOpen" :pages="handbookPages" @close="isHandbookOpen = false" />
 
   <!-- Klick på bakgrunden träffar själva dialogen, innehållet ligger i .menu-content -->
   <dialog ref="menu" class="menu-overlay" @click.self="closeMenu">
