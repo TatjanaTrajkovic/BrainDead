@@ -27,7 +27,8 @@ onMounted(loadHighScores);
     <p v-else-if="entries.length === 0" class="status">Ingen har tagit sig till IKEA än.</p>
 
     <ol v-else>
-      <li v-for="entry in entries" :key="entry.username">
+      <!-- --row styr när raden börjar skrivas, se animationen i CSS:en -->
+      <li v-for="(entry, index) in entries" :key="entry.username" :style="{ '--row': index }">
         <!-- title visar hela namnet vid hover när det klipps med … -->
         <span class="name" :class="{ long: entry.username.length > 18 }" :title="entry.username">{{
           entry.username
@@ -93,11 +94,47 @@ li {
   grid-template-columns: 52% 45%;
   justify-content: space-between;
   align-items: end;
-  /* Vänsterställt som när man fyller i ett papper för hand */
+  /* Vänsterställt */
   text-align: left;
   font-size: 3.5cqw;
   line-height: 1;
   padding-bottom: 0.3cqw;
+  /* Takten i skrivmaskinsanimationen. */
+  --name-time: 0.3s;
+  --pause: 0.1s; /* mellan namn och poäng */
+  --score-time: 0.15s;
+  /* Räknas ut, så nästa rad börjar först när poängen på raden ovanför är skriven */
+  --row-time: calc(var(--name-time) + var(--pause) + var(--score-time));
+  --row-start: calc(var(--row) * var(--row-time));
+}
+
+/* Skrivmaskin: först namnet, en kort paus, sedan poängen. En rad i taget uppifrån.
+   backwards döljer texten medan den väntar, och tar bort klippningen när den är klar */
+@keyframes type-row {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+.name {
+  animation: type-row var(--name-time) steps(15, end) backwards;
+  animation-delay: var(--row-start);
+}
+
+.score {
+  animation: type-row var(--score-time) steps(4, end) backwards;
+  animation-delay: calc(var(--row-start) + var(--name-time) + var(--pause));
+}
+
+/* Respektera spelare som stängt av animationer i operativsystemet */
+@media (prefers-reduced-motion: reduce) {
+  .name,
+  .score {
+    animation: none;
+  }
 }
 
 .name {
