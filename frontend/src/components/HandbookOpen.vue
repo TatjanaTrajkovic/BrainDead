@@ -11,27 +11,44 @@ const props = defineProps({
 
 const emit = defineEmits(['close']);
 
-// Vilket uppslag som visas. Ett uppslag är två sidor: uppslag 0 = sida 0 och 1, uppslag 1 = sida 2 och 3
-const spreadIndex = ref(0);
+// Samma brytpunkt som @media i CSS:en nedan. Ändras den ena måste den andra ändras också
+const mobileQuery = window.matchMedia('(max-width: 767px)');
+// På smal skärm visas en sida i taget, annars ett uppslag med två sidor
+const isSinglePage = ref(mobileQuery.matches);
+const pagesPerView = computed(() => (isSinglePage.value ? 1 : 2));
 
-const spreadCount = computed(() => Math.ceil(props.pages.length / 2));
-const leftPage = computed(() => props.pages[spreadIndex.value * 2]);
+// Index för sidan spelaren senast bläddrade till
+const pageIndex = ref(0);
+
+// Första sidan som visas. Ett uppslag börjar alltid på en jämn sida (0, 2, 4 …), så när skärmen
+// växlar från en till två sidor hamnar sidan spelaren läste i rätt uppslag
+const firstPageIndex = computed(() =>
+  isSinglePage.value ? pageIndex.value : pageIndex.value - (pageIndex.value % 2),
+);
+
+const leftPage = computed(() => props.pages[firstPageIndex.value]);
 // undefined på sista uppslaget om antalet sidor är udda
-const rightPage = computed(() => props.pages[spreadIndex.value * 2 + 1]);
+const rightPage = computed(() =>
+  isSinglePage.value ? undefined : props.pages[firstPageIndex.value + 1],
+);
 
-const isFirst = computed(() => spreadIndex.value === 0);
-const isLast = computed(() => spreadIndex.value >= spreadCount.value - 1);
+const isFirst = computed(() => firstPageIndex.value === 0);
+const isLast = computed(() => firstPageIndex.value + pagesPerView.value >= props.pages.length);
 
 function previous() {
   if (!isFirst.value) {
-    spreadIndex.value--;
+    pageIndex.value = firstPageIndex.value - pagesPerView.value;
   }
 }
 
 function next() {
   if (!isLast.value) {
-    spreadIndex.value++;
+    pageIndex.value = firstPageIndex.value + pagesPerView.value;
   }
+}
+
+function handleScreenChange(event) {
+  isSinglePage.value = event.matches;
 }
 
 function handleKeydown(event) {
@@ -44,9 +61,15 @@ function handleKeydown(event) {
   }
 }
 
-// Lyssnaren ligger på window och lever längre än komponenten, så den måste tas bort när boken stängs
-onMounted(() => window.addEventListener('keydown', handleKeydown));
-onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
+// Lyssnarna ligger på window och lever längre än komponenten, så de måste tas bort när boken stängs
+onMounted(() => {
+  window.addEventListener('keydown', handleKeydown);
+  mobileQuery.addEventListener('change', handleScreenChange);
+});
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeydown);
+  mobileQuery.removeEventListener('change', handleScreenChange);
+});
 </script>
 
 <template>
@@ -62,7 +85,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
           </template>
         </div>
 
-        <div class="page page-right">
+        <div v-if="!isSinglePage" class="page page-right">
           <template v-if="rightPage">
             <h2>{{ rightPage.title }}</h2>
             <p>{{ rightPage.text }}</p>
@@ -196,6 +219,52 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
 .arrow:focus-visible {
   outline: 3px solid var(--color-ink);
   outline-offset: 3px;
+}
+
+/* En sida i taget: visa bara vänstra halvan av bokbilden */
+@media (max-width: 767px) {
+  .handbook {
+    width: min(100%, calc((100dvh - 2rem) * 1000 / 1552));
+    aspect-ratio: 1000 / 1552;
+    /* Bilden blir dubbelt så bred som elementet, så bara vänstersidan får plats */
+    background-size: 200% 100%;
+    background-position: left;
+  }
+
+  /* Lite lägre än på desktop så att rubriken inte hamnar under X:et */
+  .page {
+    top: 11%;
+  }
+
+  .page-left {
+    left: 18%;
+    right: 8%;
+  }
+
+  .page h2 {
+    font-size: max(1.5rem, 8cqi);
+  }
+
+  .page p {
+    font-size: max(1.25rem, 6cqi);
+  }
+
+  .close {
+    right: 4%;
+    width: 10%;
+  }
+
+  .arrow {
+    width: 11%;
+  }
+
+  .arrow-previous {
+    left: 18%;
+  }
+
+  .arrow-next {
+    right: 8%;
+  }
 }
 
 svg {
