@@ -162,6 +162,7 @@ Notera: finished_at i game_session är tiden när omgången lämnat aktivt läge
 | GET   | `/api/sessions/:sessionId`          | Hämtar en pågående eller avslutad omgång                                                                                                           |
 | GET   | `/api/sessions/:sessionId/question` | Hämtar nästa fråga med svarsalternativ, `total_questions` och `answered_count`, eller `{ "finished": true }` när inga återstår                     |
 | POST  | `/api/sessions/:sessionId/answer`   | Sparar ett svar. Body: `{ "answerId": 1 }`                                                                                                         |
+| GET   | `/api/highscores`                   | Hämtar topp 10: varje spelares bästa avslutade omgång med hälsa över 0, som `{ username, score }`. Vid lika poäng vinner den som blev klar först   |
 | GET   | `/admin/questions`                  | Hämtar alla frågor                                                                                                                                 |
 
 ### Felsvar
