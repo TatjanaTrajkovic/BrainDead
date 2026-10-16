@@ -101,3 +101,10 @@ body {
     padding: 1rem;
   }
 }
+
+/* Bilder ska inte gå att markera eller dra iväg (#86) */
+img {
+  -webkit-user-select: none; /* För äldre Safari */
+  user-select: none;
+  -webkit-user-drag: none;
+}
