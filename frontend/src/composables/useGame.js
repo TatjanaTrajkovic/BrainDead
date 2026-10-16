@@ -138,8 +138,8 @@ export function useGame() {
     }
   }
 
-  // Avbryter omgången och går tillbaka till menyn. Omgången ligger kvar som pågående i backend,
-  // så spelaren kan fortsätta med "Återuppta omgång".
+  // Avbryter omgången. phase blir 'idle', och då skickar GameView spelaren till startsidan.
+  // Omgången ligger kvar som pågående i backend, så spelaren kan fortsätta med "Återuppta omgång".
   async function quit() {
     if (submitting.value) {
       return;
