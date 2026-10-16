@@ -38,7 +38,7 @@ Det enda som står mellan dig och dem är det som finns kvar i ditt huvud. Varje
 
 | Del      | Teknik                   |
 | -------- | ------------------------ |
-| Frontend | Vue 3, Vite              |
+| Frontend | Vue 3, Vue Router, Vite  |
 | Backend  | Node.js, Express 5, CORS |
 | Databas  | MySQL (mysql2)           |
 
@@ -160,8 +160,9 @@ Notera: finished_at i game_session är tiden när omgången lämnat aktivt läge
 | POST  | `/api/sessions`                     | Startar en ny omgång, eller returnerar den pågående om en redan finns. Body `{ "forceNew": true }` pausar den pågående omgången och startar en ny. |
 | GET   | `/api/sessions/active`              | Hämtar användarens pågående omgång, 404 om ingen finns. Skapar aldrig något.                                                                       |
 | GET   | `/api/sessions/:sessionId`          | Hämtar en pågående eller avslutad omgång                                                                                                           |
-| GET   | `/api/sessions/:sessionId/question` | Hämtar nästa fråga med svarsalternativ, `total_questions` och `answered_count`, eller `{ "finished": true }` när inga återstår                  |
+| GET   | `/api/sessions/:sessionId/question` | Hämtar nästa fråga med svarsalternativ, `total_questions` och `answered_count`, eller `{ "finished": true }` när inga återstår                     |
 | POST  | `/api/sessions/:sessionId/answer`   | Sparar ett svar. Body: `{ "answerId": 1 }`                                                                                                         |
+| GET   | `/api/highscores`                   | Hämtar topp 10: varje spelares bästa avslutade omgång med hälsa över 0, som `{ username, score }`. Vid lika poäng vinner den som blev klar först   |
 | GET   | `/admin/questions`                  | Hämtar alla frågor                                                                                                                                 |
 
 ### Felsvar
@@ -185,22 +186,36 @@ All spellogik ligger i composablen `frontend/src/composables/useGame.js`. Kompon
 idle → loading → question ⇄ feedback → finished
 ```
 
-
-| Funktion               | Vad den gör                                                                                                             |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `start(forceNew)`      | Startar en omgång och hämtar första frågan. `forceNew = true` pausar en pågående omgång först                           |
-| `select(answerId)`     | Markerar ett svar utan att skicka det. Går att byta tills svaret är låst                                                |
-| `answer()`             | Låser och skickar det valda svaret och sätter `feedback`, `health` och `previousHealth`. Nästa fråga sparas från svaret |
-| `next()`               | Visar nästa fråga, eller går till `finished` om det inte finns fler eller hälsan är slut                                |
-| `resume()`             | Körs när spelaren klickar "Återuppta omgång" och fortsätter omgången som sparats i `localStorage`                       |
-| `checkActiveSession()` | Körs vid sidladdning och sätter `hasActiveSession` så att menyn vet om "Återuppta" går att klicka på                    |
-| `quit()`               | Avbryter och går tillbaka till menyn. Omgången ligger kvar så den kan återupptas                                        |
+| Funktion               | Vad den gör                                                                                                                  |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `start(forceNew)`      | Startar en omgång och hämtar första frågan. `forceNew = true` pausar en pågående omgång först                                |
+| `select(answerId)`     | Markerar ett svar utan att skicka det. Går att byta tills svaret är låst                                                     |
+| `answer()`             | Låser och skickar det valda svaret och sätter `feedback`, `health` och `previousHealth`. Nästa fråga sparas från svaret      |
+| `next()`               | Visar nästa fråga, eller går till `finished` om det inte finns fler eller hälsan är slut                                     |
+| `resume()`             | Körs när spelaren klickar "Återuppta omgång" och fortsätter omgången som sparats i `localStorage`                            |
+| `checkActiveSession()` | Körs när startsidan visas och sätter `hasActiveSession` så att menyn vet om "Återuppta" går att klicka på                    |
+| `quit()`               | Avbryter och sätter `phase` till `idle`, så att spelaren skickas till startsidan. Omgången ligger kvar så den kan återupptas |
 
 `totalQuestions` och `answeredCount` kommer från den aktuella frågan och styr `ProgressDots`. De uppdateras när nästa fråga visas och stämmer även efter omladdning.
 
+State i `useGame` ligger utanför själva funktionen, så alla vyer som anropar `useGame()` delar samma spel. Startsidan kan starta en omgång som spelskärmen sedan visar, och spelet finns kvar när man byter sida.
+
+### Sidor och navigering
+
+Routern ligger i `frontend/src/router/router.js` och vyerna i `frontend/src/views/`. `App.vue` visar loggan och `<RouterView />`.
+
+| Route   | Vy         | Innehåll                                                                                                    |
+| ------- | ---------- | ----------------------------------------------------------------------------------------------------------- |
+| `/`     | `HomeView` | Startsidan. "Starta spelet" öppnar `SessionMenu` i en overlay (`<dialog>`) där man startar eller återupptar |
+| `/game` | `GameView` | Spelskärmen, se nedan                                                                                       |
+
+`GameView` skickar själv tillbaka spelaren till `/` när `phase` blir `idle`, alltså när omgången avbryts eller en start misslyckas. Laddas `/game` om försöker den återuppta omgången, och finns ingen omgång skickas spelaren till `/`.
+
+Startsidan är ett rutnät med ytorna `area-handbook`, `area-prolog`, `area-id` och `area-start`. Just nu innehåller de platshållare. Ersätt en platshållare med komponenten och behåll klassen, så hamnar komponenten på rätt plats.
+
 ### Spelskärmen
 
-Under `question` och `feedback` visas spelet i `QuizLayout`. Den är bara ett rutnät med namngivna slots, och `App.vue` bestämmer vad som läggs i varje slot. Den mörka panelen runt omkring är `.content-wrapper` i `main.css`.
+Under `question` och `feedback` visas spelet i `QuizLayout`. Den är bara ett rutnät med namngivna slots, och `GameView` bestämmer vad som läggs i varje slot. Den mörka panelen runt omkring är `.content-wrapper` i `main.css`.
 
 ```
 +--------------+-----------------------------+---------------+
@@ -228,7 +243,18 @@ Samma komponenter används i båda faserna, `phase` styr vad de visar:
 | `#submit`   | `LockAnswerButton` | "Lås svar"                    | "Nästa fråga >" / "Se resultat"       |
 | `#health`   | `HealthMeter`      | Nuvarande hälsa               | Hälsan efter svaret, pluppar tonas ut |
 
-`AnswerBox` läggs med `v-for` direkt i `#answers`, så att varje knapp blir en egen cell i 2×2-rutnätet. `QuitButton` ligger under panelen och tar spelaren tillbaka till menyn.
+`AnswerBox` läggs med `v-for` direkt i `#answers`, så att varje knapp blir en egen cell i 2×2-rutnätet. `QuitButton` ligger under panelen och tar spelaren tillbaka till startsidan.
+
+### Handboken
+
+`HandbookOpen` visar den uppslagna handboken som en modal ovanpå sidan. Innehållet ligger i `frontend/src/data/handbook.js` som en lista med sidor (`{ title, text }`), så texten kan ändras utan att röra komponenten.
+
+- Föräldern styr när boken visas med `v-if` och stänger den när komponenten skickar `close`
+- Stängs med X, Esc eller klick utanför boken
+- Bläddras med pilarna eller ← → på tangentbordet
+- Visar två sidor per uppslag, och en sida i taget på skärmar smalare än 768px
+
+Just nu öppnas den med en tillfällig knapp i ytan `area-handbook` i `HomeView`. Knappen ersätts av den stängda handboken.
 
 ## Arbetssätt
 
