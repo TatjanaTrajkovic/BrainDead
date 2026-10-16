@@ -68,11 +68,6 @@ h2 {
   text-transform: uppercase;
 }
 
-/* Lika mycket luft på båda sidor, .btn i base.css har mer till vänster */
-.btn {
-  align-self: center;
-  padding: 16px 24px;
-}
 
 .health {
   font-family: var(--font-handwritten);
