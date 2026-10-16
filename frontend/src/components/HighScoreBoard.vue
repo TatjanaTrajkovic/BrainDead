@@ -47,7 +47,7 @@ onMounted(loadHighScores);
   aspect-ratio: 1232 / 1552;
   background: url('../assets/images/highscore.webp') center / contain no-repeat;
   color: var(--color-ink);
-  font-family: var(--font-handwritten);
+  font-family: var(--font-main);
 }
 
 /* Listan och statustexterna delar samma yta på pappret */
@@ -72,7 +72,7 @@ ol {
   height: 4.64%; /* en rad, en tiondel av listans höjd */
   display: flex;
   align-items: flex-end;
-  font-size: 5cqw;
+  font-size: 3.5cqw;
   line-height: 1;
   padding-bottom: 0.3cqw;
   text-align: left;
@@ -95,7 +95,7 @@ li {
   align-items: end;
   /* Vänsterställt som när man fyller i ett papper för hand */
   text-align: left;
-  font-size: 5cqw;
+  font-size: 3.5cqw;
   line-height: 1;
   padding-bottom: 0.3cqw;
 }
