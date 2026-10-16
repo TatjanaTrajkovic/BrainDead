@@ -1,5 +1,7 @@
 <script setup>
 import { computed } from 'vue';
+import brainAlive from '@/assets/images/brain1.webp';
+import brainDead from '@/assets/images/brain3.webp';
 
 const props = defineProps({
   // Sluthälsan, 0–1 från backend
@@ -14,6 +16,9 @@ const props = defineProps({
   },
 });
 
+// Frisk hjärna om spelaren klarade sig, annars den mest medtagna
+const brainImg = computed(() => (props.isAlive ? brainAlive : brainDead));
+
 const healthPercent = computed(() => Math.round(props.health * 100));
 
 const emit = defineEmits(['play-again']);
@@ -24,7 +29,9 @@ function playAgain() {
 </script>
 
 <template>
-  <section class="end-card">
+  <section class="end-card content-card">
+    <img :src="brainImg" class="brain" alt="" />
+
     <h2>{{ isAlive ? 'Framme vid IKEA' : 'Brain Dead' }}</h2>
 
     <p v-if="isAlive">
@@ -35,20 +42,34 @@ function playAgain() {
 
     <p class="health">Hjärnkapacitet kvar: {{ healthPercent }} %</p>
 
-    <button type="button" @click="playAgain">Spela igen</button>
+    <button type="button" class="btn btn-gray" @click="playAgain">Spela igen</button>
   </section>
 </template>
 
 <style scoped>
+/* Ram, bakgrund och typsnitt kommer från .content-card, knappen från .btn i base.css */
 .end-card {
-  padding: 20px;
-  border: 2px solid #333;
-  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 32px 24px;
   text-align: center;
 }
 
-button {
-  padding: 10px 20px;
-  cursor: pointer;
+.brain {
+  width: 96px;
+}
+
+h2 {
+  font-size: 2rem;
+  text-transform: uppercase;
+}
+
+.health {
+  font-family: var(--font-handwritten);
+  font-size: 1.8rem;
 }
 </style>
