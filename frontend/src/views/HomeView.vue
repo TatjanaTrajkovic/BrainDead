@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router';
 import { useGame } from '@/composables/useGame';
 import SessionMenu from '@/components/SessionMenu.vue';
 import HandbookOpen from '@/components/HandbookOpen.vue';
+import StartButton from '@/components/StartButton.vue';
 import { handbookPages } from '@/data/handbook';
 
 const router = useRouter();
@@ -55,9 +56,8 @@ function handleResume() {
     </div>
     <div class="area-prolog placeholder">Prolog</div>
     <div class="area-id placeholder">ID-kort</div>
-    <div class="area-start placeholder">
-      <!-- Tillfällig knapp tills StartButton finns -->
-      <button type="button" class="btn btn-purple" @click="openMenu">Starta spelet</button>
+    <div class="area-start">
+      <StartButton class="start-button" @start="openMenu" />
     </div>
   </div>
 
@@ -99,6 +99,13 @@ function handleResume() {
 }
 .area-start {
   grid-area: start;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+}
+
+.start-button {
+  max-width: 280px;
 }
 
 /* Tillfälligt, tas bort när alla komponenter är inkopplade */
