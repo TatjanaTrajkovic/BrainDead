@@ -70,6 +70,6 @@ h2 {
 
 .health {
   font-family: var(--font-handwritten);
-  font-size: 1.8rem;
+  font-size: 2.1rem;
 }
 </style>

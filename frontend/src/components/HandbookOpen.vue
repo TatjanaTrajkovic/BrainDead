@@ -147,6 +147,7 @@ onUnmounted(() => {
   container-type: inline-size;
   color: var(--color-ink);
   font-family: var(--font-handwritten);
+  -webkit-text-stroke: var(--font-handwritten-stroke);
   text-align: left;
 }
 

@@ -8,6 +8,8 @@
   --color-ink: #2b1d0e;
   --font-main: 'Special Elite', monospace;
   --font-handwritten: 'Reenie Beanie', cursive;
+  /* Gör det tunna handskriftstypsnittet tjockare och lättare att läsa */
+  --font-handwritten-stroke: 0.02em currentColor;
 }
 
 .content-card {
