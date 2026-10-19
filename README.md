@@ -150,7 +150,7 @@ Vid push och pull request mot `main` kör [CI-flödet](.github/workflows/ci.yaml
 | `answer`           | Svarsalternativ med hälsomultiplikator och feedback                                                                           |
 | `session_question` | Vilket svar spelaren valde på en fråga i en session                                                                           |
 
-Varje spelare identifieras av `auth_token`, en slumpad nyckel som ligger i cookien `braindead_token`. Gäster och registrerade spelare är vanliga rader i `users`, så resten av backend behöver inte skilja på dem. `role` styr behörighet (`PLAYER` eller `ADMIN`), och `is_guest` visar om spelaren har ett konto.
+Varje spelare identifieras av en slumpad nyckel som ligger i cookien `braindead_token`. Databasen sparar bara en SHA-256-hash av nyckeln i `auth_token`, så en läckt databas räcker inte för att logga in som någon annan. Gäster och registrerade spelare är vanliga rader i `users`, så resten av backend behöver inte skilja på dem. `role` styr behörighet (`PLAYER` eller `ADMIN`), och `is_guest` visar om spelaren har ett konto.
 
 Notera: finished_at i game_session är tiden när omgången lämnat aktivt läge. Sätts både vid COMPLETED och PAUSED, tolkas tillsammans med status.
 
