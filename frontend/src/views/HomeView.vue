@@ -65,13 +65,13 @@ function handleResume() {
         Öppna handbok
       </button>
     </div>
-    <div class="area-start">
-      <StartButton class="start-button" @start="openMenu" />
-    </div>
     <div class="area-prolog">
       <PrologueNotebook :pages="prologuePages" />
     </div>
     <LoginCard class="area-id" />
+    <div class="area-start">
+      <StartButton @start="openMenu" />
+    </div>
   </div>
 
   <HandbookOpen v-if="isHandbookOpen" :pages="handbookPages" @close="isHandbookOpen = false" />
@@ -94,13 +94,13 @@ function handleResume() {
 <style scoped>
 .home {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.8fr);
+  /* Bredderna är valda så att prologen och ID-kort + startknapp blir lika höga */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.7fr);
   grid-template-rows: auto 1fr;
   grid-template-areas:
     'handbook prolog id'
     'handbook prolog start';
   gap: 2rem;
-  min-height: min(70vh, 640px);
 }
 
 .area-handbook {
@@ -117,10 +117,6 @@ function handleResume() {
   display: flex;
   justify-content: center;
   align-items: flex-end;
-}
-
-.start-button {
-  max-width: 280px;
 }
 
 /* Tillfälligt, tas bort när alla komponenter är inkopplade */
