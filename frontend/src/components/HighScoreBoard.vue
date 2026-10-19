@@ -30,9 +30,7 @@ onMounted(loadHighScores);
       <!-- --row styr när raden börjar skrivas, se animationen i CSS:en -->
       <li v-for="(entry, index) in entries" :key="entry.username" :style="{ '--row': index }">
         <!-- title visar hela namnet vid hover när det klipps med … -->
-        <span class="name" :class="{ long: entry.username.length > 18 }" :title="entry.username">{{
-          entry.username
-        }}</span>
+        <span class="name" :title="entry.username">{{ entry.username }}</span>
         <span class="score">{{ entry.score }}</span>
       </li>
     </ol>
@@ -137,15 +135,12 @@ li {
   }
 }
 
+/* Max 11 tecken får alltid plats, se validateUsername.js.
+   Ellipsis är en säkerhet för namn som redan finns i databasen */
 .name {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-/* Långa namn krymper lite så fler tecken får plats före … */
-.name.long {
-  font-size: 0.75em;
 }
 </style>
