@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
 import nukeClosed from '@/assets/images/nuke_closed.webp';
 import nukeOpen from '@/assets/images/nuke_open.webp';
 
@@ -10,7 +10,10 @@ defineProps({
 
 const emit = defineEmits(['start']);
 
-// true när locket är uppe, då visas bilden med öppet lock och knappen går att trycka på
+// Lådans rotelement, används för att avgöra om ett tryck skett utanför lådan
+const root = ref(null);
+
+// true när locket är uppe, då visas bilden med öppet lock och ett tryck på knappen startar omgången
 const isOpen = ref(false);
 
 // Bara musen öppnar locket vid hover. Touch skickar pointerenter vid tryck
@@ -45,7 +48,8 @@ function handleBoxPointerDown(event) {
   }
 }
 
-// Trycket som öppnade locket kan ta fokus från knappen, då ska locket inte stängas igen
+// Tangentbord: locket stängs när knappen tappar fokus. Undantag: trycket som öppnade locket
+// kan ta fokus från knappen, då ska locket inte stängas igen
 function handleBlur() {
   if (openedByThisTap) {
     openedByThisTap = false;
@@ -65,10 +69,23 @@ function handleClick() {
     emit('start');
   }
 }
+
+// Tryck utanför lådan stänger locket. Lådan får ingen händelse själv när trycket sker utanför,
+// och knappen har inte alltid fokus, så blur räcker inte
+function handleOutsidePointerDown(event) {
+  if (root.value && !root.value.contains(event.target)) {
+    isOpen.value = false;
+    openedByThisTap = false;
+  }
+}
+
+// Lyssnaren ligger på document och lever längre än komponenten, så den måste tas bort
+onMounted(() => document.addEventListener('pointerdown', handleOutsidePointerDown));
+onUnmounted(() => document.removeEventListener('pointerdown', handleOutsidePointerDown));
 </script>
 
 <template>
-  <div class="nuke" @pointerdown="handleBoxPointerDown">
+  <div ref="root" class="nuke" @pointerdown="handleBoxPointerDown">
     <img :src="isOpen ? nukeOpen : nukeClosed" alt="" class="nuke-img" />
     <div class="hover-zone" @pointerenter="handleEnter" @pointerleave="handleLeave">
       <button
