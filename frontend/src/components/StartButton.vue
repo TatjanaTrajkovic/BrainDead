@@ -27,18 +27,37 @@ function handleLeave(event) {
   }
 }
 
-// Med stängt lock öppnar första trycket locket (mobil), först nästa tryck startar omgången
-function handleClick() {
-  if (!isOpen.value) {
+let openedByThisTap = false;
+
+// Öppna bara locket vid tangentbordsfokus, inte när fokus kommer från ett tryck
+function handleFocus(event) {
+  if (event.target.matches(':focus-visible')) {
     isOpen.value = true;
+  }
+}
+
+// Tryck var som helst i lådan: stängt lock öppnas, inget mer händer
+function handleBoxPointerDown(event) {
+  if (event.pointerType !== 'mouse' && !isOpen.value) {
+    isOpen.value = true;
+    openedByThisTap = true;
+  }
+}
+
+// Musklick och tangentbord: bara öppet lock startar omgången
+function handleClick() {
+  if (openedByThisTap) {
+    openedByThisTap = false;
     return;
   }
-  emit('start');
+  if (isOpen.value) {
+    emit('start');
+  }
 }
 </script>
 
 <template>
-  <div class="nuke">
+  <div class="nuke" @pointerdown="handleBoxPointerDown">
     <img :src="isOpen ? nukeOpen : nukeClosed" alt="" class="nuke-img" />
     <div class="hover-zone" @pointerenter="handleEnter" @pointerleave="handleLeave">
       <button
@@ -47,7 +66,7 @@ function handleClick() {
         aria-label="Initiera apokalyps"
         :disabled="disabled"
         @click="handleClick"
-        @focus="isOpen = true"
+        @focus="handleFocus"
         @blur="isOpen = false"
       ></button>
     </div>
