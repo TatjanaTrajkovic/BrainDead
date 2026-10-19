@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
 import nukeClosed from '@/assets/images/nuke_closed.webp';
 import nukeOpen from '@/assets/images/nuke_open.webp';
 
@@ -10,11 +10,13 @@ defineProps({
 
 const emit = defineEmits(['start']);
 
-// true när locket är uppe, då visas bilden med öppet lock och knappen går att trycka på
+// Lådans rotelement, används för att avgöra om ett tryck skett utanför lådan
+const root = ref(null);
+
+// true när locket är uppe, då visas bilden med öppet lock och ett tryck på knappen startar omgången
 const isOpen = ref(false);
 
-// Bara musen öppnar locket vid hover. Touch-skärmar skickar också pointerenter vid tryck,
-// och då skulle locket öppnas och omgången starta på samma tryck
+// Bara musen öppnar locket vid hover. Touch skickar pointerenter vid tryck
 function handleEnter(event) {
   if (event.pointerType === 'mouse') {
     isOpen.value = true;
@@ -27,28 +29,75 @@ function handleLeave(event) {
   }
 }
 
-// Med stängt lock öppnar första trycket locket (mobil), först nästa tryck startar omgången
-function handleClick() {
-  if (!isOpen.value) {
+// Minns att det här trycket öppnade locket, så att det inte också startar omgången
+let openedByThisTap = false;
+
+// Öppna bara locket vid tangentbordsfokus, inte när fokus kommer från ett tryck
+function handleFocus(event) {
+  if (event.target.matches(':focus-visible')) {
     isOpen.value = true;
+  }
+}
+
+// Touch: tryck var som helst i lådan öppnar locket utan att starta omgången
+function handleBoxPointerDown(event) {
+  openedByThisTap = false;
+  if (event.pointerType !== 'mouse' && !isOpen.value) {
+    isOpen.value = true;
+    openedByThisTap = true;
+  }
+}
+
+// Tangentbord: locket stängs när knappen tappar fokus. Undantag: trycket som öppnade locket
+// kan ta fokus från knappen, då ska locket inte stängas igen
+function handleBlur() {
+  if (openedByThisTap) {
+    openedByThisTap = false;
     return;
   }
-  emit('start');
+  isOpen.value = false;
 }
+
+// Trycket som öppnade locket (touch) ska inte starta omgången
+// Annars startar omgången bara om locket redan är öppet
+function handleClick() {
+  if (openedByThisTap) {
+    openedByThisTap = false;
+    return;
+  }
+  if (isOpen.value) {
+    emit('start');
+  }
+}
+
+// Tryck utanför lådan stänger locket. Lådan får ingen händelse själv när trycket sker utanför,
+// och knappen har inte alltid fokus, så blur räcker inte
+function handleOutsidePointerDown(event) {
+  if (root.value && !root.value.contains(event.target)) {
+    isOpen.value = false;
+    openedByThisTap = false;
+  }
+}
+
+// Lyssnaren ligger på document och lever längre än komponenten, så den måste tas bort
+onMounted(() => document.addEventListener('pointerdown', handleOutsidePointerDown));
+onUnmounted(() => document.removeEventListener('pointerdown', handleOutsidePointerDown));
 </script>
 
 <template>
-  <div class="nuke" @pointerenter="handleEnter" @pointerleave="handleLeave">
+  <div ref="root" class="nuke" @pointerdown="handleBoxPointerDown">
     <img :src="isOpen ? nukeOpen : nukeClosed" alt="" class="nuke-img" />
-    <button
-      type="button"
-      class="red-button"
-      aria-label="Initiera apokalyps"
-      :disabled="disabled"
-      @click="handleClick"
-      @focus="isOpen = true"
-      @blur="isOpen = false"
-    ></button>
+    <div class="hover-zone" @pointerenter="handleEnter" @pointerleave="handleLeave">
+      <button
+        type="button"
+        class="red-button"
+        aria-label="Initiera apokalyps"
+        :disabled="disabled"
+        @click="handleClick"
+        @focus="handleFocus"
+        @blur="handleBlur"
+      ></button>
+    </div>
   </div>
 </template>
 
@@ -71,12 +120,20 @@ function handleClick() {
   pointer-events: none;
 }
 
+.hover-zone {
+  position: absolute;
+  top: 22%;
+  left: 15%;
+  width: 70%;
+  height: 58%;
+}
+
 /* Osynlig rund knapp ovanpå den röda cirkeln i bilden. Procent gör att den följer med när lådan skalas */
 .red-button {
   position: absolute;
-  top: 51%;
+  top: 50%;
   left: 50%;
-  width: 32%;
+  width: 58%;
   aspect-ratio: 1;
   transform: translate(-50%, -50%);
   border-radius: 50%;
