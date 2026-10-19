@@ -13,8 +13,7 @@ const emit = defineEmits(['start']);
 // true när locket är uppe, då visas bilden med öppet lock och knappen går att trycka på
 const isOpen = ref(false);
 
-// Bara musen öppnar locket vid hover. Touch-skärmar skickar också pointerenter vid tryck,
-// och då skulle locket öppnas och omgången starta på samma tryck
+// Bara musen öppnar locket vid hover. Touch skickar pointerenter vid tryck
 function handleEnter(event) {
   if (event.pointerType === 'mouse') {
     isOpen.value = true;
@@ -27,6 +26,7 @@ function handleLeave(event) {
   }
 }
 
+// Minns att det här trycket öppnade locket, så att det inte också startar omgången
 let openedByThisTap = false;
 
 // Öppna bara locket vid tangentbordsfokus, inte när fokus kommer från ett tryck
@@ -36,7 +36,7 @@ function handleFocus(event) {
   }
 }
 
-// Tryck var som helst i lådan: stängt lock öppnas, inget mer händer
+// Touch: tryck var som helst i lådan öppnar locket utan att starta omgången
 function handleBoxPointerDown(event) {
   if (event.pointerType !== 'mouse' && !isOpen.value) {
     isOpen.value = true;
@@ -44,7 +44,8 @@ function handleBoxPointerDown(event) {
   }
 }
 
-// Musklick och tangentbord: bara öppet lock startar omgången
+// Trycket som öppnade locket (touch) ska inte starta omgången
+// Annars startar omgången bara om locket redan är öppet
 function handleClick() {
   if (openedByThisTap) {
     openedByThisTap = false;
