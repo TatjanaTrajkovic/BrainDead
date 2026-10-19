@@ -3,6 +3,7 @@ const BASE_URL = import.meta.env.VITE_API_URL;
 async function request(path, options = {}) {
   const response = await fetch(`${BASE_URL}${path}`, {
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include', // skickar med token till backend
     ...options,
   });
   const data = await response.json().catch(() => null);
@@ -45,4 +46,8 @@ export function getSession(sessionId) {
 
 export function getHighScores() {
   return request('/highscores');
+}
+
+export function ensurePlayer() {
+  return request('/auth/guest', { method: 'POST' });
 }

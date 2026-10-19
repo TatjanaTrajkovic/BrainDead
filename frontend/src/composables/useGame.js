@@ -5,6 +5,7 @@ import {
   getNextQuestion,
   getSession,
   startSession,
+  ensurePlayer,
 } from '../api/gameApi';
 
 const STORAGE_KEY = 'braindead.sessionId';
@@ -80,6 +81,8 @@ export function useGame() {
     phase.value = 'loading';
 
     try {
+      // Utloggade spelare blir gäster först här, så den som bara tittar på startsidan inte skapar någon användare
+      await ensurePlayer();
       const session = await startSession(forceNew);
       sessionId.value = session.session_id;
       saveSessionId(session.session_id);
@@ -130,8 +133,8 @@ export function useGame() {
       saveSessionId(session.session_id); // befintliga resume() hittar rätt omgång när spelaren klickar "Återuppta"
     } catch (err) {
       hasActiveSession.value = false;
-      // 404 betyder att ingen omgång pågår. Allt annat är ett riktigt fel som spelaren ska se.
-      if (err.status !== 404) {
+      // 404 = ingen omgång pågår, 401 = ingen spelare än (ny besökare). Allt annat är ett riktigt fel
+      if (err.status !== 404 && err.status !== 401) {
         // Är servern helt nere kastar fetch ett fel utan status
         error.value = err.status ? err.message : 'Kunde inte nå servern';
       }
