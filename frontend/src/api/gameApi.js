@@ -48,6 +48,12 @@ export function getHighScores() {
   return request('/highscores');
 }
 
+// Skapar en gästspelare, eller returnerar spelaren som redan finns om cookien är giltig
 export function ensurePlayer() {
   return request('/auth/guest', { method: 'POST' });
+}
+
+// Hämtar spelaren som cookien hör till. Backend svarar 401 om det inte finns någon
+export function getMe() {
+  return request('/auth/me');
 }
