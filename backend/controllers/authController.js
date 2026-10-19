@@ -12,7 +12,7 @@ exports.createGuest = async (req, res) => {
 
     const { userId, token } = await authService.createGuest();
     res.cookie(cookie.TOKEN_COOKIE, token, cookie.TOKEN_COOKIE_OPTIONS);
-    res.status(201).json({ user_id: userId, is_guest: true });
+    res.status(201).json({ user_id: userId, username: null, role: 'PLAYER', is_guest: true });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Kunde inte skapa gäst' });
