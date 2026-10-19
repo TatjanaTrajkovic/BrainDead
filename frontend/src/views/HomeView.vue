@@ -6,16 +6,23 @@ import SessionMenu from '@/components/SessionMenu.vue';
 import HandbookOpen from '@/components/HandbookOpen.vue';
 import StartButton from '@/components/StartButton.vue';
 import { handbookPages } from '@/data/handbook';
+import HighScoreOverlay from '@/components/HighScoreOverlay.vue';
+import LoginCard from '@/components/LoginCard.vue';
+import PrologueNotebook from '@/components/PrologueNotebook.vue';
+import { prologuePages } from '@/data/prologue';
 
 const router = useRouter();
 const { error, start, resume, hasActiveSession, checkActiveSession } = useGame();
 
-// <dialog> på rad 55 ger bakgrund, stängning med Esc och håller fokus i menyn.
+// <dialog> längst ner i templaten ger bakgrund, stängning med Esc och håller fokus i menyn.
 // Variabelnamnet matchar ref="menu" i templaten, så Vue lägger elementet här efter rendering
 const menu = ref(null);
 
 // Styr om den uppslagna handboken visas
 const isHandbookOpen = ref(false);
+
+// Styr om topplistan visas
+const isHighScoreOpen = ref(false);
 
 onMounted(checkActiveSession);
 
@@ -49,19 +56,27 @@ function handleResume() {
 
   <div class="home">
     <div class="area-handbook placeholder">
+      <!-- Tillfällig knapp tills fliken ovanför handboken finns -->
+      <button type="button" class="btn btn-gray" @click="isHighScoreOpen = true">
+        Öppna topplista
+      </button>
       <!-- Tillfällig knapp tills den stängda handboken finns -->
       <button type="button" class="btn btn-gray" @click="isHandbookOpen = true">
         Öppna handbok
       </button>
     </div>
-    <div class="area-prolog placeholder">Prolog</div>
-    <div class="area-id placeholder">ID-kort</div>
     <div class="area-start">
       <StartButton class="start-button" @start="openMenu" />
     </div>
+     <div class="area-prolog">
+      <PrologueNotebook :pages="prologuePages" />
+    </div>
+    <LoginCard class="area-id" />
   </div>
 
   <HandbookOpen v-if="isHandbookOpen" :pages="handbookPages" @close="isHandbookOpen = false" />
+
+  <HighScoreOverlay v-if="isHighScoreOpen" @close="isHighScoreOpen = false" />
 
   <!-- Klick på bakgrunden träffar själva dialogen, innehållet ligger i .menu-content -->
   <dialog ref="menu" class="menu-overlay" @click.self="closeMenu">
@@ -79,7 +94,7 @@ function handleResume() {
 <style scoped>
 .home {
   display: grid;
-  grid-template-columns: 1fr 1fr 0.8fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.8fr);
   grid-template-rows: auto 1fr;
   grid-template-areas:
     'handbook prolog id'
