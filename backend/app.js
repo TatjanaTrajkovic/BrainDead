@@ -8,17 +8,19 @@ const port = 3000;
 const cookieParser = require('cookie-parser');
 
 app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
-app.use(cookieParser);
+app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 const questionRoute = require('./routes/questionRoute');
 const sessionRoute = require('./routes/sessionRoute');
 const highScoreRoute = require('./routes/highScoreRoute');
+const authRoute = require('./routes/authRoute');
 
 app.use('/admin', questionRoute);
 app.use('/api', sessionRoute);
 app.use('/api', highScoreRoute);
+app.use('/api', authRoute);
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
