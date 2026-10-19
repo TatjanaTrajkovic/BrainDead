@@ -1,11 +1,9 @@
 const sessionService = require('../service/sessionService');
 
-const testUserId = 1; // TODO: byt mot req.user.id när inloggningen finns
-
 exports.createSession = async (req, res) => {
   try {
     const forceNew = req.body?.forceNew === true;
-    const { session, created } = await sessionService.createSession(testUserId, forceNew);
+    const { session, created } = await sessionService.createSession(req.user.user_id, forceNew);
     res.status(created ? 201 : 200).json(session);
   } catch (err) {
     console.error(err);
@@ -15,7 +13,7 @@ exports.createSession = async (req, res) => {
 
 exports.getActiveSession = async (req, res) => {
   try {
-    const session = await sessionService.getActiveSession(testUserId);
+    const session = await sessionService.getActiveSession(req.user.user_id);
     if (!session) {
       return res.status(404).json({ error: 'Ingen pågående omgång' });
     }
