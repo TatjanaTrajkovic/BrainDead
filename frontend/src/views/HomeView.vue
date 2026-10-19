@@ -10,6 +10,7 @@ import HighScoreOverlay from '@/components/HighScoreOverlay.vue';
 import LoginCard from '@/components/LoginCard.vue';
 import PrologueNotebook from '@/components/PrologueNotebook.vue';
 import { prologuePages } from '@/data/prologue';
+import HandbookHighscore from '@/components/HandbookHighscore.vue';
 
 const router = useRouter();
 const { error, start, resume, hasActiveSession, checkActiveSession } = useGame();
@@ -55,15 +56,11 @@ function handleResume() {
   <p v-if="error">{{ error }}</p>
 
   <div class="home">
-    <div class="area-handbook placeholder">
-      <!-- Tillfällig knapp tills fliken ovanför handboken finns -->
-      <button type="button" class="btn btn-gray" @click="isHighScoreOpen = true">
-        Öppna topplista
-      </button>
-      <!-- Tillfällig knapp tills den stängda handboken finns -->
-      <button type="button" class="btn btn-gray" @click="isHandbookOpen = true">
-        Öppna handbok
-      </button>
+    <div class="area-handbook">
+      <HandbookHighscore
+        @open-handbook="isHandbookOpen = true"
+        @open-highscore="isHighScoreOpen = true"
+      />
     </div>
     <div class="area-prolog">
       <PrologueNotebook :pages="prologuePages" />
@@ -105,6 +102,8 @@ function handleResume() {
 
 .area-handbook {
   grid-area: handbook;
+  width: 100%;
+  height: 100%;
 }
 .area-prolog {
   grid-area: prolog;
