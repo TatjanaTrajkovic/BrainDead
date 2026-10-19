@@ -162,7 +162,8 @@ Notera: finished_at i game_session är tiden när omgången lämnat aktivt läge
 
 | Metod | Endpoint                            | Beskrivning                                                                                                                                                                         |
 | ----- | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| POST  | `/api/auth/guest`                   | Skapar en gästspelare och sätter cookien `braindead_token`, eller returnerar spelaren som redan finns. Svarar `{ user_id, username, role, is_guest }`                               |
+| POST  | `/api/auth/guest`                   | Skapar en gästspelare och sätter cookien `braindead_token`, eller returnerar spelaren som redan finns. Svarar `{ user_id, username, role, is_guest, display_name }`                 |
+| GET   | `/api/auth/me`                      | Hämtar spelaren som cookien hör till, i samma form som ovan. `display_name` är användarnamnet, eller `Gäst-<user_id>` för gäster. `401` utan cookie                                 |
 | POST  | `/api/sessions`                     | Startar en ny omgång, eller returnerar den pågående om en redan finns. Body `{ "forceNew": true }` pausar den pågående omgången och startar en ny.                                  |
 | GET   | `/api/sessions/active`              | Hämtar användarens pågående omgång, 404 om ingen finns. Skapar aldrig något.                                                                                                        |
 | GET   | `/api/sessions/:sessionId`          | Hämtar en pågående eller avslutad omgång                                                                                                                                            |
@@ -171,7 +172,7 @@ Notera: finished_at i game_session är tiden när omgången lämnat aktivt läge
 | GET   | `/api/highscores`                   | Hämtar topp 10: varje spelares bästa avslutade omgång med hälsa över 0, som `{ username, score }`. Gäster visas som `Gäst-<user_id>`. Vid lika poäng vinner den som blev klar först |
 | GET   | `/admin/questions`                  | Hämtar alla frågor                                                                                                                                                                  |
 
-Alla `/api/sessions`-endpoints kräver cookien `braindead_token`. Middlewaren `requireUser` slår upp spelaren och sätter `req.user`, och utan giltig cookie svarar de `401`. `/api/highscores` och `/api/auth/guest` är öppna.
+Alla `/api/sessions`-endpoints kräver cookien `braindead_token`. Middlewaren `requireUser` slår upp spelaren och sätter `req.user`, och utan giltig cookie svarar de `401`. `/api/highscores` och `/api/auth/guest` är öppna, och `/api/auth/me` kräver också cookien.
 
 ### Felsvar
 
@@ -206,6 +207,8 @@ idle → loading → question ⇄ feedback → finished
 | `quit()`               | Avbryter och sätter `phase` till `idle`, så att spelaren skickas till startsidan. Omgången ligger kvar så den kan återupptas                                          |
 
 `totalQuestions` och `answeredCount` kommer från den aktuella frågan och styr `ProgressDots`. De uppdateras när nästa fråga visas och stämmer även efter omladdning.
+
+Spelaren ligger i composablen `useAuth` (`frontend/src/composables/useAuth.js`), som också har delat state. `loadPlayer()` hämtar spelaren via `/api/auth/me` när startsidan visas, och `ensurePlayer()` gör besökaren till gäst. `start()` i `useGame` anropar `ensurePlayer()`, så ID-kortet uppdateras direkt när en ny besökare startar sin första omgång.
 
 State i `useGame` ligger utanför själva funktionen, så alla vyer som anropar `useGame()` delar samma spel. Startsidan kan starta en omgång som spelskärmen sedan visar, och spelet finns kvar när man byter sida.
 
@@ -329,13 +332,13 @@ Just nu öppnas den med en tillfällig knapp i ytan `area-handbook` i `HomeView`
 
 `LoginCard` visar spelarens ID-kort på startsidan och förbereder inloggningen. Komponenten visar bara det den får och skickar events uppåt, så den behöver inte ändras när inloggningen byggs.
 
-| Prop / event  | Gör                                                                                |
-| ------------- | ---------------------------------------------------------------------------------- |
-| `player`      | Den inloggade spelaren, t.ex. `{ username }`. `null` visar "OIDENTIFIERAD"         |
-| `authEnabled` | Visar knapparna "Identifiera" och "Ny identitet". `false` tills inloggningen finns |
-| `@identify`   | Skickas när spelaren klickar "Identifiera". Ska öppna inloggningen                 |
-| `@signup`     | Skickas när spelaren klickar "Ny identitet". Ska öppna registreringen              |
-| `@logout`     | Skickas när en inloggad spelare klickar "Stämpla ut"                               |
+| Prop / event  | Gör                                                                                                      |
+| ------------- | -------------------------------------------------------------------------------------------------------- |
+| `player`      | Spelaren från `useAuth`. Visar `display_name`, samma namn som i topplistan. `null` visar "OIDENTIFIERAD" |
+| `authEnabled` | Visar knapparna "Identifiera" och "Ny identitet". `false` tills inloggningen finns                       |
+| `@identify`   | Skickas när spelaren klickar "Identifiera". Ska öppna inloggningen                                       |
+| `@signup`     | Skickas när spelaren klickar "Ny identitet". Ska öppna registreringen                                    |
+| `@logout`     | Skickas när en registrerad spelare klickar "Stämpla ut". Gäster har ingen sådan knapp                    |
 
 Bakgrunden är bilden `logincard.webp` med papperet och fotot, och texten ligger som HTML ovanpå. Kortet är en container (`container-type: inline-size`) och textstorlekarna anges i `cqw`, procent av kortets bredd. Därför behåller texten sina proportioner när kortet ändrar storlek.
 
