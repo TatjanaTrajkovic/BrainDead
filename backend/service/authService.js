@@ -17,9 +17,13 @@ async function createGuest() {
   return { userId: result.insertId, token };
 }
 
+// display_name är namnet som visas, samma som i topplistan: användarnamnet, eller Gäst-<id> för gäster
 async function findByToken(token) {
   const [rows] = await database.query(
-    'SELECT user_id, username, role, is_guest FROM users WHERE auth_token = ? AND status = ?',
+    `SELECT user_id, username, role, is_guest,
+            COALESCE(username, CONCAT('Gäst-', user_id)) AS display_name
+     FROM users
+     WHERE auth_token = ? AND status = ?`,
     [hashToken(token), 'ACTIVE'],
   );
   return rows[0] ?? null;
