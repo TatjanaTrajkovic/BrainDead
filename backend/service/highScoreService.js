@@ -2,12 +2,13 @@ const database = require('../connectionMySQL');
 
 // Topplistan: varje spelares bästa avslutade omgång, högst poäng först.
 // Bara COMPLETED med hälsa över 0 räknas, pausade och döda omgångar visas inte.
+// Gäster har inget användarnamn och visas som "Gäst-<user_id>".
 // Vid lika poäng vinner den som blev klar först.
 async function getHighScores() {
   const [rows] = await database.query(
     `SELECT username, score
      FROM (
-       SELECT u.username,
+       SELECT COALESCE(u.username, CONCAT('Gäst-', u.user_id)) as username,
               ROUND(gs.current_health * 100) AS score,
               gs.finished_at,
               -- Numrerar varje spelares omgångar från bäst (1) till sämst
