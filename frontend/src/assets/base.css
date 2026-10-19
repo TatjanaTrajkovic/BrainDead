@@ -23,6 +23,11 @@
   box-shadow: inset 0 0 0 var(--border) var(--color-border-inner);
 }
 
+button,
+a {
+  touch-action: manipulation;
+}
+
 button {
   background: none;
   border: none;
@@ -87,6 +92,10 @@ button {
 *::after {
   box-sizing: border-box;
   margin: 0;
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
