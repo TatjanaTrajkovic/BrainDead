@@ -67,19 +67,19 @@ async function getNextQuestion(sessionId, db = database) {
   };
 }
 
-async function answerQuestion(sessionId, answerId) {
+async function answerQuestion(sessionId, answerId, userId) {
   const connection = await database.getConnection();
   try {
     await connection.beginTransaction();
 
-    // Omgången måste finnas och vara aktiv. FOR UPDATE låser raden, så ett dubbelklick
-    // inte kan räknas två gånger.
+    // Omgången måste finnas, tillhöra spelaren och vara aktiv. En annans omgång ger samma svar
+    // som en som inte finns. FOR UPDATE låser raden, så ett dubbelklick inte kan räknas två gånger.
     const [sessions] = await connection.query(
       `SELECT current_health, status
        FROM game_session
-       WHERE session_id = ?
+       WHERE session_id = ? AND user_id = ?
        FOR UPDATE`,
-      [sessionId],
+      [sessionId, userId],
     );
     if (sessions.length === 0) {
       await connection.rollback();
@@ -146,10 +146,14 @@ async function answerQuestion(sessionId, answerId) {
   }
 }
 
-async function getSession(sessionId) {
+// Hämtar en omgång, men bara om den tillhör spelaren. En annans omgång ger null (404),
+// så det inte avslöjas att den finns
+async function getSession(sessionId, userId) {
   const [rows] = await database.query(
-    'SELECT session_id, current_health, status, started_at, finished_at FROM game_session WHERE session_id = ?',
-    [sessionId],
+    `SELECT session_id, current_health, status, started_at, finished_at
+     FROM game_session
+     WHERE session_id = ? AND user_id = ?`,
+    [sessionId, userId],
   );
   if (rows.length > 0) {
     return rows[0];

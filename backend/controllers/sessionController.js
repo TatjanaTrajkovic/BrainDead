@@ -1,11 +1,9 @@
 const sessionService = require('../service/sessionService');
 
-const testUserId = 1; // TODO: byt mot req.user.id när inloggningen finns
-
 exports.createSession = async (req, res) => {
   try {
     const forceNew = req.body?.forceNew === true;
-    const { session, created } = await sessionService.createSession(testUserId, forceNew);
+    const { session, created } = await sessionService.createSession(req.user.user_id, forceNew);
     res.status(created ? 201 : 200).json(session);
   } catch (err) {
     console.error(err);
@@ -15,7 +13,7 @@ exports.createSession = async (req, res) => {
 
 exports.getActiveSession = async (req, res) => {
   try {
-    const session = await sessionService.getActiveSession(testUserId);
+    const session = await sessionService.getActiveSession(req.user.user_id);
     if (!session) {
       return res.status(404).json({ error: 'Ingen pågående omgång' });
     }
@@ -28,7 +26,7 @@ exports.getActiveSession = async (req, res) => {
 
 exports.getNextQuestion = async (req, res) => {
   try {
-    const session = await sessionService.getSession(req.params.sessionId);
+    const session = await sessionService.getSession(req.params.sessionId, req.user.user_id);
     if (!session) {
       return res.status(404).json({ error: 'Ingen session hittad' });
     }
@@ -52,7 +50,7 @@ exports.answerQuestion = async (req, res) => {
   const { answerId } = req.body;
   const { sessionId } = req.params;
   try {
-    const result = await sessionService.answerQuestion(sessionId, answerId);
+    const result = await sessionService.answerQuestion(sessionId, answerId, req.user.user_id);
     if (result.error === 'SESSION_NOT_FOUND') {
       return res.status(404).json({ error: 'Ingen session hittad' });
     }
@@ -71,7 +69,7 @@ exports.answerQuestion = async (req, res) => {
 
 exports.getSession = async (req, res) => {
   try {
-    const session = await sessionService.getSession(req.params.sessionId);
+    const session = await sessionService.getSession(req.params.sessionId, req.user.user_id);
     if (session) {
       res.status(200).json(session);
     } else {

@@ -67,11 +67,14 @@ cd BrainDead
 
 ### 2. Databas
 
-Kör `backend/schema.sql` mot din MySQL-server. Skriptet skapar databasen `BrainDead` och alla tabeller.
+Kör `backend/db/schema.sql` mot din MySQL-server. Skriptet skapar databasen `BrainDead` och alla tabeller. `backend/db/data.sql` fyller på med frågor och svar.
 
 ```sh
-mysql -u <användare> -p < backend/schema.sql
+mysql -u <användare> -p < backend/db/schema.sql
+mysql -u <användare> -p < backend/db/data.sql
 ```
+
+Kör om båda skripten när `schema.sql` har ändrats, till exempel efter att `is_guest` och `auth_token` lades till i `users`.
 
 ### 3. Miljövariabler
 
@@ -139,13 +142,15 @@ Vid push och pull request mot `main` kör [CI-flödet](.github/workflows/ci.yaml
 
 ## Databasmodell
 
-| Tabell             | Beskrivning                                         |
-| ------------------ | --------------------------------------------------- |
-| `users`            | Konto med användarnamn, e-post, roll och status     |
-| `game_session`     | En spelomgång med aktuell hälsa och status          |
-| `question`         | Scenario, frågetext och ordning (`position`)        |
-| `answer`           | Svarsalternativ med hälsomultiplikator och feedback |
-| `session_question` | Vilket svar spelaren valde på en fråga i en session |
+| Tabell             | Beskrivning                                                                                                                   |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| `users`            | Spelare med roll och status. Gäster har bara `is_guest` och `auth_token`, registrerade även användarnamn, e-post och lösenord |
+| `game_session`     | En spelomgång med aktuell hälsa och status                                                                                    |
+| `question`         | Scenario, frågetext och ordning (`position`)                                                                                  |
+| `answer`           | Svarsalternativ med hälsomultiplikator och feedback                                                                           |
+| `session_question` | Vilket svar spelaren valde på en fråga i en session                                                                           |
+
+Varje spelare identifieras av en slumpad nyckel som ligger i cookien `braindead_token`. Databasen sparar bara en SHA-256-hash av nyckeln i `auth_token`, så en läckt databas räcker inte för att logga in som någon annan. Gäster och registrerade spelare är vanliga rader i `users`, så resten av backend behöver inte skilja på dem. `role` styr behörighet (`PLAYER` eller `ADMIN`), och `is_guest` visar om spelaren har ett konto.
 
 Notera: finished_at i game_session är tiden när omgången lämnat aktivt läge. Sätts både vid COMPLETED och PAUSED, tolkas tillsammans med status.
 
@@ -155,16 +160,19 @@ Notera: finished_at i game_session är tiden när omgången lämnat aktivt läge
 
 <!-- TODO: fylls på i takt med att routes byggs -->
 
-| Metod | Endpoint                            | Beskrivning                                                                                                                                        |
-| ----- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| POST  | `/api/sessions`                     | Startar en ny omgång, eller returnerar den pågående om en redan finns. Body `{ "forceNew": true }` pausar den pågående omgången och startar en ny. |
-| GET   | `/api/highscores`                   | Hämtar topp 10: varje spelares bästa avslutade omgång med hälsa över 0, som `{ username, score }`. Vid lika poäng vinner den som blev klar först   |
-| GET   | `/api/sessions/active`              | Hämtar användarens pågående omgång, 404 om ingen finns. Skapar aldrig något.                                                                       |
-| GET   | `/api/sessions/:sessionId`          | Hämtar en pågående eller avslutad omgång                                                                                                           |
-| GET   | `/api/sessions/:sessionId/question` | Hämtar nästa fråga med svarsalternativ, `total_questions` och `answered_count`, eller `{ "finished": true }` när inga återstår                     |
-| POST  | `/api/sessions/:sessionId/answer`   | Sparar ett svar. Body: `{ "answerId": 1 }`                                                                                                         |
-| GET   | `/api/highscores`                   | Hämtar topp 10: varje spelares bästa avslutade omgång med hälsa över 0, som `{ username, score }`. Vid lika poäng vinner den som blev klar först   |
-| GET   | `/admin/questions`                  | Hämtar alla frågor                                                                                                                                 |
+| Metod | Endpoint                            | Beskrivning                                                                                                                                                                         |
+| ----- | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| POST  | `/api/auth/guest`                   | Skapar en gästspelare och sätter cookien `braindead_token`, eller returnerar spelaren som redan finns. Svarar `{ user_id, username, role, is_guest, display_name }`                 |
+| GET   | `/api/auth/me`                      | Hämtar spelaren som cookien hör till, i samma form som ovan. `display_name` är användarnamnet, eller `Gäst-<user_id>` för gäster. `401` utan cookie                                 |
+| POST  | `/api/sessions`                     | Startar en ny omgång, eller returnerar den pågående om en redan finns. Body `{ "forceNew": true }` pausar den pågående omgången och startar en ny.                                  |
+| GET   | `/api/sessions/active`              | Hämtar användarens pågående omgång, 404 om ingen finns. Skapar aldrig något.                                                                                                        |
+| GET   | `/api/sessions/:sessionId`          | Hämtar en pågående eller avslutad omgång                                                                                                                                            |
+| GET   | `/api/sessions/:sessionId/question` | Hämtar nästa fråga med svarsalternativ, `total_questions` och `answered_count`, eller `{ "finished": true }` när inga återstår                                                      |
+| POST  | `/api/sessions/:sessionId/answer`   | Sparar ett svar. Body: `{ "answerId": 1 }`                                                                                                                                          |
+| GET   | `/api/highscores`                   | Hämtar topp 10: varje spelares bästa avslutade omgång med hälsa över 0, som `{ username, score }`. Gäster visas som `Gäst-<user_id>`. Vid lika poäng vinner den som blev klar först |
+| GET   | `/admin/questions`                  | Hämtar alla frågor                                                                                                                                                                  |
+
+Alla `/api/sessions`-endpoints kräver cookien `braindead_token`. Middlewaren `requireUser` slår upp spelaren och sätter `req.user`, och utan giltig cookie svarar de `401`. Endpoints med `:sessionId` kontrollerar dessutom att omgången tillhör spelaren. En annans omgång ger `404`, samma svar som en omgång som inte finns, så det avslöjas inte att den finns. `/api/highscores` och `/api/auth/guest` är öppna, och `/api/auth/me` kräver också cookien.
 
 ### Felsvar
 
@@ -173,7 +181,8 @@ Fel från `/api/sessions`-endpoints returneras som `{ "error": "..." }`.
 | Status | När                                                   |
 | ------ | ----------------------------------------------------- |
 | 400    | Svaret hör inte till den aktuella frågan              |
-| 404    | Omgången finns inte                                   |
+| 401    | Ingen eller ogiltig spelare, cookien saknas           |
+| 404    | Omgången finns inte, eller tillhör en annan spelare   |
 | 409    | Omgången är redan avslutad (gäller `POST .../answer`) |
 | 500    | Serverfel                                             |
 
@@ -187,17 +196,19 @@ All spellogik ligger i composablen `frontend/src/composables/useGame.js`. Kompon
 idle → loading → question ⇄ feedback → finished
 ```
 
-| Funktion               | Vad den gör                                                                                                                  |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `start(forceNew)`      | Startar en omgång och hämtar första frågan. `forceNew = true` pausar en pågående omgång först                                |
-| `select(answerId)`     | Markerar ett svar utan att skicka det. Går att byta tills svaret är låst                                                     |
-| `answer()`             | Låser och skickar det valda svaret och sätter `feedback`, `health` och `previousHealth`. Nästa fråga sparas från svaret      |
-| `next()`               | Visar nästa fråga, eller går till `finished` om det inte finns fler eller hälsan är slut                                     |
-| `resume()`             | Körs när spelaren klickar "Återuppta omgång" och fortsätter omgången som sparats i `localStorage`                            |
-| `checkActiveSession()` | Körs när startsidan visas och sätter `hasActiveSession` så att menyn vet om "Återuppta" går att klicka på                    |
-| `quit()`               | Avbryter och sätter `phase` till `idle`, så att spelaren skickas till startsidan. Omgången ligger kvar så den kan återupptas |
+| Funktion               | Vad den gör                                                                                                                                                           |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `start(forceNew)`      | Gör spelaren till gäst om den inte redan är spelare (`ensurePlayer()`), startar en omgång och hämtar första frågan. `forceNew = true` pausar en pågående omgång först |
+| `select(answerId)`     | Markerar ett svar utan att skicka det. Går att byta tills svaret är låst                                                                                              |
+| `answer()`             | Låser och skickar det valda svaret och sätter `feedback`, `health` och `previousHealth`. Nästa fråga sparas från svaret                                               |
+| `next()`               | Visar nästa fråga, eller går till `finished` om det inte finns fler eller hälsan är slut                                                                              |
+| `resume()`             | Körs när spelaren klickar "Återuppta omgång" och fortsätter omgången som sparats i `localStorage`                                                                     |
+| `checkActiveSession()` | Körs när startsidan visas och sätter `hasActiveSession` så att menyn vet om "Återuppta" går att klicka på. `401` (ny besökare) och `404` betyder ingen omgång         |
+| `quit()`               | Avbryter och sätter `phase` till `idle`, så att spelaren skickas till startsidan. Omgången ligger kvar så den kan återupptas                                          |
 
 `totalQuestions` och `answeredCount` kommer från den aktuella frågan och styr `ProgressDots`. De uppdateras när nästa fråga visas och stämmer även efter omladdning.
+
+Spelaren ligger i composablen `useAuth` (`frontend/src/composables/useAuth.js`), som också har delat state. `loadPlayer()` hämtar spelaren via `/api/auth/me` när startsidan visas, och `ensurePlayer()` gör besökaren till gäst. `start()` i `useGame` anropar `ensurePlayer()`, så ID-kortet uppdateras direkt när en ny besökare startar sin första omgång.
 
 State i `useGame` ligger utanför själva funktionen, så alla vyer som anropar `useGame()` delar samma spel. Startsidan kan starta en omgång som spelskärmen sedan visar, och spelet finns kvar när man byter sida.
 
@@ -321,13 +332,13 @@ Just nu öppnas den med en tillfällig knapp i ytan `area-handbook` i `HomeView`
 
 `LoginCard` visar spelarens ID-kort på startsidan och förbereder inloggningen. Komponenten visar bara det den får och skickar events uppåt, så den behöver inte ändras när inloggningen byggs.
 
-| Prop / event  | Gör                                                                                |
-| ------------- | ---------------------------------------------------------------------------------- |
-| `player`      | Den inloggade spelaren, t.ex. `{ username }`. `null` visar "OIDENTIFIERAD"         |
-| `authEnabled` | Visar knapparna "Identifiera" och "Ny identitet". `false` tills inloggningen finns |
-| `@identify`   | Skickas när spelaren klickar "Identifiera". Ska öppna inloggningen                 |
-| `@signup`     | Skickas när spelaren klickar "Ny identitet". Ska öppna registreringen              |
-| `@logout`     | Skickas när en inloggad spelare klickar "Stämpla ut"                               |
+| Prop / event  | Gör                                                                                                      |
+| ------------- | -------------------------------------------------------------------------------------------------------- |
+| `player`      | Spelaren från `useAuth`. Visar `display_name`, samma namn som i topplistan. `null` visar "OIDENTIFIERAD" |
+| `authEnabled` | Visar knapparna "Identifiera" och "Ny identitet". `false` tills inloggningen finns                       |
+| `@identify`   | Skickas när spelaren klickar "Identifiera". Ska öppna inloggningen                                       |
+| `@signup`     | Skickas när spelaren klickar "Ny identitet". Ska öppna registreringen                                    |
+| `@logout`     | Skickas när en registrerad spelare klickar "Stämpla ut". Gäster har ingen sådan knapp                    |
 
 Bakgrunden är bilden `logincard.webp` med papperet och fotot, och texten ligger som HTML ovanpå. Kortet är en container (`container-type: inline-size`) och textstorlekarna anges i `cqw`, procent av kortets bredd. Därför behåller texten sina proportioner när kortet ändrar storlek.
 

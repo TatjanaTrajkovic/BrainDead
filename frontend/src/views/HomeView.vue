@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useGame } from '@/composables/useGame';
+import { useAuth } from '@/composables/useAuth';
 import SessionMenu from '@/components/SessionMenu.vue';
 import HandbookOpen from '@/components/HandbookOpen.vue';
 import StartButton from '@/components/StartButton.vue';
@@ -13,6 +14,7 @@ import { prologuePages } from '@/data/prologue';
 
 const router = useRouter();
 const { error, start, resume, hasActiveSession, checkActiveSession } = useGame();
+const { player, loadPlayer } = useAuth();
 
 // <dialog> längst ner i templaten ger bakgrund, stängning med Esc och håller fokus i menyn.
 // Variabelnamnet matchar ref="menu" i templaten, så Vue lägger elementet här efter rendering
@@ -24,7 +26,10 @@ const isHandbookOpen = ref(false);
 // Styr om topplistan visas
 const isHighScoreOpen = ref(false);
 
-onMounted(checkActiveSession);
+onMounted(() => {
+  checkActiveSession();
+  loadPlayer();
+});
 
 function openMenu() {
   menu.value.showModal();
@@ -68,7 +73,7 @@ function handleResume() {
     <div class="area-prolog">
       <PrologueNotebook :pages="prologuePages" />
     </div>
-    <LoginCard class="area-id" />
+    <LoginCard class="area-id" :player="player" />
     <div class="area-start">
       <StartButton @start="openMenu" />
     </div>
