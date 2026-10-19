@@ -252,12 +252,59 @@ När `phase` blir `finished` visas `EndCard` i stället för rutnätet. Den visa
 
 ### Handboken
 
-`HandbookOpen` visar den uppslagna handboken som en modal ovanpå sidan. Innehållet ligger i `frontend/src/data/handbook.js` som en lista med sidor (`{ title, text }`), så texten kan ändras utan att röra komponenten.
+`HandbookOpen` visar den uppslagna handboken som en modal ovanpå sidan. Varje sida renderas av `HandbookPage`. Innehållet ligger i `frontend/src/data/handbook.js` som en lista med sidor, så texten kan ändras utan att röra komponenterna.
 
 - Föräldern styr när boken visas med `v-if` och stänger den när komponenten skickar `close`
 - Stängs med X, Esc eller klick utanför boken
 - Bläddras med pilarna eller ← → på tangentbordet
 - Visar två sidor per uppslag, och en sida i taget på skärmar smalare än 768px
+- Föregående, stäng och nästa ligger samlade i en rad längst ner, med stäng i mitten
+
+#### Sidformat
+
+Varje sida är ett objekt med en lista `sections`. Varje avsnitt kan ha följande fält, och alla är valfria:
+
+| Fält       | Visas som                                         |
+| ---------- | ------------------------------------------------- |
+| `title`    | Rubrik (`<h2>`, versaler)                         |
+| `subtitle` | Underrubrik (`<h3>`)                              |
+| `text`     | Brödtext (`<p>`)                                  |
+| `warning`  | Varningstext i röd färg, visas efter `text`       |
+| `image`    | Bild, `{ src, alt }`. Fyller höjden som blir kvar |
+
+```js
+import bildnamn from '../assets/images/handbook/bild.webp';
+
+export const handbookPages = [
+  {
+    sections: [
+      // Radbrytning med \n i en vanlig sträng
+      {
+        title: 'Rubrik',
+        text: 'Första raden.\nAndra raden.\n\nNytt stycke efter tom rad',
+        // Röd text
+        warning: 'Varning.',
+      },
+      {
+        subtitle: 'Underrubrik',
+        // Radbrytning med backticks, raderna skrivs som de ska visas
+        text: `Första raden.
+        Andra raden.
+
+        Nytt stycke efter en tom rad.`,
+      },
+    ],
+  },
+  {
+    sections: [{ image: { src: bildnamn, alt: 'Beskrivning' } }],
+  },
+];
+```
+
+- Radbrytningar: skriv `\n` i en vanlig sträng, eller använd backticks och skriv raderna som de ska visas. `white-space: pre-line` gör att de syns, och indrag i början av rader i backticks tas bort i visningen.
+- Bilder måste importeras överst i `handbook.js` och skickas in som variabel, inte som sträng
+- Mellan avsnitt läggs ett litet mellanrum. `warning` avslutar ett avsnitt, så text efter en varning blir ett nytt avsnitt
+- En sida scrollar (`overflow-y: auto`) om innehållet blir för högt. Korta ner texten eller dela upp på flera sidor om det inte är önskat
 
 Just nu öppnas den med en tillfällig knapp i ytan `area-handbook` i `HomeView`. Knappen ersätts av den stängda handboken.
 
