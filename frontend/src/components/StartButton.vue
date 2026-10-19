@@ -38,17 +38,19 @@ function handleClick() {
 </script>
 
 <template>
-  <div class="nuke" @pointerenter="handleEnter" @pointerleave="handleLeave">
+  <div class="nuke">
     <img :src="isOpen ? nukeOpen : nukeClosed" alt="" class="nuke-img" />
-    <button
-      type="button"
-      class="red-button"
-      aria-label="Initiera apokalyps"
-      :disabled="disabled"
-      @click="handleClick"
-      @focus="isOpen = true"
-      @blur="isOpen = false"
-    ></button>
+    <div class="hover-zone" @pointerenter="handleEnter" @pointerleave="handleLeave">
+      <button
+        type="button"
+        class="red-button"
+        aria-label="Initiera apokalyps"
+        :disabled="disabled"
+        @click="handleClick"
+        @focus="isOpen = true"
+        @blur="isOpen = false"
+      ></button>
+    </div>
   </div>
 </template>
 
@@ -71,12 +73,20 @@ function handleClick() {
   pointer-events: none;
 }
 
+.hover-zone {
+  position: absolute;
+  top: 22%;
+  left: 15%;
+  width: 70%;
+  height: 58%;
+}
+
 /* Osynlig rund knapp ovanpå den röda cirkeln i bilden. Procent gör att den följer med när lådan skalas */
 .red-button {
   position: absolute;
-  top: 51%;
+  top: 50%;
   left: 50%;
-  width: 32%;
+  width: 58%;
   aspect-ratio: 1;
   transform: translate(-50%, -50%);
   border-radius: 50%;
