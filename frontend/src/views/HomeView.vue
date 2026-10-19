@@ -6,13 +6,14 @@ import SessionMenu from '@/components/SessionMenu.vue';
 import HandbookOpen from '@/components/HandbookOpen.vue';
 import { handbookPages } from '@/data/handbook';
 import HighScoreOverlay from '@/components/HighScoreOverlay.vue';
+import LoginCard from '@/components/LoginCard.vue';
 import PrologueNotebook from '@/components/PrologueNotebook.vue';
 import { prologuePages } from '@/data/prologue';
 
 const router = useRouter();
 const { error, start, resume, hasActiveSession, checkActiveSession } = useGame();
 
-// <dialog> på rad 55 ger bakgrund, stängning med Esc och håller fokus i menyn.
+// <dialog> längst ner i templaten ger bakgrund, stängning med Esc och håller fokus i menyn.
 // Variabelnamnet matchar ref="menu" i templaten, så Vue lägger elementet här efter rendering
 const menu = ref(null);
 
@@ -66,7 +67,7 @@ function handleResume() {
     <div class="area-prolog">
       <PrologueNotebook :pages="prologuePages" />
     </div>
-    <div class="area-id placeholder">ID-kort</div>
+    <LoginCard class="area-id" />
     <div class="area-start placeholder">
       <!-- Tillfällig knapp tills StartButton finns -->
       <button type="button" class="btn btn-purple" @click="openMenu">Starta spelet</button>
@@ -93,7 +94,7 @@ function handleResume() {
 <style scoped>
 .home {
   display: grid;
-  grid-template-columns: 1fr 1fr 0.8fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.8fr);
   grid-template-rows: auto 1fr;
   grid-template-areas:
     'handbook prolog id'
