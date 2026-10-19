@@ -38,10 +38,20 @@ function handleFocus(event) {
 
 // Touch: tryck var som helst i lådan öppnar locket utan att starta omgången
 function handleBoxPointerDown(event) {
+  openedByThisTap = false;
   if (event.pointerType !== 'mouse' && !isOpen.value) {
     isOpen.value = true;
     openedByThisTap = true;
   }
+}
+
+// Trycket som öppnade locket kan ta fokus från knappen, då ska locket inte stängas igen
+function handleBlur() {
+  if (openedByThisTap) {
+    openedByThisTap = false;
+    return;
+  }
+  isOpen.value = false;
 }
 
 // Trycket som öppnade locket (touch) ska inte starta omgången
@@ -68,7 +78,7 @@ function handleClick() {
         :disabled="disabled"
         @click="handleClick"
         @focus="handleFocus"
-        @blur="isOpen = false"
+        @blur="handleBlur"
       ></button>
     </div>
   </div>
