@@ -1,12 +1,17 @@
 <script setup>
-defineProps({
-  // null = ingen inloggad. Formen bestäms när inloggningen finns
+import { computed } from 'vue';
+
+const props = defineProps({
+  // Spelaren från useAuth, null för en ny besökare. Gäster har is_guest = true
   player: { type: Object, default: null },
   // Knapparna för inloggning visas bara när inloggningen är byggd
   authEnabled: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['identify', 'logout', 'signup']);
+
+// Bara registrerade spelare har ett konto att stämpla ut från. Gäster kan fortfarande identifiera sig
+const isRegistered = computed(() => props.player && !props.player.is_guest);
 </script>
 
 <template>
@@ -14,14 +19,15 @@ const emit = defineEmits(['identify', 'logout', 'signup']);
     <div class="text">
       <h2>ID-KORT</h2>
       <p class="company">Skumma Aktier AB</p>
-      <p class="status" :class="{ known: player }">
-        {{ player ? player.username : 'OIDENTIFIERAD' }}
+      <!-- display_name är samma namn som i topplistan: användarnamnet eller Gäst-<id> -->
+      <p class="status" :class="{ known: isRegistered }">
+        {{ player ? player.display_name : 'OIDENTIFIERAD' }}
       </p>
-      <div v-if="authEnabled && !player" class="actions">
+      <div v-if="authEnabled && !isRegistered" class="actions">
         <button type="button" class="stamp" @click="emit('identify')">IDENTIFIERA</button>
         <button type="button" class="stamp new-id" @click="emit('signup')">NY IDENTITET</button>
       </div>
-      <button v-else-if="player" type="button" class="stamp logout" @click="emit('logout')">
+      <button v-else-if="isRegistered" type="button" class="stamp logout" @click="emit('logout')">
         STÄMPLA UT
       </button>
     </div>

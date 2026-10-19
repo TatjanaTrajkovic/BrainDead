@@ -5,8 +5,8 @@ import {
   getNextQuestion,
   getSession,
   startSession,
-  ensurePlayer,
 } from '../api/gameApi';
+import { useAuth } from './useAuth';
 
 const STORAGE_KEY = 'braindead.sessionId';
 
@@ -56,6 +56,8 @@ const selectedAnswerId = ref(null);
 let nextQuestion = null;
 
 export function useGame() {
+  const { ensurePlayer } = useAuth();
+
   const isAlive = computed(() => health.value > 0);
 
   // Till ProgressDots. Följer med varje fråga från backend, så de stämmer även efter omladdning
