@@ -38,7 +38,8 @@ defineProps({
 
 .feedback-title {
   font-family: var(--font-handwritten);
-  font-size: 1.8rem;
+  -webkit-text-stroke: var(--font-handwritten-stroke);
+  font-size: 2.1rem;
   font-weight: normal;
   line-height: 1;
   margin-bottom: 8px;

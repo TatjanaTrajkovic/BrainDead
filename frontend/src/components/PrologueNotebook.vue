@@ -79,6 +79,7 @@ function next() {
   container-type: inline-size;
   color: var(--color-ink);
   font-family: var(--font-handwritten);
+  -webkit-text-stroke: var(--font-handwritten-stroke);
   text-align: left;
 }
 
@@ -112,7 +113,7 @@ function next() {
   left: 9%;
   right: 9%;
   overflow-y: auto;
-  font-size: 7cqi;
+  font-size: 7.5cqi;
   line-height: 1.15;
   white-space: pre-line;
 }
