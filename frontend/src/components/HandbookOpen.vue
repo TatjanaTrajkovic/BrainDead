@@ -1,8 +1,9 @@
 <script setup>
+import HandbookPage from './HandbookPage.vue';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 
 const props = defineProps({
-  // Sidorna i boken, t.ex. handbookPages från data/handbook.js. Varje sida är { title, text }
+  // Sidorna i boken, t.ex. handbookPages från data/handbook.js. Varje sida är { sections: [...] }
   pages: {
     type: Array,
     required: true,
@@ -78,53 +79,47 @@ onUnmounted(() => {
     <!-- .self: stäng bara vid klick på själva bakgrunden, inte på boken -->
     <div class="overlay" @click.self="emit('close')">
       <section class="handbook" role="dialog" aria-modal="true" aria-label="Handbok för överlevare">
-        <!-- :key ändras vid bläddring, så Vue ser texten som ett nytt element och kör toningen.
-             out-in: gamla texten tonas ut helt innan den nya tonas in -->
         <div class="page page-left">
           <Transition name="page-fade" mode="out-in">
-            <div v-if="leftPage" :key="firstPageIndex">
-              <h2>{{ leftPage.title }}</h2>
-              <p>{{ leftPage.text }}</p>
-            </div>
+            <HandbookPage v-if="leftPage" :key="firstPageIndex" :page="leftPage" />
           </Transition>
         </div>
 
         <div v-if="!isSinglePage" class="page page-right">
           <Transition name="page-fade" mode="out-in">
-            <div v-if="rightPage" :key="firstPageIndex + 1">
-              <h2>{{ rightPage.title }}</h2>
-              <p>{{ rightPage.text }}</p>
-            </div>
+            <HandbookPage v-if="rightPage" :key="firstPageIndex + 1" :page="rightPage" />
           </Transition>
         </div>
 
-        <button type="button" class="close" aria-label="Stäng handboken" @click="emit('close')">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="12" cy="12" r="10" />
-            <path d="M8 8 L16 16 M16 8 L8 16" />
-          </svg>
-        </button>
+        <nav class="controls">
+          <!-- Samma pil som pekar uppåt, roteras åt vänster eller höger med CSS -->
+          <button
+            type="button"
+            class="arrow arrow-previous"
+            aria-label="Föregående sida"
+            :disabled="isFirst"
+            @click="previous"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16 L12 7 L19 16" /></svg>
+          </button>
 
-        <!-- Samma pil som pekar uppåt, roteras åt vänster eller höger med CSS -->
-        <button
-          type="button"
-          class="arrow arrow-previous"
-          aria-label="Föregående sida"
-          :disabled="isFirst"
-          @click="previous"
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16 L12 7 L19 16" /></svg>
-        </button>
+          <button type="button" class="close" aria-label="Stäng handboken" @click="emit('close')">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M8 8 L16 16 M16 8 L8 16" />
+            </svg>
+          </button>
 
-        <button
-          type="button"
-          class="arrow arrow-next"
-          aria-label="Nästa sida"
-          :disabled="isLast"
-          @click="next"
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16 L12 7 L19 16" /></svg>
-        </button>
+          <button
+            type="button"
+            class="arrow arrow-next"
+            aria-label="Nästa sida"
+            :disabled="isLast"
+            @click="next"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16 L12 7 L19 16" /></svg>
+          </button>
+        </nav>
       </section>
     </div>
   </Teleport>
@@ -164,24 +159,13 @@ onUnmounted(() => {
 }
 
 .page-left {
-  left: 10%;
+  left: 9%;
   right: 54%;
 }
 
 .page-right {
   left: 55%;
-  right: 10%;
-}
-
-.page h2 {
-  margin-bottom: 0.5em;
-  font-size: max(1.5rem, 4cqi);
-  text-transform: uppercase;
-}
-
-.page p {
-  font-size: max(1.25rem, 3cqi);
-  line-height: 1.2;
+  right: 8%;
 }
 
 /* Klasserna sätts av <Transition name="page-fade">: -enter när texten kommer in, -leave när den går */
@@ -203,29 +187,32 @@ onUnmounted(() => {
   }
 }
 
-.close {
+/* Navigering med föregående, stäng och nästa, stäng i mitten */
+.controls {
   position: absolute;
-  top: 4%;
-  right: 7%;
-  width: 7%;
+  left: 20%;
+  right: 20%;
+  bottom: 6%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.arrow,
+.close {
+  width: 6cqi;
   color: var(--color-ink);
+}
+
+.close {
   opacity: 0.6;
 }
 
-.arrow {
-  position: absolute;
-  bottom: 4%;
-  width: 6%;
-  color: var(--color-ink);
-}
-
 .arrow-previous {
-  left: 10%;
   transform: rotate(-90deg);
 }
 
 .arrow-next {
-  right: 10%;
   transform: rotate(90deg);
 }
 
@@ -251,14 +238,12 @@ onUnmounted(() => {
   .handbook {
     width: min(100%, calc((100dvh - 2rem) * 1000 / 1552));
     aspect-ratio: 1000 / 1552;
-    /* Bilden blir dubbelt så bred som elementet, så bara vänstersidan får plats */
     background-size: 200% 100%;
     background-position: left;
   }
 
-  /* Lite lägre än på desktop så att rubriken inte hamnar under X:et */
   .page {
-    top: 11%;
+    top: 8%;
   }
 
   .page-left {
@@ -266,29 +251,14 @@ onUnmounted(() => {
     right: 8%;
   }
 
-  .page h2 {
-    font-size: max(1.5rem, 8cqi);
-  }
-
-  .page p {
-    font-size: max(1.25rem, 6cqi);
-  }
-
-  .close {
-    right: 4%;
-    width: 10%;
-  }
-
-  .arrow {
-    width: 11%;
-  }
-
-  .arrow-previous {
+  .controls {
     left: 18%;
+    right: 8%;
   }
 
-  .arrow-next {
-    right: 8%;
+  .arrow,
+  .close {
+    width: 11cqi;
   }
 }
 
