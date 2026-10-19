@@ -172,7 +172,7 @@ Notera: finished_at i game_session är tiden när omgången lämnat aktivt läge
 | GET   | `/api/highscores`                   | Hämtar topp 10: varje spelares bästa avslutade omgång med hälsa över 0, som `{ username, score }`. Gäster visas som `Gäst-<user_id>`. Vid lika poäng vinner den som blev klar först |
 | GET   | `/admin/questions`                  | Hämtar alla frågor                                                                                                                                                                  |
 
-Alla `/api/sessions`-endpoints kräver cookien `braindead_token`. Middlewaren `requireUser` slår upp spelaren och sätter `req.user`, och utan giltig cookie svarar de `401`. `/api/highscores` och `/api/auth/guest` är öppna, och `/api/auth/me` kräver också cookien.
+Alla `/api/sessions`-endpoints kräver cookien `braindead_token`. Middlewaren `requireUser` slår upp spelaren och sätter `req.user`, och utan giltig cookie svarar de `401`. Endpoints med `:sessionId` kontrollerar dessutom att omgången tillhör spelaren. En annans omgång ger `404`, samma svar som en omgång som inte finns, så det avslöjas inte att den finns. `/api/highscores` och `/api/auth/guest` är öppna, och `/api/auth/me` kräver också cookien.
 
 ### Felsvar
 
@@ -182,7 +182,7 @@ Fel från `/api/sessions`-endpoints returneras som `{ "error": "..." }`.
 | ------ | ----------------------------------------------------- |
 | 400    | Svaret hör inte till den aktuella frågan              |
 | 401    | Ingen eller ogiltig spelare, cookien saknas           |
-| 404    | Omgången finns inte                                   |
+| 404    | Omgången finns inte, eller tillhör en annan spelare   |
 | 409    | Omgången är redan avslutad (gäller `POST .../answer`) |
 | 500    | Serverfel                                             |
 

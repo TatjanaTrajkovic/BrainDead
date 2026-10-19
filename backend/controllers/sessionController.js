@@ -26,7 +26,7 @@ exports.getActiveSession = async (req, res) => {
 
 exports.getNextQuestion = async (req, res) => {
   try {
-    const session = await sessionService.getSession(req.params.sessionId);
+    const session = await sessionService.getSession(req.params.sessionId, req.user.user_id);
     if (!session) {
       return res.status(404).json({ error: 'Ingen session hittad' });
     }
@@ -50,7 +50,7 @@ exports.answerQuestion = async (req, res) => {
   const { answerId } = req.body;
   const { sessionId } = req.params;
   try {
-    const result = await sessionService.answerQuestion(sessionId, answerId);
+    const result = await sessionService.answerQuestion(sessionId, answerId, req.user.user_id);
     if (result.error === 'SESSION_NOT_FOUND') {
       return res.status(404).json({ error: 'Ingen session hittad' });
     }
@@ -69,7 +69,7 @@ exports.answerQuestion = async (req, res) => {
 
 exports.getSession = async (req, res) => {
   try {
-    const session = await sessionService.getSession(req.params.sessionId);
+    const session = await sessionService.getSession(req.params.sessionId, req.user.user_id);
     if (session) {
       res.status(200).json(session);
     } else {
