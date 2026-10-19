@@ -6,6 +6,8 @@ import SessionMenu from '@/components/SessionMenu.vue';
 import HandbookOpen from '@/components/HandbookOpen.vue';
 import { handbookPages } from '@/data/handbook';
 import HighScoreOverlay from '@/components/HighScoreOverlay.vue';
+import PrologueNotebook from '@/components/PrologueNotebook.vue';
+import { prologuePages } from '@/data/prologue';
 
 const router = useRouter();
 const { error, start, resume, hasActiveSession, checkActiveSession } = useGame();
@@ -61,7 +63,9 @@ function handleResume() {
         Öppna handbok
       </button>
     </div>
-    <div class="area-prolog placeholder">Prolog</div>
+    <div class="area-prolog">
+      <PrologueNotebook :pages="prologuePages" />
+    </div>
     <div class="area-id placeholder">ID-kort</div>
     <div class="area-start placeholder">
       <!-- Tillfällig knapp tills StartButton finns -->
