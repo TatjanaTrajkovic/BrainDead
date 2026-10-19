@@ -67,6 +67,11 @@ h2 {
   letter-spacing: 0.05em;
   color: #750000;
   text-align: center;
+  /* Namnet bryts aldrig till två rader. Max 11 tecken får plats, se validateUsername.js.
+     Ellipsis är en säkerhet för namn som redan finns i databasen */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .status.known {
