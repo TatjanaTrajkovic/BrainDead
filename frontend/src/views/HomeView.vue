@@ -12,7 +12,7 @@ import { prologuePages } from '@/data/prologue';
 const router = useRouter();
 const { error, start, resume, hasActiveSession, checkActiveSession } = useGame();
 
-// <dialog> på rad 55 ger bakgrund, stängning med Esc och håller fokus i menyn.
+// <dialog> längst ner i templaten ger bakgrund, stängning med Esc och håller fokus i menyn.
 // Variabelnamnet matchar ref="menu" i templaten, så Vue lägger elementet här efter rendering
 const menu = ref(null);
 

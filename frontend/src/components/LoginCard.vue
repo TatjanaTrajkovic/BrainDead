@@ -2,6 +2,8 @@
 defineProps({
   // null = ingen inloggad. Formen bestäms när inloggningen finns
   player: { type: Object, default: null },
+  // Knapparna för inloggning visas bara när inloggningen är byggd
+  authEnabled: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['identify', 'logout', 'signup']);
@@ -15,11 +17,13 @@ const emit = defineEmits(['identify', 'logout', 'signup']);
       <p class="status" :class="{ known: player }">
         {{ player ? player.username : 'OIDENTIFIERAD' }}
       </p>
-      <div v-if="!player" class="actions">
+      <div v-if="authEnabled && !player" class="actions">
         <button type="button" class="stamp" @click="emit('identify')">IDENTIFIERA</button>
         <button type="button" class="stamp new-id" @click="emit('signup')">NY IDENTITET</button>
       </div>
-      <button v-else type="button" class="stamp logout" @click="emit('logout')">STÄMPLA UT</button>
+      <button v-else-if="player" type="button" class="stamp logout" @click="emit('logout')">
+        STÄMPLA UT
+      </button>
     </div>
   </section>
 </template>
@@ -28,7 +32,7 @@ const emit = defineEmits(['identify', 'logout', 'signup']);
 .id-card {
   position: relative;
   width: 100%;
-  aspect-ratio: 656 / 424;
+  aspect-ratio: 550 / 357;
   background: url('@/assets/images/logincard.webp') center / contain no-repeat;
   container-type: inline-size;
   color: var(--color-ink);
@@ -41,6 +45,7 @@ const emit = defineEmits(['identify', 'logout', 'signup']);
   inset: 13% 6% 13% 51%;
   display: flex;
   flex-direction: column;
+  justify-content: center;
 }
 
 h2 {

@@ -274,16 +274,17 @@ Just nu öppnas den med en tillfällig knapp i ytan `area-handbook` i `HomeView`
 
 `LoginCard` visar spelarens ID-kort på startsidan och förbereder inloggningen. Komponenten visar bara det den får och skickar events uppåt, så den behöver inte ändras när inloggningen byggs.
 
-| Prop / event | Gör                                                                        |
-| ------------ | -------------------------------------------------------------------------- |
-| `player`     | Den inloggade spelaren, t.ex. `{ username }`. `null` visar "OIDENTIFIERAD" |
-| `@identify`  | Skickas när spelaren klickar "Identifiera". Ska öppna inloggningen         |
-| `@signup`    | Skickas när spelaren klickar "Ny identitet". Ska öppna registreringen      |
-| `@logout`    | Skickas när en inloggad spelare klickar "Stämpla ut"                       |
+| Prop / event  | Gör                                                                                |
+| ------------- | ---------------------------------------------------------------------------------- |
+| `player`      | Den inloggade spelaren, t.ex. `{ username }`. `null` visar "OIDENTIFIERAD"         |
+| `authEnabled` | Visar knapparna "Identifiera" och "Ny identitet". `false` tills inloggningen finns |
+| `@identify`   | Skickas när spelaren klickar "Identifiera". Ska öppna inloggningen                 |
+| `@signup`     | Skickas när spelaren klickar "Ny identitet". Ska öppna registreringen              |
+| `@logout`     | Skickas när en inloggad spelare klickar "Stämpla ut"                               |
 
 Bakgrunden är bilden `logincard.webp` med papperet och fotot, och texten ligger som HTML ovanpå. Kortet är en container (`container-type: inline-size`) och textstorlekarna anges i `cqw`, procent av kortets bredd. Därför behåller texten sina proportioner när kortet ändrar storlek.
 
-Det finns ingen inloggning än, så `@identify`, `@signup` och `@logout` har ingen mottagare i `HomeView`.
+Det finns ingen inloggning än, så `authEnabled` är `false` och knapparna döljs. `@identify`, `@signup` och `@logout` har ingen mottagare i `HomeView`.
 
 ### Gemensamma stilar
 
