@@ -42,8 +42,8 @@ const phase = ref('idle');
 const sessionId = ref(null);
 const question = ref(null);
 const feedback = ref('');
-const health = ref(1);
-const previousHealth = ref(1);
+const health = ref(100);
+const previousHealth = ref(100);
 const error = ref('');
 const submitting = ref(false);
 // Sant när backend har en pågående omgång som spelaren kan återuppta

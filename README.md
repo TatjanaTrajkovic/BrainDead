@@ -29,7 +29,7 @@ Det enda som står mellan dig och dem är det som finns kvar i ditt huvud. Varje
 ## Om spelet
 
 - **Så fungerar det:** scenario → fråga → svarsalternativ → feedback
-- **Hälsa:** startar på 1.00 och påverkas av varje val (`health_multiplier`)
+- **Hälsa:** ett heltal som startar på 100. Varje svar drar av sin `health_change` (0 för det bästa valet). Omgången tar slut när hälsan når 0, och hälsan som är kvar blir poängen i topplistan
 - **Roller:** `PLAYER` och `ADMIN`
 
 <!-- TODO: lägg till skärmdump eller GIF när UI:t finns -->
@@ -145,9 +145,9 @@ Vid push och pull request mot `main` kör [CI-flödet](.github/workflows/ci.yaml
 | Tabell             | Beskrivning                                                                                                                   |
 | ------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
 | `users`            | Spelare med roll och status. Gäster har bara `is_guest` och `auth_token`, registrerade även användarnamn, e-post och lösenord |
-| `game_session`     | En spelomgång med aktuell hälsa och status                                                                                    |
+| `game_session`     | En spelomgång med aktuell hälsa (0–100) och status                                                                            |
 | `question`         | Scenario, frågetext och ordning (`position`)                                                                                  |
-| `answer`           | Svarsalternativ med hälsomultiplikator och feedback                                                                           |
+| `answer`           | Svarsalternativ med feedback och `health_change`, hur mycket hälsa svaret drar av (positivt tal)                              |
 | `session_question` | Vilket svar spelaren valde på en fråga i en session                                                                           |
 
 Varje spelare identifieras av en slumpad nyckel som ligger i cookien `braindead_token`. Databasen sparar bara en SHA-256-hash av nyckeln i `auth_token`, så en läckt databas räcker inte för att logga in som någon annan. Gäster och registrerade spelare är vanliga rader i `users`, så resten av backend behöver inte skilja på dem. `role` styr behörighet (`PLAYER` eller `ADMIN`), och `is_guest` visar om spelaren har ett konto.

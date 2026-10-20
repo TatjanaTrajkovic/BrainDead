@@ -11,12 +11,13 @@ const props = defineProps({
   totalBlobs: { type: Number, default: 16 },
 });
 
-const filled = computed(() => Math.ceil(Math.max(0, Math.min(1, props.health)) * props.totalBlobs));
+const percent = computed(() => Math.max(0, Math.min(100, props.health)) / 100);
+const filled = computed(() => Math.ceil(percent.value * props.totalBlobs));
 
 const level = computed(() => {
-  if (props.health > 3 / 4) return { color: 'green', img: brain1 };
-  if (props.health > 2 / 4) return { color: 'yellow', img: brain2 };
-  if (props.health > 1 / 4) return { color: 'orange', img: brain3 };
+  if (props.health > 75) return { color: 'green', img: brain1 };
+  if (props.health > 50) return { color: 'yellow', img: brain2 };
+  if (props.health > 25) return { color: 'orange', img: brain3 };
   if (props.health > 0) return { color: 'red', img: brain4 };
   return { color: 'red', img: brain5 };
 });
@@ -32,7 +33,7 @@ const level = computed(() => {
         :class="i > filled ? 'blob--empty' : `blob--${level.color}`"
       ></div>
     </div>
-    <img :src="level.img" class="icon" :alt="`Hjärnkapacitet ${Math.round(health * 100)} %`" />
+    <img :src="level.img" class="icon" :alt="`Hjärnkapacitet ${health} %`" />
   </div>
 </template>
 
