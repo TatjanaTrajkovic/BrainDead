@@ -1,5 +1,7 @@
 <script setup>
-defineProps({
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+
+const props = defineProps({
   text: {
     type: String,
     required: true,
@@ -10,12 +12,90 @@ defineProps({
     default: false,
   },
 });
+
+const scroller = ref(null);
+// Pilarna visas bara när det finns mer text åt det hållet
+const canScrollUp = ref(false);
+const canScrollDown = ref(false);
+
+function updateArrows() {
+  const el = scroller.value;
+  if (!el) {
+    return;
+  }
+  canScrollUp.value = el.scrollTop > 0;
+  // -1 för att scrollTop kan bli ett decimaltal som aldrig riktigt når botten
+  canScrollDown.value = el.scrollTop + el.clientHeight < el.scrollHeight - 1;
+}
+
+// Ett klick scrollar 80 % av rutans höjd, så att en rad från förra vyn syns kvar
+function scrollStep(direction) {
+  const el = scroller.value;
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  el.scrollBy({
+    top: direction * el.clientHeight * 0.8,
+    behavior: reduceMotion ? 'auto' : 'smooth',
+  });
+}
+
+// Rutan och texten kan ändra storlek (fönstret, typsnitt som laddas), då kan pilarna behöva visas eller döljas
+let observer = null;
+
+onMounted(() => {
+  observer = new ResizeObserver(updateArrows);
+  observer.observe(scroller.value);
+  observer.observe(scroller.value.firstElementChild);
+  updateArrows();
+});
+
+onBeforeUnmount(() => {
+  observer?.disconnect();
+});
+
+// Ny text (nästa fråga eller feedback) börjar från toppen. Elementet är detsamma, så scrollen ligger annars kvar
+watch(
+  () => props.text,
+  async () => {
+    await nextTick();
+    scroller.value.scrollTop = 0;
+    updateArrows();
+  },
+);
 </script>
 
 <template>
-  <div class="scenario-box content-card" :class="{ feedback: isFeedback }">
-    <h3 v-if="isFeedback" class="feedback-title">Vad hände?</h3>
-    <p>{{ text }}</p>
+  <div class="scenario-box">
+    <div class="content-card" :class="{ feedback: isFeedback }">
+      <h3 v-if="isFeedback" class="feedback-title">Vad hände?</h3>
+
+      <div class="scroll-area">
+        <!-- tabindex så att texten går att scrolla med tangentbordet -->
+        <div ref="scroller" class="text" tabindex="0" @scroll="updateArrows">
+          <p>{{ text }}</p>
+        </div>
+
+        <!-- Samma pil som i prologen, pekar uppåt och roteras nedåt med CSS -->
+        <button
+          v-if="canScrollUp"
+          type="button"
+          class="arrow arrow-up"
+          aria-label="Scrolla upp"
+          @click="scrollStep(-1)"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16 L12 7 L19 16" /></svg>
+        </button>
+
+        <button
+          v-if="canScrollDown"
+          type="button"
+          class="arrow arrow-down"
+          aria-label="Scrolla ner"
+          @click="scrollStep(1)"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16 L12 7 L19 16" /></svg>
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -27,12 +107,40 @@ defineProps({
   line-height: 1.5;
 }
 
+/* Kortet fyller rutan och står still, bara texten inuti scrollar */
+.content-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Pilarna placeras i den här ytan, så att uppåtpilen hamnar under rubriken i feedback-fasen */
+.scroll-area {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+.text {
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* Plats för pilarna, så att texten inte hamnar under dem */
+  padding-right: 2.25rem;
+  /* Döljer scrollbaren men behåller scrollningen, pilarna visar att det finns mer */
+  scrollbar-width: none;
+}
+
+.text::-webkit-scrollbar {
+  display: none;
+}
+
 .scenario-box p {
   margin: 0;
 }
 
 /* Feedbacken får grå bakgrund och rubrik så att den skiljer sig från scenariot */
-.scenario-box.feedback {
+.content-card.feedback {
   background-color: var(--color-bg-gray);
 }
 
@@ -43,5 +151,41 @@ defineProps({
   font-weight: normal;
   line-height: 1;
   margin-bottom: 8px;
+}
+
+.arrow {
+  position: absolute;
+  right: 0;
+  width: 1.75rem;
+  color: currentColor;
+  opacity: 0.8;
+}
+
+.arrow-up {
+  top: 0;
+}
+
+.arrow-down {
+  bottom: 0;
+  transform: rotate(180deg);
+}
+
+.arrow:hover {
+  opacity: 1;
+}
+
+.arrow:focus-visible {
+  outline: 3px solid currentColor;
+  outline-offset: 3px;
+}
+
+svg {
+  display: block;
+  width: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 </style>

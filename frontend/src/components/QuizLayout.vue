@@ -29,9 +29,9 @@
 }
 .story {
   grid-area: story;
-  /* Långa scenarier scrollar i stället för att trycka ut svaren och knappen ur panelen */
+  /* Raden får krympa, så att långa scenarier inte trycker ut svaren och knappen ur panelen.
+     Själva scrollen sker inne i ScenarioBox */
   min-height: 0;
-  overflow-y: auto;
 }
 .question {
   grid-area: question;
