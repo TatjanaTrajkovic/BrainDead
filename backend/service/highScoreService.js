@@ -9,7 +9,7 @@ async function getHighScores() {
     `SELECT username, score
      FROM (
        SELECT COALESCE(u.username, CONCAT('Gäst-', u.user_id)) as username,
-              ROUND(gs.current_health * 100) AS score,
+              gs.current_health AS score,
               gs.finished_at,
               -- Numrerar varje spelares omgångar från bäst (1) till sämst
               ROW_NUMBER() OVER (

@@ -17,7 +17,7 @@ CREATE TABLE users(
 CREATE TABLE game_session(
     session_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
-    current_health DECIMAL(3, 2) NOT NULL DEFAULT 1,
+    current_health INT NOT NULL DEFAULT 100,
     status ENUM('ACTIVE', 'COMPLETED', 'PAUSED') NOT NULL DEFAULT 'ACTIVE',
     started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     finished_at TIMESTAMP NULL DEFAULT NULL,
@@ -36,7 +36,7 @@ CREATE TABLE answer(
     answer_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     question_id INT NOT NULL,
     text VARCHAR(150) NOT NULL,
-    health_multiplier DECIMAL(3, 2) NOT NULL,
+    health_change INT NOT NULL,
     feedback VARCHAR(500) NOT NULL,
     FOREIGN KEY (question_id) REFERENCES question(question_id)
 );

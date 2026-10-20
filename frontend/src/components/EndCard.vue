@@ -4,7 +4,7 @@ import brainAlive from '@/assets/images/brains/brain1.webp';
 import brainDead from '@/assets/images/brains/brain5.webp';
 
 const props = defineProps({
-  // Sluthälsan, 0–1 från backend
+  // Sluthälsan, 0–100 från backend
   health: {
     type: Number,
     required: true,
@@ -19,7 +19,7 @@ const props = defineProps({
 // Frisk hjärna om spelaren klarade sig, annars den mest medtagna
 const brainImg = computed(() => (props.isAlive ? brainAlive : brainDead));
 
-const healthPercent = computed(() => Math.round(props.health * 100));
+const healthPercent = computed(() => props.health);
 
 const emit = defineEmits(['play-again']);
 
