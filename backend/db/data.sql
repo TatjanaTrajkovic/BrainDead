@@ -72,13 +72,13 @@ INSERT INTO answer (question_id, text, health_change, feedback) VALUES
 -- 9. Slakthuset
 INSERT INTO answer (question_id, text, health_change, feedback) VALUES
 (9, 'Ingen tid att äta, snabbt vidare mot IKEA. Mat finns ju där.', 30, 'Du underskattade avståndet och kollapsar halvvägs.'),
-(9, 'Du slår upp en eld och tänker att i ett slakthus bör det väl finnas iallafall EN oxfilé? Protein är viktigt.', 15, 'God idé, om det inte vore för zombiernas ljuskänslighet. De ser elden direkt.'),
+(9, 'Du slår upp en eld och tänker att i ett slakthus bör det väl finnas iallafall EN oxfilé? Protein är viktigt.', 20, 'God idé, om det inte vore för zombiernas ljuskänslighet. De ser elden direkt.'),
 (9, 'Någon har lämnat en oöppnad RedBull, koffein och socker är ju bra energi?', 20, 'Du får en himla fart och springer tills du dippar på parkeringen till IKEA. Du tar dig trots allt in med några små bettmärken.'),
 (9, 'Du hittar en påse med bananbröd från det gamla konditoriet intill. Kolhydrater FTW!', 0, 'Mycket bra val, du får snabb och hållbar energi som hjälper dig hela vägen fram!');
 
 -- 10. Bäckebol Ikea slutstationen
 INSERT INTO answer (question_id, text, health_change, feedback) VALUES
-(10, 'Sätter dig ner och äter köttbullar i lugn och ro. Frågor får man ta senare.', 25, 'Du blir mätt och glad, men känner efter en stund hur du börjar bli sugen på hjärna till efterrätt. Du har blivit infekterad!'),
-(10, 'Du tycker något känns fel och bestämmer dig för att prata med kocken.', 40, 'Kocken vänder sig långsamt om. Hans ögon är grumliga och han mumlar "ät... ät...". Innan du hinner backa rycker han åt sig din arm.'),
+(10, 'Sätter dig ner och äter köttbullar i lugn och ro. Frågor får man ta senare.', 25, 'Du blir mätt och glad, men känner efter en stund hur du börjar bli sugen på hjärna till efterrätt. Du skakar av dig det, för den här gången...'),
+(10, 'Du tycker något känns fel och bestämmer dig för att prata med kocken.', 50, 'Kocken vänder sig långsamt om. Hans ögon är grumliga och han mumlar "ät... ät...". Innan du hinner backa rycker han åt sig din arm.'),
 (10, 'Du springer till kylrummet för att se vad som finns där inne.', 0, 'Du slänger upp kylrumsdörren och ett tjugotal överlevare vräker ut. Kocken hade låst in dem för att göra dem till nästa omgång köttbullar. Tillsammans övermannar ni den smittade kocken och barrikaderar köket. Ni har klarat er, men köttbullarna lämnar ni orörda. Grattis, du har överlevt apokalypsen!'),
 (10, 'Du vänder och går raskt mot utgången, kanske finns det överlevare på BAUHAUS?', 30, 'Du lämnar IKEA och styr mot BAUHAUS. Där finns inga överlevare, bara zombies beväpnade med verktyg till vettiga priser.');
