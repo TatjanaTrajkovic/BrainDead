@@ -7,8 +7,6 @@ const pool = mysql.createPool({
   database: process.env.DB_NAME,
   waitForConnections: true,
   connectionLimit: 10,
-  // DECIMAL-kolumner (t.ex. current_health) returneras som tal i stället för strängar
-  decimalNumbers: true,
 });
 
 module.exports = pool;

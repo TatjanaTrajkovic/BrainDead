@@ -15,7 +15,7 @@ async function createSession(userId, forceNew = false) {
   }
   const [result] = await database.query('INSERT INTO game_session (user_id) VALUES (?)', [userId]);
   return {
-    session: { session_id: result.insertId, current_health: 1, status: 'ACTIVE' },
+    session: { session_id: result.insertId, current_health: 100, status: 'ACTIVE' },
     created: true,
   };
 }
@@ -96,7 +96,7 @@ async function answerQuestion(sessionId, answerId, userId) {
       return { error: 'SESSION_NOT_ACTIVE' };
     }
     const [answers] = await connection.query(
-      `SELECT health_multiplier, feedback
+      `SELECT health_change, feedback
       FROM answer
       WHERE answer_id = ? AND question_id = ?`,
       [answerId, question.question_id],
@@ -112,11 +112,7 @@ async function answerQuestion(sessionId, answerId, userId) {
       [sessionId, question.question_id, answerId],
     );
 
-    // Aldrig över 1.00, avrundat till två decimaler
-    const health = Math.min(
-      1,
-      Math.round(Number(sessions[0].current_health) * Number(answer.health_multiplier) * 100) / 100,
-    );
+    const health = Math.max(0, Math.min(100, sessions[0].current_health - answer.health_change));
 
     // Slut när hälsan är 0 eller när det inte finns fler frågor
     const nextQuestion = health > 0 ? await getNextQuestion(sessionId, connection) : null;
