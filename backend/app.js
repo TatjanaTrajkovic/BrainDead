@@ -3,11 +3,13 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const app = express();
-const port = 3000;
+// Port och frontend-adress läses från .env. Fallback gör att det fungerar lokalt utan ändringar
+const port = process.env.PORT || 3000;
+const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:5173';
 
 const cookieParser = require('cookie-parser');
 
-app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
+app.use(cors({ origin: corsOrigin, credentials: true }));
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -23,5 +25,5 @@ app.use('/api', highScoreRoute);
 app.use('/api', authRoute);
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
+  console.log(`The Brain Deads are listening on backend port ${port}`);
 });

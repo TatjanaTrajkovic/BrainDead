@@ -91,6 +91,8 @@ cp .env.example .env
 | `DB_USER`      | Ditt MySQL-användarnamn                                       |
 | `DB_PASSWORD`  | Ditt MySQL-lösenord                                           |
 | `DB_NAME`      | Databasens namn, `BrainDead`                                  |
+| `PORT`         | Backendens port, `3000` om den inte anges                     |
+| `CORS_ORIGIN`  | Frontendens adress, `http://localhost:5173` om den inte anges |
 | `Vite_API_URL` | Adress till backend-API:t, oftast `http://localhost:3000/api` |
 
 ### 4. Backend
