@@ -5,13 +5,15 @@ import { useGame } from '@/composables/useGame';
 import { useAuth } from '@/composables/useAuth';
 import SessionMenu from '@/components/SessionMenu.vue';
 import HandbookOpen from '@/components/HandbookOpen.vue';
-import StartButton from '@/components/StartButton.vue';
 import { handbookPages } from '@/data/handbook';
 import HighScoreOverlay from '@/components/HighScoreOverlay.vue';
 import LoginCard from '@/components/LoginCard.vue';
 import PrologueNotebook from '@/components/PrologueNotebook.vue';
 import { prologuePages } from '@/data/prologue';
 import HandbookHighscore from '@/components/HandbookHighscore.vue';
+import ThumbTest from '@/components/ThumbTest.vue';
+import { useAccessFlow } from '@/composables/useAccessFlow';
+import AccessPanel from '@/components/AccessPanel.vue';
 
 const router = useRouter();
 const { error, start, resume, hasActiveSession, checkActiveSession } = useGame();
@@ -20,6 +22,23 @@ const { player, loadPlayer } = useAuth();
 // <dialog> längst ner i templaten ger bakgrund, stängning med Esc och håller fokus i menyn.
 // Variabelnamnet matchar ref="menu" i templaten, så Vue lägger elementet här efter rendering
 const menu = ref(null);
+
+// Tillståndsmaskinen för panelen och tummen. handleLogin anropas när spelaren valt Google/GitHub
+const {
+  items,
+  state: accessState,
+  progress,
+  selected,
+  canScan,
+  message,
+  reset: resetAccess,
+  onScanStart,
+  onScanProgress,
+  onScanCancel,
+  onScanned,
+  moveSelection,
+  confirmSelection,
+} = useAccessFlow(handleLogin);
 
 // Styr om den uppslagna handboken visas
 const isHandbookOpen = ref(false);
@@ -40,6 +59,11 @@ function closeMenu() {
   menu.value.close();
 }
 
+// provider är 'google' eller 'github'. Koppla in din inloggning här
+// (jag har inte sett useAuth, så anpassa efter vad den erbjuder)
+function handleLogin(provider) {
+  console.log('Logga in med', provider);
+}
 // Fråga först om spelaren har en pågående omgång, eftersom forceNew pausar den
 function handleStartNew() {
   if (hasActiveSession.value && !window.confirm('Du har en pågående omgång. Vill du börja om?')) {
@@ -48,6 +72,11 @@ function handleStartNew() {
   closeMenu();
   start(true);
   router.push({ name: 'game' });
+}
+
+function handleStart() {
+  resetAccess();
+  openMenu();
 }
 
 function handleResume() {
@@ -71,8 +100,19 @@ function handleResume() {
       <PrologueNotebook :pages="prologuePages" />
     </div>
     <LoginCard class="area-id" :player="player" />
-    <div class="area-start">
-      <StartButton @start="openMenu" />
+    <div class="area-panel">
+      <AccessPanel
+        class="panel"
+        :state="accessState"
+        :message="message"
+        :progress="progress"
+        :items="items"
+        :selected="selected"
+        @up="moveSelection(-1)"
+        @down="moveSelection(1)"
+        @ok="confirmSelection"
+        @start="handleStart"
+      />
     </div>
   </div>
 
@@ -91,18 +131,32 @@ function handleResume() {
       <button type="button" class="btn btn-gray" @click="closeMenu">Stäng</button>
     </div>
   </dialog>
+  <ThumbTest
+    anchor-to=".home"
+    anchor-side="right"
+    :anchor-offset-x="-10"
+    :anchor-offset-y="30"
+    scanner-selector=".access-scanner"
+    :scan-enabled="canScan"
+    :z-index="30"
+    @scan-start="onScanStart"
+    @scan-progress="onScanProgress"
+    @scan-cancel="onScanCancel"
+    @scanned="onScanned"
+  />
 </template>
 
 <style scoped>
 .home {
   display: grid;
-  /* Bredderna är valda så att prologen och ID-kort + startknapp blir lika höga */
+  /* Bredderna är valda så att prologen och panelen blir lika höga */
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.7fr);
   grid-template-rows: auto 1fr;
   grid-template-areas:
-    'handbook prolog id'
-    'handbook prolog start';
+    'handbook prolog panel'
+    'handbook prolog panel';
   gap: 2rem;
+  height: 100%;
 }
 
 .area-handbook {
@@ -116,17 +170,24 @@ function handleResume() {
 .area-id {
   grid-area: id;
 }
-.area-start {
-  grid-area: start;
+
+.area-panel {
+  grid-area: panel;
+  min-height: 0;
+  /* Innehållet räknas som 0 i höjd, så panelen påverkar inte radhöjden.
+     Rutan sträcks ändå till grid-arean. */
+  contain: size;
   display: flex;
   justify-content: center;
-  align-items: flex-end;
 }
 
-/* Tillfälligt, tas bort när alla komponenter är inkopplade */
-.placeholder {
-  min-height: 120px;
-  border: 2px dashed var(--color-border-outer);
+/* Panelen fyller grid-arean på höjden, bredden följer bildens proportioner.
+   .area-panel > .panel behövs för att slå AccessPanels egen width: 100% */
+.area-panel > .panel {
+  width: auto;
+  height: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .menu-overlay {
