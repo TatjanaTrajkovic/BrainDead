@@ -58,22 +58,23 @@ async function registerUser(username, password) {
 
 async function guestToUser(userId, username, password) {
   const hashedPassword = await hashPassword(password);
+  let result;
   try {
-    const [result] = await database.execute(
+    [result] = await database.execute(
       `UPDATE users SET username = ?, password_hash = ?, is_guest = FALSE WHERE user_id = ? AND status = ?`,
       [username, hashedPassword, userId, 'ACTIVE'],
     );
-    if (result.affectedRows === 0) {
-      throw new Error('Användaren är inte en gäst');
-    }
   } catch (err) {
     // Förutsätter UNIQUE-constraint på username i databasen
     if (err.code === 'ER_DUP_ENTRY') {
       const e = new Error('Användarnamnet är upptaget');
       e.code = 'USERNAME_TAKEN';
-      return { error: e.code };
+      throw e;
     }
-    return { error: err.code };
+    throw err;
+  }
+  if (result.affectedRows === 0) {
+    throw new Error('Användaren är inte en gäst');
   }
 
   return { userId: userId, username, is_guest: false };
