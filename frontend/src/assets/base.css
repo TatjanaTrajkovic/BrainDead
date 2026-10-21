@@ -99,7 +99,7 @@ html {
 }
 
 body {
-  min-height: 100vh;
+  min-height: 100dvh;
   color: var(--color-text);
   background: var(--color-bg) url('./images/background.webp') center bottom / cover no-repeat;
   font-family: 'Special Elite', system-ui, sans-serif;
