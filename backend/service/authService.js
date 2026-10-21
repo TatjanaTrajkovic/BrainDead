@@ -32,6 +32,17 @@ async function verifyPassword(password, stored) {
   return crypto.timingSafeEqual(candidate, expectedBuffer);
 }
 
+// username är UNIQUE i databasen, så ett upptaget namn ger ER_DUP_ENTRY.
+// Det blir USERNAME_TAKEN (409), allt annat kastas vidare och blir 500
+function handleDbError(err) {
+  if (err.code === 'ER_DUP_ENTRY') {
+    const e = new Error('Användarnamnet är upptaget');
+    e.code = 'USERNAME_TAKEN';
+    throw e;
+  }
+  throw err;
+}
+
 async function createGuest() {
   const token = crypto.randomUUID();
   const [result] = await database.query(
@@ -41,43 +52,34 @@ async function createGuest() {
   return { userId: result.insertId, token };
 }
 
+// Ny spelare utan gäst: kontot får en token direkt, så att spelaren är inloggad
 async function registerUser(username, password) {
   const hashedPassword = await hashPassword(password);
-  const [existing] = await database.query('SELECT user_id FROM users WHERE username = ?', [
-    username,
-  ]);
-
-  if (existing.length > 0) throw new Error('Username taken');
-
-  const [result] = await database.execute(
-    'INSERT INTO users(username, password_hash) VALUES (?, ?)',
-    [username, hashedPassword],
-  );
-  return { userId: result.insertId, username };
+  const token = crypto.randomUUID();
+  try {
+    const [result] = await database.execute(
+      'INSERT INTO users (username, password_hash, auth_token) VALUES (?, ?, ?)',
+      [username, hashedPassword, hashToken(token)],
+    );
+    return { user: { user_id: result.insertId, username, is_guest: false }, token };
+  } catch (err) {
+    handleDbError(err);
+  }
 }
 
+// Gästen blir ett konto, så att poängen följer med. auth_token ligger kvar, så cookien fortsätter gälla
 async function guestToUser(userId, username, password) {
   const hashedPassword = await hashPassword(password);
-  let result;
   try {
-    [result] = await database.execute(
-      `UPDATE users SET username = ?, password_hash = ?, is_guest = FALSE WHERE user_id = ? AND status = ?`,
+    await database.execute(
+      `UPDATE users SET username = ?, password_hash = ?, is_guest = FALSE
+       WHERE user_id = ? AND is_guest = TRUE AND status = ?`,
       [username, hashedPassword, userId, 'ACTIVE'],
     );
+    return { user_id: userId, username, is_guest: false };
   } catch (err) {
-    // Förutsätter UNIQUE-constraint på username i databasen
-    if (err.code === 'ER_DUP_ENTRY') {
-      const e = new Error('Användarnamnet är upptaget');
-      e.code = 'USERNAME_TAKEN';
-      throw e;
-    }
-    throw err;
+    handleDbError(err);
   }
-  if (result.affectedRows === 0) {
-    throw new Error('Användaren är inte en gäst');
-  }
-
-  return { userId: userId, username, is_guest: false };
 }
 
 // display_name är namnet som visas, samma som i topplistan: användarnamnet, eller Gäst-<id> för gäster
