@@ -1,6 +1,7 @@
 const authService = require('../service/authService');
-// const utils = require('../utils/validateUsername');
 const { TOKEN_COOKIE, TOKEN_COOKIE_OPTIONS } = require('../utils/authCookie');
+const { normalizeUsername, validateUsername } = require('../utils/validateUsername');
+const { normalizePassword, validatePassword } = require('../utils/validatePassword');
 
 exports.createGuest = async (req, res) => {
   try {
@@ -26,9 +27,9 @@ exports.createGuest = async (req, res) => {
 };
 
 exports.createUser = async (req, res) => {
-  const { username, password } = req.body;
+  const { username, password } = req.body ?? {};
 
-  if (!username || !password) {
+  if (typeof username !== 'string' || typeof password !== 'string') {
     return res.status(400).json({ error: 'Användarnamn och lösenord krävs' });
   }
 
@@ -36,15 +37,27 @@ exports.createUser = async (req, res) => {
     return res.status(400).json({ error: 'Du är redan inloggad som registrerad användare' });
   }
 
+  const cleanUsername = normalizeUsername(username);
+  const cleanPassword = normalizePassword(password);
+
+  const usernameError = validateUsername(cleanUsername);
+  if (usernameError) {
+    return res.status(400).json({ error: usernameError });
+  }
+  const passwordError = validatePassword(cleanPassword);
+  if (passwordError) {
+    return res.status(400).json({ error: passwordError });
+  }
+
   try {
     let user;
 
     if (req.user) {
       // Gäst: uppgradera befintlig rad, cookien fortsätter gälla
-      user = await authService.guestToUser(req.user.user_id, username, password);
+      user = await authService.guestToUser(req.user.user_id, cleanUsername, cleanPassword);
     } else {
       // Ingen spelare: skapa ny användare och logga in direkt
-      const result = await authService.registerUser(username, password);
+      const result = await authService.registerUser(cleanUsername, cleanPassword);
       res.cookie(TOKEN_COOKIE, result.token, TOKEN_COOKIE_OPTIONS);
       user = result.user;
     }
