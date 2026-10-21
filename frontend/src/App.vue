@@ -1,11 +1,13 @@
 <script setup>
-import { RouterView } from 'vue-router';
+import { RouterView, RouterLink } from 'vue-router';
 </script>
 
 <template>
   <main>
     <header>
-      <img src="./assets/images/logo.webp" alt="BrainDead" class="logo" />
+      <RouterLink to="/">
+        <img src="./assets/images/logo.webp" alt="BrainDead" class="logo" />
+      </RouterLink>
     </header>
     <RouterView />
   </main>
