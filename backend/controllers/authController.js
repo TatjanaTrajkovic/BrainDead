@@ -1,5 +1,7 @@
 const authService = require('../service/authService');
 const cookie = require('../utils/authCookie');
+// const utils = require('../utils/validateUsername');
+const { TOKEN_COOKIE, TOKEN_COOKIE_OPTIONS } = require('../utils/authCookie');
 
 exports.createGuest = async (req, res) => {
   try {
@@ -22,6 +24,40 @@ exports.createGuest = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Kunde inte skapa gäst' });
+  }
+};
+
+exports.createUser = async (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Användarnamn och lösenord krävs' });
+  }
+
+  if (req.user && !req.user.is_guest) {
+    return res.status(400).json({ error: 'Du är redan inloggad som registrerad användare' });
+  }
+
+  try {
+    let user;
+
+    if (req.user) {
+      // Gäst: uppgradera befintlig rad, cookien fortsätter gälla
+      user = await authService.guestToUser(req.user.user_id, username, password);
+    } else {
+      // Ingen spelare: skapa ny användare och logga in direkt
+      const result = await authService.registerUser(username, password);
+      res.cookie(TOKEN_COOKIE, result.token, TOKEN_COOKIE_OPTIONS);
+      user = result.user;
+    }
+
+    return res.status(201).json({ message: 'Registrering lyckades', user });
+  } catch (error) {
+    if (error.code === 'USERNAME_TAKEN') {
+      return res.status(409).json({ error: 'Användarnamnet är upptaget' });
+    }
+    console.error(error);
+    return res.status(500).json({ error: 'Serverfel' });
   }
 };
 
