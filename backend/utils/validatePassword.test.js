@@ -25,3 +25,15 @@ test('saknat lösenord eller bara blanktecken', () => {
   assert.equal(validatePassword(' \t\n     '), 'Lösenordet saknas');
   assert.equal(validatePassword('  hemligt  '), null);
 });
+
+// .normalize('NFD') istället för att klistra in tecknen, formerna ser likadana ut i editorn
+test('normaliserar lösenordet', () => {
+  // "a" + ring ovanför (två tecken) blir ett "å"
+  assert.equal(normalizePassword('å'.normalize('NFD')), 'å'.normalize('NFC'));
+  // Ingen trim, mellanslagen är en del av lösenordet
+  assert.equal(normalizePassword('  hej  '), '  hej  ');
+  // 8 tecken innan normalisering men bara 4 efter, därför valideras det normaliserade
+  const decomposed = 'å'.normalize('NFD').repeat(4);
+  assert.equal(validatePassword(decomposed), null);
+  assert.match(validatePassword(normalizePassword(decomposed)), /minst 8/);
+});
