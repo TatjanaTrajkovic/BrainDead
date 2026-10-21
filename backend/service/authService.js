@@ -61,7 +61,15 @@ async function registerUser(username, password) {
       'INSERT INTO users (username, password_hash, auth_token) VALUES (?, ?, ?)',
       [username, hashedPassword, hashToken(token)],
     );
-    return { user: { user_id: result.insertId, username, is_guest: false }, token };
+    // Samma form som findByToken. display_name är användarnamnet, precis som COALESCE ger
+    const user = {
+      user_id: result.insertId,
+      username,
+      role: 'PLAYER',
+      is_guest: false,
+      display_name: username,
+    };
+    return { user, token };
   } catch (err) {
     handleDbError(err);
   }
@@ -76,7 +84,7 @@ async function guestToUser(userId, username, password) {
        WHERE user_id = ? AND is_guest = TRUE AND status = ?`,
       [username, hashedPassword, userId, 'ACTIVE'],
     );
-    return { user_id: userId, username, is_guest: false };
+    return { user_id: userId, username, role: 'PLAYER', is_guest: false, display_name: username };
   } catch (err) {
     handleDbError(err);
   }

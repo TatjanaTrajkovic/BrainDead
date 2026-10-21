@@ -144,15 +144,17 @@ Vid push och pull request mot `main` kör [CI-flödet](.github/workflows/ci.yaml
 
 ## Databasmodell
 
-| Tabell             | Beskrivning                                                                                                                   |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| `users`            | Spelare med roll och status. Gäster har bara `is_guest` och `auth_token`, registrerade även användarnamn, e-post och lösenord |
-| `game_session`     | En spelomgång med aktuell hälsa (0–100) och status                                                                            |
-| `question`         | Scenario, frågetext och ordning (`position`)                                                                                  |
-| `answer`           | Svarsalternativ med feedback och `health_change`, hur mycket hälsa svaret drar av (positivt tal)                              |
-| `session_question` | Vilket svar spelaren valde på en fråga i en session                                                                           |
+| Tabell             | Beskrivning                                                                                                           |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| `users`            | Spelare med roll och status. Gäster har bara `is_guest` och `auth_token`, registrerade även användarnamn och lösenord |
+| `game_session`     | En spelomgång med aktuell hälsa (0–100) och status                                                                    |
+| `question`         | Scenario, frågetext och ordning (`position`)                                                                          |
+| `answer`           | Svarsalternativ med feedback och `health_change`, hur mycket hälsa svaret drar av (positivt tal)                      |
+| `session_question` | Vilket svar spelaren valde på en fråga i en session                                                                   |
 
 Varje spelare identifieras av en slumpad nyckel som ligger i cookien `braindead_token`. Databasen sparar bara en SHA-256-hash av nyckeln i `auth_token`, så en läckt databas räcker inte för att logga in som någon annan. Gäster och registrerade spelare är vanliga rader i `users`, så resten av backend behöver inte skilja på dem. `role` styr behörighet (`PLAYER` eller `ADMIN`), och `is_guest` visar om spelaren har ett konto.
+
+Lösenord hashas med Nodes inbyggda `crypto.scrypt` och ett slumpat salt per lösenord, och sparas som `salt:hash` i `password_hash`. Nyckeln i cookien kan hashas med snabba SHA-256 eftersom den är slumpad, men lösenord väljs av människor och går att gissa, så de behöver en långsam hash.
 
 Notera: finished_at i game_session är tiden när omgången lämnat aktivt läge. Sätts både vid COMPLETED och PAUSED, tolkas tillsammans med status.
 
@@ -166,6 +168,7 @@ Notera: finished_at i game_session är tiden när omgången lämnat aktivt läge
 | ----- | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | POST  | `/api/auth/guest`                   | Skapar en gästspelare och sätter cookien `braindead_token`, eller returnerar spelaren som redan finns. Svarar `{ user_id, username, role, is_guest, display_name }`                 |
 | GET   | `/api/auth/me`                      | Hämtar spelaren som cookien hör till, i samma form som ovan. `display_name` är användarnamnet, eller `Gäst-<user_id>` för gäster. `401` utan cookie                                 |
+| POST  | `/api/auth/signup`                  | Registrerar ett konto. Body `{ "username", "password" }`. En gäst uppgraderas och behåller sina poäng, utan cookie skapas ett nytt konto. Svarar `201` i samma form som ovan        |
 | POST  | `/api/sessions`                     | Startar en ny omgång, eller returnerar den pågående om en redan finns. Body `{ "forceNew": true }` pausar den pågående omgången och startar en ny.                                  |
 | GET   | `/api/sessions/active`              | Hämtar användarens pågående omgång, 404 om ingen finns. Skapar aldrig något.                                                                                                        |
 | GET   | `/api/sessions/:sessionId`          | Hämtar en pågående eller avslutad omgång                                                                                                                                            |
@@ -174,19 +177,19 @@ Notera: finished_at i game_session är tiden när omgången lämnat aktivt läge
 | GET   | `/api/highscores`                   | Hämtar topp 10: varje spelares bästa avslutade omgång med hälsa över 0, som `{ username, score }`. Gäster visas som `Gäst-<user_id>`. Vid lika poäng vinner den som blev klar först |
 | GET   | `/admin/questions`                  | Hämtar alla frågor                                                                                                                                                                  |
 
-Alla `/api/sessions`-endpoints kräver cookien `braindead_token`. Middlewaren `requireUser` slår upp spelaren och sätter `req.user`, och utan giltig cookie svarar de `401`. Endpoints med `:sessionId` kontrollerar dessutom att omgången tillhör spelaren. En annans omgång ger `404`, samma svar som en omgång som inte finns, så det avslöjas inte att den finns. `/api/highscores` och `/api/auth/guest` är öppna, och `/api/auth/me` kräver också cookien.
+Middlewaren `loadUser` slår upp spelaren från cookien `braindead_token` och sätter `req.user`. `loadUser()` svarar `401` utan giltig cookie, och används av alla `/api/sessions`-endpoints och `/api/auth/me`. `loadUser({ required: false })` släpper igenom anropet även utan spelare. Det används av `/api/auth/signup`, som ska fungera både för gäster och för nya besökare. Endpoints med `:sessionId` kontrollerar dessutom att omgången tillhör spelaren. En annans omgång ger `404`, samma svar som en omgång som inte finns, så det avslöjas inte att den finns. `/api/highscores` och `/api/auth/guest` är öppna.
 
 ### Felsvar
 
-Fel från `/api/sessions`-endpoints returneras som `{ "error": "..." }`.
+Fel returneras som `{ "error": "..." }`.
 
-| Status | När                                                   |
-| ------ | ----------------------------------------------------- |
-| 400    | Svaret hör inte till den aktuella frågan              |
-| 401    | Ingen eller ogiltig spelare, cookien saknas           |
-| 404    | Omgången finns inte, eller tillhör en annan spelare   |
-| 409    | Omgången är redan avslutad (gäller `POST .../answer`) |
-| 500    | Serverfel                                             |
+| Status | När                                                                                                      |
+| ------ | -------------------------------------------------------------------------------------------------------- |
+| 400    | Svaret hör inte till den aktuella frågan, eller signup saknar värden eller spelaren är redan registrerad |
+| 401    | Ingen eller ogiltig spelare, cookien saknas                                                              |
+| 404    | Omgången finns inte, eller tillhör en annan spelare                                                      |
+| 409    | Omgången är redan avslutad (`POST .../answer`), eller användarnamnet är upptaget (signup)                |
+| 500    | Serverfel                                                                                                |
 
 ## Spelflöde i frontend
 
