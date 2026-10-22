@@ -77,3 +77,11 @@ exports.createUser = async (req, res) => {
 exports.getMe = (req, res) => {
   res.status(200).json(req.user);
 };
+
+exports.logout = (req, res) => {
+  res.clearCookie(cookie.TOKEN_COOKIE);
+};
+
+exports.login = async (req, res) => {
+  const { username, password } = req.body ?? {};
+};
