@@ -103,4 +103,48 @@ async function findByToken(token) {
   return rows[0] ?? null;
 }
 
-module.exports = { createGuest, findByToken, registerUser, verifyPassword, guestToUser };
+// null både när användarnamnet saknas och när lösenordet är fel,
+// så att controllern inte kan avslöja vilka användarnamn som finns.
+// Ny token vid varje inloggning, den gamla slutar gälla
+async function loginUser(username, password) {
+  const [rows] = await database.execute(
+    `SELECT user_id, username, role, password_hash
+     FROM users
+     WHERE username = ? AND status = ? AND is_guest = FALSE`,
+    [username, 'ACTIVE'],
+  );
+  const row = rows[0];
+  if (!row || !(await verifyPassword(password, row.password_hash))) {
+    return null;
+  }
+
+  const token = crypto.randomUUID();
+  await database.execute('UPDATE users SET auth_token = ? WHERE user_id = ?', [
+    hashToken(token),
+    row.user_id,
+  ]);
+  // Samma form som findByToken, password_hash skickas aldrig vidare
+  const user = {
+    user_id: row.user_id,
+    username: row.username,
+    role: row.role,
+    is_guest: false,
+    display_name: row.username,
+  };
+  return { user, token };
+}
+
+// Token slutar gälla, även om någon har kvar en kopia av cookien
+async function logoutUser(userId) {
+  await database.execute('UPDATE users SET auth_token = NULL WHERE user_id = ?', [userId]);
+}
+
+module.exports = {
+  createGuest,
+  findByToken,
+  registerUser,
+  verifyPassword,
+  guestToUser,
+  loginUser,
+  logoutUser,
+};
