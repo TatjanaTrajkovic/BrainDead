@@ -80,10 +80,12 @@ exports.getMe = (req, res) => {
 
 exports.logoutUser = async (req, res) => {
   try {
+    if (req.user.is_guest) {
+      return res.status(400).json({ error: 'Gäster kan inte logga ut' });
+    }
     await authService.logoutUser(req.user.user_id);
     res.clearCookie(TOKEN_COOKIE, { httpOnly: true, sameSite: 'lax' });
-    res.status(200).json({ message: 'Utloggad' });
-    res.status(204).end();
+    return res.status(200).json({ message: 'Utloggad' });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Kunde inte logga ut' });
@@ -91,5 +93,24 @@ exports.logoutUser = async (req, res) => {
 };
 
 exports.loginUser = async (req, res) => {
-  const { cleamUsername, cleanPassword } = req.body ?? {};
+  const { username, password } = req.body ?? {};
+
+  if (typeof username !== 'string' || typeof password !== 'string') {
+    return res.status(400).json({ error: 'Användarnamn och lösenord krävs' });
+  }
+  const cleanUsername = normalizeUsername(username);
+  const cleanPassword = normalizePassword(password);
+
+  try {
+    const result = await authService.loginUser(cleanUsername, cleanPassword);
+    // Samma svar för fel användarnamn och fel lösenord, så att det inte avslöjas vilka namn som finns
+    if (!result) {
+      return res.status(401).json({ error: 'Fel användarnamn eller lösenord' });
+    }
+    res.cookie(TOKEN_COOKIE, result.token, TOKEN_COOKIE_OPTIONS);
+    return res.status(200).json(result.user);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Kunde inte logga in' });
+  }
 };
