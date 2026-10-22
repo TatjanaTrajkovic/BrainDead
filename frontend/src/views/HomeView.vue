@@ -12,6 +12,7 @@ import LoginCard from '@/components/LoginCard.vue';
 import PrologueNotebook from '@/components/PrologueNotebook.vue';
 import { prologuePages } from '@/data/prologue';
 import HandbookHighscore from '@/components/HandbookHighscore.vue';
+import ConfirmDialog from '@/components/ConfirmDialog.vue';
 
 const router = useRouter();
 const { error, start, resume, hasActiveSession, checkActiveSession } = useGame();
@@ -20,6 +21,8 @@ const { player, loadPlayer } = useAuth();
 // <dialog> längst ner i templaten ger bakgrund, stängning med Esc och håller fokus i menyn.
 // Variabelnamnet matchar ref="menu" i templaten, så Vue lägger elementet här efter rendering
 const menu = ref(null);
+// Egen ruta i spelets stil som frågar om spelaren vill börja om, ersätter window.confirm
+const restartDialog = ref(null);
 
 // Styr om den uppslagna handboken visas
 const isHandbookOpen = ref(false);
@@ -42,9 +45,14 @@ function closeMenu() {
 
 // Fråga först om spelaren har en pågående omgång, eftersom forceNew pausar den
 function handleStartNew() {
-  if (hasActiveSession.value && !window.confirm('Du har en pågående omgång. Vill du börja om?')) {
+  if (hasActiveSession.value) {
+    restartDialog.value.open();
     return;
   }
+  startNewGame();
+}
+
+function startNewGame() {
   closeMenu();
   start(true);
   router.push({ name: 'game' });
@@ -91,6 +99,14 @@ function handleResume() {
       <button type="button" class="btn btn-gray" @click="closeMenu">Stäng</button>
     </div>
   </dialog>
+  <ConfirmDialog
+    ref="restartDialog"
+    title="Pågående omgång"
+    message="Du har en pågående omgång. Vill du börja om?"
+    confirm-text="Börja om"
+    cancel-text="Avbryt"
+    @confirm="startNewGame"
+  />
 </template>
 
 <style scoped>
