@@ -154,6 +154,8 @@ Vid push och pull request mot `main` kör [CI-flödet](.github/workflows/ci.yaml
 
 Varje spelare identifieras av en slumpad nyckel som ligger i cookien `braindead_token`. Databasen sparar bara en SHA-256-hash av nyckeln i `auth_token`, så en läckt databas räcker inte för att logga in som någon annan. Gäster och registrerade spelare är vanliga rader i `users`, så resten av backend behöver inte skilja på dem. `role` styr behörighet (`PLAYER` eller `ADMIN`), och `is_guest` visar om spelaren har ett konto.
 
+Varje inloggning skapar en ny nyckel som ersätter den gamla, och utloggning sätter `auth_token` till `NULL`. Eftersom varje spelare bara har en nyckel går det att vara inloggad på en enhet åt gången: loggar man in på en ny enhet blir den gamla utloggad, och utloggning gäller alla enheter. Cookien gäller i ett år, men databasen har ingen egen utgångstid för nyckeln.
+
 Lösenord hashas med Nodes inbyggda `crypto.scrypt` och ett slumpat salt per lösenord, och sparas som `salt:hash` i `password_hash`. Nyckeln i cookien kan hashas med snabba SHA-256 eftersom den är slumpad, men lösenord väljs av människor och går att gissa, så de behöver en långsam hash.
 
 Notera: finished_at i game_session är tiden när omgången lämnat aktivt läge. Sätts både vid COMPLETED och PAUSED, tolkas tillsammans med status.
@@ -169,6 +171,8 @@ Notera: finished_at i game_session är tiden när omgången lämnat aktivt läge
 | POST  | `/api/auth/guest`                   | Skapar en gästspelare och sätter cookien `braindead_token`, eller returnerar spelaren som redan finns. Svarar `{ user_id, username, role, is_guest, display_name }`                 |
 | GET   | `/api/auth/me`                      | Hämtar spelaren som cookien hör till, i samma form som ovan. `display_name` är användarnamnet, eller `Gäst-<user_id>` för gäster. `401` utan cookie                                 |
 | POST  | `/api/auth/signup`                  | Registrerar ett konto. Body `{ "username", "password" }`. En gäst uppgraderas och behåller sina poäng, utan cookie skapas ett nytt konto. Svarar `201` i samma form som ovan        |
+| POST  | `/api/auth/login`                   | Loggar in ett registrerat konto. Body `{ "username", "password" }`. Sätter en ny cookie och svarar `200` i samma form som ovan. Fel namn och fel lösenord ger samma `401`           |
+| POST  | `/api/auth/logout`                  | Loggar ut spelaren: nyckeln slutar gälla och cookien tas bort. Svarar `200`. Gäster får `400`, eftersom de inte kan logga in igen                                                   |
 | POST  | `/api/sessions`                     | Startar en ny omgång, eller returnerar den pågående om en redan finns. Body `{ "forceNew": true }` pausar den pågående omgången och startar en ny.                                  |
 | GET   | `/api/sessions/active`              | Hämtar användarens pågående omgång, 404 om ingen finns. Skapar aldrig något.                                                                                                        |
 | GET   | `/api/sessions/:sessionId`          | Hämtar en pågående eller avslutad omgång                                                                                                                                            |
@@ -177,19 +181,19 @@ Notera: finished_at i game_session är tiden när omgången lämnat aktivt läge
 | GET   | `/api/highscores`                   | Hämtar topp 10: varje spelares bästa avslutade omgång med hälsa över 0, som `{ username, score }`. Gäster visas som `Gäst-<user_id>`. Vid lika poäng vinner den som blev klar först |
 | GET   | `/admin/questions`                  | Hämtar alla frågor                                                                                                                                                                  |
 
-Middlewaren `loadUser` slår upp spelaren från cookien `braindead_token` och sätter `req.user`. `loadUser()` svarar `401` utan giltig cookie, och används av alla `/api/sessions`-endpoints och `/api/auth/me`. `loadUser({ required: false })` släpper igenom anropet även utan spelare. Det används av `/api/auth/signup`, som ska fungera både för gäster och för nya besökare. Endpoints med `:sessionId` kontrollerar dessutom att omgången tillhör spelaren. En annans omgång ger `404`, samma svar som en omgång som inte finns, så det avslöjas inte att den finns. `/api/highscores` och `/api/auth/guest` är öppna.
+Middlewaren `loadUser` slår upp spelaren från cookien `braindead_token` och sätter `req.user`. `loadUser()` svarar `401` utan giltig cookie, och används av alla `/api/sessions`-endpoints, `/api/auth/me` och `/api/auth/logout`. `loadUser({ required: false })` släpper igenom anropet även utan spelare. Det används av `/api/auth/signup`, som ska fungera både för gäster och för nya besökare. Endpoints med `:sessionId` kontrollerar dessutom att omgången tillhör spelaren. En annans omgång ger `404`, samma svar som en omgång som inte finns, så det avslöjas inte att den finns. `/api/highscores`, `/api/auth/guest` och `/api/auth/login` är öppna.
 
 ### Felsvar
 
 Fel returneras som `{ "error": "..." }`.
 
-| Status | När                                                                                                      |
-| ------ | -------------------------------------------------------------------------------------------------------- |
-| 400    | Svaret hör inte till den aktuella frågan, eller signup saknar värden eller spelaren är redan registrerad |
-| 401    | Ingen eller ogiltig spelare, cookien saknas                                                              |
-| 404    | Omgången finns inte, eller tillhör en annan spelare                                                      |
-| 409    | Omgången är redan avslutad (`POST .../answer`), eller användarnamnet är upptaget (signup)                |
-| 500    | Serverfel                                                                                                |
+| Status | När                                                                                                                                        |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| 400    | Svaret hör inte till den aktuella frågan, signup eller login saknar värden, spelaren är redan registrerad, eller en gäst försöker logga ut |
+| 401    | Ingen eller ogiltig spelare, cookien saknas, eller fel användarnamn eller lösenord vid login                                               |
+| 404    | Omgången finns inte, eller tillhör en annan spelare                                                                                        |
+| 409    | Omgången är redan avslutad (`POST .../answer`), eller användarnamnet är upptaget (signup)                                                  |
+| 500    | Serverfel                                                                                                                                  |
 
 ## Spelflöde i frontend
 
