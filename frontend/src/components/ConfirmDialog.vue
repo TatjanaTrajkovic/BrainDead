@@ -94,7 +94,3 @@ defineExpose({ open });
   text-transform: uppercase;
 }
 </style>
-
-
-
-
