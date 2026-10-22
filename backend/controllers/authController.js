@@ -84,7 +84,7 @@ exports.logoutUser = async (req, res) => {
       return res.status(400).json({ error: 'Gäster kan inte logga ut' });
     }
     await authService.logoutUser(req.user.user_id);
-    res.clearCookie(TOKEN_COOKIE, { httpOnly: true, sameSite: 'lax' });
+    res.clearCookie(TOKEN_COOKIE, TOKEN_COOKIE_OPTIONS);
     return res.status(200).json({ message: 'Utloggad' });
   } catch (err) {
     console.error(err);
