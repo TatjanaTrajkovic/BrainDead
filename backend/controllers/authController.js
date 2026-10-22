@@ -78,10 +78,18 @@ exports.getMe = (req, res) => {
   res.status(200).json(req.user);
 };
 
-exports.logout = (req, res) => {
-  res.clearCookie(cookie.TOKEN_COOKIE);
+exports.logoutUser = async (req, res) => {
+  try {
+    await authService.logoutUser(req.user.user_id);
+    res.clearCookie(TOKEN_COOKIE, { httpOnly: true, sameSite: 'lax' });
+    res.status(200).json({ message: 'Utloggad' });
+    res.status(204).end();
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Kunde inte logga ut' });
+  }
 };
 
-exports.login = async (req, res) => {
-  const { username, password } = req.body ?? {};
+exports.loginUser = async (req, res) => {
+  const { cleamUsername, cleanPassword } = req.body ?? {};
 };
