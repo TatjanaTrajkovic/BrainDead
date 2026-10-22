@@ -49,9 +49,10 @@ async function getNextQuestion(sessionId, db = database) {
   }
 
   const question = questions[0];
-  const [answers] = await db.query('SELECT answer_id, text FROM answer WHERE question_id = ?', [
-    question.question_id,
-  ]);
+  const [answers] = await db.query(
+    'SELECT answer_id, text FROM answer WHERE question_id = ? ORDER BY RAND()',
+    [question.question_id],
+  );
   const [counts] = await db.query(
     `SELECT
   (SELECT COUNT(*) FROM question WHERE status = 'ACTIVE') AS total_questions,
