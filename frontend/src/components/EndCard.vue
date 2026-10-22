@@ -21,10 +21,13 @@ const brainImg = computed(() => (props.isAlive ? brainAlive : brainDead));
 
 const healthPercent = computed(() => props.health);
 
-const emit = defineEmits(['play-again']);
+const emit = defineEmits(['play-again', 'go-home']);
 
 function playAgain() {
   emit('play-again');
+}
+function goHome() {
+  emit('go-home');
 }
 </script>
 
@@ -42,7 +45,10 @@ function playAgain() {
 
     <p class="health">Hjärnkapacitet kvar: {{ healthPercent }} %</p>
 
-    <button type="button" class="btn btn-gray" @click="playAgain">Spela igen</button>
+    <div class="actions">
+      <button type="button" class="btn btn-gray" @click="playAgain">Spela igen</button>
+      <button type="button" class="btn btn-gray" @click="goHome">Till startsidan</button>
+    </div>
   </section>
 </template>
 
@@ -71,5 +77,12 @@ h2 {
 .health {
   font-family: var(--font-handwritten);
   font-size: 2.1rem;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
 }
 </style>

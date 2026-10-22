@@ -50,6 +50,11 @@ watch(phase, (newPhase) => {
     router.push({ name: 'home' });
   }
 });
+
+// Omgången är redan avslutad i backend, så det räcker att byta vy
+function goHome() {
+  router.push({ name: 'home' });
+}
 </script>
 
 <template>
@@ -101,6 +106,12 @@ watch(phase, (newPhase) => {
       @quit="quit"
     />
 
-    <EndCard v-if="phase === 'finished'" :health="health" :is-alive="isAlive" @play-again="start" />
+    <EndCard
+      v-if="phase === 'finished'"
+      :health="health"
+      :is-alive="isAlive"
+      @play-again="start"
+      @go-home="goHome"
+    />
   </div>
 </template>
