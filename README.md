@@ -213,7 +213,7 @@ idle → loading → question ⇄ feedback → finished
 
 `totalQuestions` och `answeredCount` kommer från den aktuella frågan och styr `ProgressDots`. De uppdateras när nästa fråga visas och stämmer även efter omladdning.
 
-Spelaren ligger i composablen `useAuth` (`frontend/src/composables/useAuth.js`), som också har delat state. `loadPlayer()` hämtar spelaren via `/api/auth/me` när startsidan visas, och `ensurePlayer()` gör besökaren till gäst. `start()` i `useGame` anropar `ensurePlayer()`, så ID-kortet uppdateras direkt när en ny besökare startar sin första omgång.
+Spelaren ligger i composablen `useAuth` (`frontend/src/composables/useAuth.js`), som också har delat state. `loadPlayer()` hämtar spelaren via `/api/auth/me` när startsidan visas, och `ensurePlayer()` gör besökaren till gäst. `start()` i `useGame` anropar `ensurePlayer()`, så ID-kortet uppdateras direkt när en ny besökare startar sin första omgång. `signup(username, password)` registrerar ett konto via `/api/auth/signup` och lägger svaret i `player`. En gäst uppgraderas och behåller sina poäng, och en ny besökare får ett konto direkt, så ingen gäst behöver skapas först. Fel från backend kastas vidare med meddelandet i `err.message`. Det finns inget formulär för registreringen än.
 
 State i `useGame` ligger utanför själva funktionen, så alla vyer som anropar `useGame()` delar samma spel. Startsidan kan starta en omgång som spelskärmen sedan visar, och spelet finns kvar när man byter sida.
 
