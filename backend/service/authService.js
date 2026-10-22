@@ -134,6 +134,11 @@ async function loginUser(username, password) {
   return { user, token };
 }
 
+// Token slutar gälla, även om någon har kvar en kopia av cookien
+async function logoutUser(userId) {
+  await database.execute('UPDATE users SET auth_token = NULL WHERE user_id = ?', [userId]);
+}
+
 module.exports = {
   createGuest,
   findByToken,
@@ -141,4 +146,5 @@ module.exports = {
   verifyPassword,
   guestToUser,
   loginUser,
+  logoutUser,
 };
