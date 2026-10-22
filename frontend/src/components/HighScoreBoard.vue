@@ -125,6 +125,7 @@ li {
 .score {
   animation: type-row var(--score-time) steps(4, end) backwards;
   animation-delay: calc(var(--row-start) + var(--name-time) + var(--pause));
+  padding-top: 0.25em;
 }
 
 /* Respektera spelare som stängt av animationer i operativsystemet */
@@ -142,5 +143,6 @@ li {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  padding-top: 0.25em;
 }
 </style>
