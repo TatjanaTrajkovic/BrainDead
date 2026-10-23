@@ -55,6 +55,18 @@ export function signup(username, password) {
   });
 }
 
+export function login(username, password) {
+  return request('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ username, password }),
+  });
+}
+
+//Nyckeln slutar gälla i backend, cookien tas bort.
+export function logout() {
+  return request('/auth/logout', { method: 'POST' });
+}
+
 // Skapar en gästspelare, eller returnerar spelaren som redan finns om cookien är giltig
 export function ensurePlayer() {
   return request('/auth/guest', { method: 'POST' });
