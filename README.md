@@ -218,7 +218,7 @@ idle → loading → question ⇄ feedback → finished
 
 `totalQuestions` och `answeredCount` kommer från den aktuella frågan och styr `ProgressDots`. De uppdateras när nästa fråga visas och stämmer även efter omladdning.
 
-Spelaren ligger i composablen `useAuth` (`frontend/src/composables/useAuth.js`), som också har delat state. `loadPlayer()` hämtar spelaren via `/api/auth/me` när startsidan visas, och `ensurePlayer()` gör besökaren till gäst. `start()` i `useGame` anropar `ensurePlayer()`, så ID-kortet uppdateras direkt när en ny besökare startar sin första omgång. `signup(username, password)` registrerar ett konto via `/api/auth/signup` och lägger svaret i `player`. En gäst uppgraderas och behåller sina poäng, och en ny besökare får ett konto direkt, så ingen gäst behöver skapas först. Fel från backend kastas vidare med meddelandet i `err.message`. Det finns inget formulär för registreringen än.
+Spelaren ligger i composablen `useAuth` (`frontend/src/composables/useAuth.js`), som också har delat state. `loadPlayer()` hämtar spelaren via `/api/auth/me` när startsidan visas, och `ensurePlayer()` gör besökaren till gäst. `start()` i `useGame` anropar `ensurePlayer()`, så ID-kortet uppdateras direkt när en ny besökare startar sin första omgång. `signup(username, password)` registrerar ett konto via `/api/auth/signup` och lägger svaret i `player`. En gäst uppgraderas och behåller sina poäng, och en ny besökare får ett konto direkt, så ingen gäst behöver skapas först. `login(username, password)` loggar in via `/api/auth/login` och `logout()` loggar ut via `/api/auth/logout`. `logout()` sätter `player` till `null` även om anropet misslyckas. Fel från backend kastas vidare med meddelandet i `err.message`. Formulären finns på ID-kortets baksida, se [ID-kortet](#id-kortet).
 
 State i `useGame` ligger utanför själva funktionen, så alla vyer som anropar `useGame()` delar samma spel. Startsidan kan starta en omgång som spelskärmen sedan visar, och spelet finns kvar när man byter sida.
 
@@ -340,19 +340,24 @@ Just nu öppnas den med en tillfällig knapp i ytan `area-handbook` i `HomeView`
 
 ### ID-kortet
 
-`LoginCard` visar spelarens ID-kort på startsidan och förbereder inloggningen. Komponenten visar bara det den får och skickar events uppåt, så den behöver inte ändras när inloggningen byggs.
+`LoginCard` visar spelarens ID-kort på startsidan. Kortet går att vända: på baksidan ligger formuläret för inloggning och registrering (`IdForm`).
 
-| Prop / event  | Gör                                                                                                      |
-| ------------- | -------------------------------------------------------------------------------------------------------- |
-| `player`      | Spelaren från `useAuth`. Visar `display_name`, samma namn som i topplistan. `null` visar "OIDENTIFIERAD" |
-| `authEnabled` | Visar knapparna "Identifiera" och "Ny identitet". `false` tills inloggningen finns                       |
-| `@identify`   | Skickas när spelaren klickar "Identifiera". Ska öppna inloggningen                                       |
-| `@signup`     | Skickas när spelaren klickar "Ny identitet". Ska öppna registreringen                                    |
-| `@logout`     | Skickas när en registrerad spelare klickar "Stämpla ut". Gäster har ingen sådan knapp                    |
+| Knapp på framsidan | Visas för            | Gör                                                                    |
+| ------------------ | -------------------- | ---------------------------------------------------------------------- |
+| IDENTIFIERA        | Ny besökare och gäst | Vänder kortet och visar inloggningen (`IdForm` med `mode="login"`)     |
+| NY IDENTITET       | Ny besökare och gäst | Vänder kortet och visar registreringen (`IdForm` med `mode="signup"`)  |
+| STÄMPLA UT         | Registrerad spelare  | Loggar ut med `logout()`. Misslyckas det visas "Kunde inte stämpla ut" |
 
-Bakgrunden är bilden `logincard.webp` med papperet och fotot, och texten ligger som HTML ovanpå. Kortet är en container (`container-type: inline-size`) och textstorlekarna anges i `cqw`, procent av kortets bredd. Därför behåller texten sina proportioner när kortet ändrar storlek.
+| Prop / event      | Gör                                                                                                      |
+| ----------------- | -------------------------------------------------------------------------------------------------------- |
+| `player`          | Spelaren från `useAuth`. Visar `display_name`, samma namn som i topplistan. `null` visar "OIDENTIFIERAD" |
+| `@player-changed` | Skickas efter inloggning, registrering och utloggning. `HomeView` anropar då `checkActiveSession()`      |
 
-Det finns ingen inloggning än, så `authEnabled` är `false` och knapparna döljs. `@identify`, `@signup` och `@logout` har ingen mottagare i `HomeView`.
+`IdForm` har två fält, Namn och Lösen, och anropar `signup()` eller `login()` i `useAuth`. Vid registrering kontrolleras namn och lösenord direkt när spelaren skriver, med samma regler som backend (`frontend/src/utils/validateUsername.js` och `validatePassword.js`). Ändras reglerna i backend måste de filerna ändras också. Vid inloggning räcker det att fälten är ifyllda. Fel från backend, till exempel "Användarnamnet är upptaget", visas under fälten. TILLBAKA eller Esc vänder tillbaka kortet utan att något skickas.
+
+Sidan som är vänd bort är `inert`, så den går inte att klicka eller tabba till. Med "minska rörelse" påslaget byts sidorna utan animation.
+
+Bakgrunden är bilden `logincard.webp` med papperet och fotot, och texten ligger som HTML ovanpå. Baksidan använder `idPlaceholderClean.webp`, samma kort utan fotot. Kortet är en container (`container-type: inline-size`) och textstorlekarna anges i `cqw`, procent av kortets bredd. Därför behåller texten sina proportioner när kortet ändrar storlek.
 
 ### Gemensamma stilar
 
