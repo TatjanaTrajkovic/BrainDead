@@ -78,7 +78,7 @@ function handleResume() {
     <div class="area-prolog">
       <PrologueNotebook :pages="prologuePages" />
     </div>
-    <LoginCard class="area-id" :player="player" />
+    <LoginCard class="area-id" :player="player" @player-changed="checkActiveSession" />
     <div class="area-start">
       <StartButton @start="openMenu" />
     </div>
