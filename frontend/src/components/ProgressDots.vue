@@ -45,10 +45,15 @@ defineProps({
   height: 100%;
 }
 
+/* Start och mål lyser som neonskyltar, i krämgult med lila sken */
 .progress-dots p {
   margin: 0;
   white-space: nowrap;
-  color: #5c2b78;
+  color: var(--dot-current);
+  text-shadow:
+    0 0 4px var(--dot-current),
+    0 0 10px var(--dot-filled),
+    0 0 16px var(--dot-filled);
 }
 
 .dot {
