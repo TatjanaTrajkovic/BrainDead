@@ -15,6 +15,7 @@ defineProps({
 
 <template>
   <div class="progress-dots" role="img" :aria-label="`Fråga ${answered + 1} av ${total}`">
+    <p>Liseberg</p>
     <span
       v-for="n in total"
       :key="n"
@@ -22,6 +23,7 @@ defineProps({
       :class="{ done: n <= answered, current: n === answered + 1 }"
       aria-hidden="true"
     ></span>
+    <p>IKEA</p>
   </div>
 </template>
 
@@ -39,8 +41,19 @@ defineProps({
   flex-direction: column-reverse;
   align-items: center;
   gap: var(--dot-gap);
-  width: 48px;
+  width: 100%;
   height: 100%;
+}
+
+/* Start och mål lyser som neonskyltar, i krämgult med lila sken */
+.progress-dots p {
+  margin: 0;
+  white-space: nowrap;
+  color: var(--dot-current);
+  text-shadow:
+    0 0 4px var(--dot-current),
+    0 0 10px var(--dot-filled),
+    0 0 16px var(--dot-filled);
 }
 
 .dot {
@@ -64,8 +77,9 @@ defineProps({
   box-shadow: 0 0 8px var(--dot-current);
 }
 
-/* Streck ned till pricken under. Den nedersta (fråga 1) har ingen under sig */
-.dot:not(:first-child)::after {
+/* Streck ned till pricken under. Bara prickar med en prick före sig i DOM:en får ett,
+   så den nedersta (fråga 1) får inget streck ned till Liseberg */
+.dot + .dot::after {
   content: '';
   position: absolute;
   top: calc(100% + var(--dot-border));
