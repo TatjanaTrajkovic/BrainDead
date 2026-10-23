@@ -193,6 +193,7 @@ Fel returneras som `{ "error": "..." }`.
 | 401    | Ingen eller ogiltig spelare, cookien saknas, eller fel användarnamn eller lösenord vid login                                               |
 | 404    | Omgången finns inte, eller tillhör en annan spelare                                                                                        |
 | 409    | Omgången är redan avslutad (`POST .../answer`), eller användarnamnet är upptaget (signup)                                                  |
+| 429    | För många misslyckade inloggningar från samma IP. Lyckade inloggningar räknas inte                                                         |
 | 500    | Serverfel                                                                                                                                  |
 
 ## Spelflöde i frontend
