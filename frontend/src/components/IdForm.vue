@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useAuth } from '@/composables/useAuth';
 import { USERNAME_MAX_LENGTH, validateUsername } from '@/utils/validateUsername';
 import { PASSWORD_MAX_LENGTH, validatePassword } from '@/utils/validatePassword';
@@ -33,6 +33,11 @@ const passwordError = computed(() =>
   isSignup.value && password.value ? validatePassword(password.value) : null,
 );
 
+// Felet från backend gäller det som skickades. Töms när spelaren ändrar något,
+// annars står t.ex. "Användarnamnet är upptaget" kvar och döljer felen från valideringen
+watch([username, password], () => {
+  serverError.value = '';
+});
 // Kortet rymmer bara en rad, så bara ett fel visas åt gången
 const message = computed(() => serverError.value || usernameError.value || passwordError.value);
 
@@ -152,7 +157,7 @@ h2 {
 input {
   flex: 1;
   min-width: 0;
-  padding: 0.5cqw 1cqw;
+  padding: 1.5cqw 1cqw;
   font: inherit;
   font-size: 5.6cqw;
   color: #5f0069;
