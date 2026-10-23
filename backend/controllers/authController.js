@@ -102,7 +102,12 @@ exports.loginUser = async (req, res) => {
   const cleanPassword = normalizePassword(password);
 
   try {
-    const result = await authService.loginUser(cleanUsername, cleanPassword);
+    // Är anroparen en gäst flyttas gästens omgångar till kontot. Registrerade spelare byter bara konto
+    let guestId = null;
+    if (req.user?.is_guest) {
+      guestId = req.user.user_id;
+    }
+    const result = await authService.loginUser(cleanUsername, cleanPassword, guestId);
     // Samma svar för fel användarnamn och fel lösenord, så att det inte avslöjas vilka namn som finns
     if (!result) {
       return res.status(401).json({ error: 'Fel användarnamn eller lösenord' });

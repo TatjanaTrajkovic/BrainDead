@@ -103,10 +103,34 @@ async function findByToken(token) {
   return rows[0] ?? null;
 }
 
+// Gästens omgångar flyttas till kontot, så att poängen och en pågående omgång följer med.
+// Körs med loginUsers anslutning, så att allt ingår i samma transaktion
+async function moveGuestSessions(connection, guestId, userId) {
+  const [guestActive] = await connection.execute(
+    `SELECT session_id FROM game_session WHERE user_id = ? AND status = 'ACTIVE'`,
+    [guestId],
+  );
+  if (guestActive.length > 0) {
+    await connection.execute(
+      `UPDATE game_session
+       SET status = 'PAUSED', finished_at = NOW()
+       WHERE user_id = ? AND status = 'ACTIVE'`,
+      [userId],
+    );
+  }
+
+  await connection.execute('UPDATE game_session SET user_id = ? WHERE user_id = ?', [
+    userId,
+    guestId,
+  ]);
+  // Tas bort efter flytten, annars stoppar främmande nyckeln i game_session borttagningen.
+  await connection.execute('DELETE FROM users WHERE user_id = ? AND is_guest = TRUE', [guestId]);
+}
+
 // null både när användarnamnet saknas och när lösenordet är fel,
 // så att controllern inte kan avslöja vilka användarnamn som finns.
 // Ny token vid varje inloggning, den gamla slutar gälla
-async function loginUser(username, password) {
+async function loginUser(username, password, guestId = null) {
   const [rows] = await database.execute(
     `SELECT user_id, username, role, password_hash
      FROM users
@@ -119,10 +143,30 @@ async function loginUser(username, password) {
   }
 
   const token = crypto.randomUUID();
-  await database.execute('UPDATE users SET auth_token = ? WHERE user_id = ?', [
-    hashToken(token),
-    row.user_id,
-  ]);
+
+  // Transaktionen börjar först när lösenordet är godkänt, så att ett fel lösenord
+  // aldrig lämnar en påbörjad transaktion efter sig. Allt sparas tillsammans eller inte alls
+  const connection = await database.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    if (guestId) {
+      await moveGuestSessions(connection, guestId, row.user_id);
+    }
+
+    await connection.execute('UPDATE users SET auth_token = ? WHERE user_id = ?', [
+      hashToken(token),
+      row.user_id,
+    ]);
+
+    await connection.commit();
+  } catch (err) {
+    await connection.rollback();
+    throw err;
+  } finally {
+    connection.release();
+  }
+
   // Samma form som findByToken, password_hash skickas aldrig vidare
   const user = {
     user_id: row.user_id,

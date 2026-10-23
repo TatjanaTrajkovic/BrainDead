@@ -1,5 +1,6 @@
 import { ref } from 'vue';
 import { ensurePlayer as ensurePlayerApi, getMe } from '../api/gameApi';
+import { signup as signupApi } from '../api/gameApi';
 
 // Delat state, som i useGame: alla vyer ser samma spelare.
 // null = ingen spelare än (ny besökare). Annars { user_id, username, role, is_guest, display_name }
@@ -20,5 +21,9 @@ export function useAuth() {
     player.value = await ensurePlayerApi();
   }
 
-  return { player, loadPlayer, ensurePlayer };
+  async function signup(username, password) {
+    player.value = await signupApi(username, password);
+  }
+
+  return { player, loadPlayer, ensurePlayer, signup };
 }

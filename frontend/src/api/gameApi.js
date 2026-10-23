@@ -48,6 +48,13 @@ export function getHighScores() {
   return request('/highscores');
 }
 
+export function signup(username, password) {
+  return request('/auth/signup', {
+    method: 'POST',
+    body: JSON.stringify({ username, password }),
+  });
+}
+
 // Skapar en gästspelare, eller returnerar spelaren som redan finns om cookien är giltig
 export function ensurePlayer() {
   return request('/auth/guest', { method: 'POST' });
