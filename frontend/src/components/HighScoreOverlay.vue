@@ -57,8 +57,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
 
 .sheet {
   position: relative;
-  /* Max 480px bred, och aldrig högre än fönstret */
-  width: min(100%, 480px, calc((100dvh - 2rem) * 1232 / 1552));
+  width: min(100%, calc((90dvh - 2rem) * 1232 / 1552));
 }
 
 /* Procent av pappret, så X:et skalar med det. */

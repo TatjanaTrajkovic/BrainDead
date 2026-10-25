@@ -42,7 +42,6 @@ onMounted(loadHighScores);
   position: relative;
   container-type: inline-size;
   width: 100%;
-  max-width: 480px;
   aspect-ratio: 1232 / 1552;
   background: url('../assets/images/highscore.webp') center / contain no-repeat;
   color: var(--color-ink);
