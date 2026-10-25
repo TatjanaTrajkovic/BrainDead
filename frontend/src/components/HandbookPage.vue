@@ -24,20 +24,19 @@ section + section {
 }
 
 h2 {
-  font-size: max(1.5rem, 3.5cqi);
+  font-size: max(1.35rem, 9cqi);
   text-transform: uppercase;
   margin: 0;
 }
 
 h3 {
-  font-size: max(1.35rem, 3cqi);
+  font-size: max(1.2rem, 8.5cqi);
   margin: 0;
 }
 
 p {
-  font-size: max(1.25rem, 3cqi);
+  font-size: max(1.05rem, 8cqi);
   line-height: 1.2;
-  /* Visar radbrytningar från backticks(``) eller \n  */
   white-space: pre-line;
   margin: 0;
 }
@@ -70,19 +69,5 @@ img {
   object-fit: contain;
   margin: 0.5em 0;
   opacity: 0.8;
-}
-
-@media (max-width: 767px) {
-  h2 {
-    font-size: max(1.5rem, 8cqi);
-  }
-
-  h3 {
-    font-size: max(1.35rem, 7cqi);
-  }
-
-  p {
-    font-size: max(1.25rem, 6cqi);
-  }
 }
 </style>
