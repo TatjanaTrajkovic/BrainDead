@@ -224,7 +224,8 @@ State i `useGame` ligger utanför själva funktionen, så alla vyer som anropar 
 
 ### Sidor och navigering
 
-Routern ligger i `frontend/src/router/router.js` och vyerna i `frontend/src/views/`. `App.vue` visar loggan och `<RouterView />`.
+Routern ligger i `frontend/src/router/router.js` och vyerna i `frontend/src/views/`.
+`App.vue visar loggan (som länkar till /) och <RouterView />`.
 
 | Route   | Vy         | Innehåll                                                                                                    |
 | ------- | ---------- | ----------------------------------------------------------------------------------------------------------- |
@@ -233,9 +234,27 @@ Routern ligger i `frontend/src/router/router.js` och vyerna i `frontend/src/view
 
 `GameView` skickar själv tillbaka spelaren till `/` när `phase` blir `idle`, alltså när omgången avbryts eller en start misslyckas. Laddas `/game` om försöker den återuppta omgången, och finns ingen omgång skickas spelaren till `/`.
 
-Startsidan är ett rutnät med ytorna `area-handbook`, `area-prolog`, `area-id` och `area-start`. `area-prolog` visar prologen och `area-id` ID-kortet, de andra innehåller än så länge platshållare. Ersätt en platshållare med komponenten och behåll klassen, så hamnar komponenten på rätt plats. Komponenten ska fylla sin cell med `width: 100%`, det är rutnätet som bestämmer storleken.
+Startsidan har tre layouter. Vilken som gäller styrs av media queries, och de måste vara **exakt likadana** i `main.css`, `HomeView.vue` och `isDesktop` i `HomeView.vue`. Annars blandas layouterna ihop vid vissa skärmstorlekar.
+
+- **Stående:** allt som inte är liggande. Två kolumner (`.col`), loggan ovanför.
+- **Desktop:** `min-width: 768px`, `min-height: 501px`, liggande och `pointer: fine`. Grid med tre lika breda kolumner. Topplistan ingår i handboksbilden.
+- **Liggande telefon/surfplatta:** liggande OCH `max-width: 767px` eller `pointer: coarse` eller `max-height: 500px`. Loggan och ID-kortet överst. topplista, handbok, prolog och startknapp på raden under.
+
+Ytorna heter `area-handbook`, `area-highscore`, `area-prolog`, `area-id` och `area-start`. Komponenterna ska fylla sin yta, och det är griden som bestämmer storleken. `area-highscore` renderas bara när `isDesktop` är `false`, eftersom topplistan på desktop är en del av handboksbilden (`HandbookHighscore part="both"`).
 
 Kolumnerna är `minmax(0, 1fr)` i stället för `1fr`. Med bara `1fr` får en kolumn aldrig bli smalare än sitt innehåll, och ID-kortets `aspect-ratio` blåste upp den högra kolumnen så att de andra trycktes ihop.
+
+`SessionMenu` visar knapparna bredvid varandra i alla liggande lägen och under varandra i stående.
+
+#### Storlek i liggande kompaktläge
+
+All storlek härleds från en enda variabel, `--bild-h` (höjden på de fyra bilderna), som sätts i `main.css`. Den är det minsta av vad bredden och höjden räcker till, så allt skalar ihop. `--topp` centrerar kompositionen lodrätt. Loggan är `position: absolute` och placeras utifrån samma variabel. Varje bild får bredd `min(100cqw, 100cqh × proportion)` i sin yta, så boxen blir exakt lika stor som bilden. Byter du en bild, uppdatera proportionen (`aspect-ratio`) i `HomeView.vue`.
+
+På desktop styrs bredden av `--content-w` i `base.css`, och loggans höjd av `--header-h`.
+
+#### Testa layouterna
+
+Kontrollera alltid stående mobil, liggande mobil, en surfplatta och PC. I Chrome/Edge DevTools får du `pointer: coarse` genom att välja en enhetsprofil (till exempel iPad). Vald "Responsive" utan enhet räknas som mus. Testa också ett lågt PC-fönster (höjd under 500 px), som ska ge kompaktläget.
 
 ### Spelskärmen
 
@@ -278,7 +297,7 @@ När `phase` blir `finished` visas `EndCard` i stället för rutnätet. Den visa
 - Föräldern styr när boken visas med `v-if` och stänger den när komponenten skickar `close`
 - Stängs med X, Esc eller klick utanför boken
 - Bläddras med pilarna eller ← → på tangentbordet
-- Visar två sidor per uppslag, och en sida i taget på skärmar smalare än 768px
+- Visar två sidor per uppslag i alla liggande lägen (även liggande telefon), och en sida i taget i stående läge
 - Föregående, stäng och nästa ligger samlade i en rad längst ner, med stäng i mitten
 
 #### Sidformat
@@ -369,9 +388,21 @@ Färger och typsnitt ligger som CSS-variabler i `frontend/src/assets/base.css`, 
 | `.btn`          | Grundstil för alla knappar                        |
 | `.btn-purple`   | Lila knapp med inre kant                          |
 | `.btn-gray`     | Grå knapp                                         |
-| `.btn-large`    | Stor knapp                                        |
+| `.btn-large`    | Stor knapp som skalar med sin bredd, se nedan     |
 
-Bilder går inte att markera eller dra iväg, det styrs av `img`-regeln längst ner i `base.css`.
+#### Användning av `.btn-large`
+
+```html
+<button class="btn-large"><span>Text</span></button>
+```
+
+- Texten **måste** ligga i en `<span>`. Knappen är en container, och textstorleken (`18cqi`) mäts mot knappens bredd.
+- Knappens bredd måste bestämmas utifrån (`width: 100%` ligger redan i klassen, eller sätt en fast bredd). Ligger knappen i en förälder som själv saknar bredd kollapsar den.
+- Höjden följer texten. Smalare knapp ger mindre text som bryts på flera rader, och knappen växer nedåt i stället för att ändra bredd.
+- Bordern skalar med knappen. Det gör föräldern till en container automatiskt (`:has(> .btn-large)` i `base.css`), så du behöver inte göra något.
+- Sätt inga egna `font-size` på `span` i komponenten, de skriver över klassens värde.
+
+Bilder och knappar går inte att markera, och bilder går inte att dra iväg. Det styrs av reglerna längst ner i `base.css`.
 
 ## Arbetssätt
 
