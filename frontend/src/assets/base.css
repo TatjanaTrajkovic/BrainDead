@@ -8,6 +8,8 @@
   --color-ink: #2b1d0e;
   --font-main: 'Special Elite', monospace;
   --font-handwritten: 'Reenie Beanie', cursive;
+  --header-h: calc(clamp(280px, 80dvw, 500px) * 0.184 + 1dvw);
+  --content-w: min(90dvw, 2840px, calc((100dvh - 0.084dvw - 0.5rem) * 1.5));
   /* Gör det tunna handskriftstypsnittet tjockare och lättare att läsa */
   --font-handwritten-stroke: 0.02em currentColor;
 }
