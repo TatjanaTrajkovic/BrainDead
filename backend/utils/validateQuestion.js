@@ -11,59 +11,95 @@ const FEEDBACK_MAX_LENGTH = 500;
 // Spelet förutsätter att varje fråga har exakt fyra svarsalternativ
 const ANSWER_COUNT = 4;
 
-function validateQuestion(question) {
+// Returnerar ett felmeddelande, eller null om texten är godkänd.
+// Längden räknas efter trim, så att bara mellanslag räknas som tomt
+function checkText(value, label, min, max) {
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    return `${label} saknas`;
+  }
+  const length = value.trim().length;
+  if (length < min) {
+    return `${label} måste vara minst ${min} tecken`;
+  }
+  if (length > max) {
+    return `${label} får vara max ${max} tecken`;
+  }
+  return null;
+}
+
+// Returnerar ett felmeddelande, eller null om frågan är godkänd.
+// requireAnswerId används vid redigering, där varje svar redan har ett id
+function validateQuestion(question, { requireAnswerId = false } = {}) {
   if (typeof question !== 'object' || question === null) {
     return 'Fråga saknas';
   }
-  if (typeof question.scenario !== 'string' || question.scenario.trim().length === 0) {
-    return 'Scenariot saknas';
+
+  const scenarioError = checkText(
+    question.scenario,
+    'Scenariot',
+    SCENARIO_MIN_LENGTH,
+    SCENARIO_MAX_LENGTH,
+  );
+  if (scenarioError) {
+    return scenarioError;
   }
-  if (typeof question.feedback !== 'string' || question.feedback.trim().length === 0) {
-    return 'Feedback saknas';
+
+  const textError = checkText(question.text, 'Frågetexten', TEXT_MIN_LENGTH, TEXT_MAX_LENGTH);
+  if (textError) {
+    return textError;
   }
-  if (typeof question.text !== 'string' || question.text.trim().length === 0) {
-    return 'Text saknas';
-  }
+
   if (!Array.isArray(question.answers)) {
     return 'Svar saknas';
   }
   if (question.answers.length !== ANSWER_COUNT) {
-    return 'Fel antal svar';
+    return `Frågan måste ha ${ANSWER_COUNT} svar`;
   }
-  if (question.scenario.length > SCENARIO_MAX_LENGTH) {
-    return `Scenariot får max vara ${SCENARIO_MAX_LENGTH} tecken`;
-  }
-  if (question.scenario.length < SCENARIO_MIN_LENGTH) {
-    return `Scenariot måste vara minst ${SCENARIO_MIN_LENGTH} tecken`;
-  }
-  if (question.text.length > TEXT_MAX_LENGTH) {
-    return `Texten får max vara ${TEXT_MAX_LENGTH} tecken`;
-  }
-  if (question.text.length < TEXT_MIN_LENGTH) {
-    return `Texten måste vara minst ${TEXT_MIN_LENGTH} tecken`;
-  }
-  if (answer.text.length > ANSWER_TEXT_MAX_LENGTH) {
-    return `Svaret får maximalt vara ${ANSWER_TEXT_MAX_LENGTH} tecken`;
-  }
-  if (answer.text.length < ANSWER_TEXT_MIN_LENGTH) {
-    return `Svaret måste vara minst ${ANSWER_TEXT_MIN_LENGTH} tecken`;
-  }
-  if (answer.feedback.length > FEEDBACK_MAX_LENGTH) {
-    return `Feedback får maximalt vara ${FEEDBACK_MAX_LENGTH} tecken`;
-  }
-  if (answer.feedback.length < FEEDBACK_MIN_LENGTH) {
-    return `Feedback måste vara minst ${FEEDBACK_MIN_LENGTH} tecken`;
-  }
-  if (!Number.isInteger(answer.health_change)) {
-    return 'Fel format på hjärnkapaciteten';
+
+  for (let i = 0; i < question.answers.length; i++) {
+    const answer = question.answers[i];
+    const prefix = `Svar ${i + 1}`;
+
+    if (typeof answer !== 'object' || answer === null) {
+      return `${prefix} saknas`;
+    }
+    if (requireAnswerId && !Number.isInteger(answer.answer_id)) {
+      return `${prefix}: answer_id saknas`;
+    }
+
+    const answerTextError = checkText(
+      answer.text,
+      `${prefix}: texten`,
+      ANSWER_TEXT_MIN_LENGTH,
+      ANSWER_TEXT_MAX_LENGTH,
+    );
+    if (answerTextError) {
+      return answerTextError;
+    }
+
+    const feedbackError = checkText(
+      answer.feedback,
+      `${prefix}: feedback`,
+      FEEDBACK_MIN_LENGTH,
+      FEEDBACK_MAX_LENGTH,
+    );
+    if (feedbackError) {
+      return feedbackError;
+    }
+
+    if (!Number.isInteger(answer.health_change)) {
+      return `${prefix}: health_change måste vara ett heltal`;
+    }
   }
 
   return null;
 }
 
-function checkText(value, label, min, max) {
-  if (typeof value !== 'string || value.trim().length === 0') {
-    return `${label} saknas`;
-  }
-  const length = value.trim().length;
-}
+module.exports = {
+  SCENARIO_MAX_LENGTH,
+  TEXT_MAX_LENGTH,
+  ANSWER_TEXT_MAX_LENGTH,
+  FEEDBACK_MAX_LENGTH,
+  ANSWER_COUNT,
+  validateQuestion,
+};
