@@ -76,6 +76,14 @@ mysql -u <användare> -p < backend/db/data.sql
 
 Kör om båda skripten när `schema.sql` har ändrats, till exempel efter att `is_guest` och `auth_token` lades till i `users`.
 
+Första admin skapas för hand: registrera ett konto i appen och kör sedan
+
+```sql
+UPDATE users SET role = 'ADMIN' WHERE username = '<namn>';
+```
+
+Lägg aldrig in en admin i `data.sql`. Ett känt lösenord i repot blir en bakdörr.
+
 ### 3. Miljövariabler
 
 Skapa din egen `.env` från mallen och fyll i dina värden. Filen committas aldrig.
@@ -179,9 +187,9 @@ Notera: finished_at i game_session är tiden när omgången lämnat aktivt läge
 | GET   | `/api/sessions/:sessionId/question` | Hämtar nästa fråga med svarsalternativ, `total_questions` och `answered_count`, eller `{ "finished": true }` när inga återstår                                                                                                                                                      |
 | POST  | `/api/sessions/:sessionId/answer`   | Sparar ett svar. Body: `{ "answerId": 1 }`                                                                                                                                                                                                                                          |
 | GET   | `/api/highscores`                   | Hämtar topp 10: varje spelares bästa avslutade omgång med hälsa över 0, som `{ username, score }`. Gäster visas som `Gäst-<user_id>`. Vid lika poäng vinner den som blev klar först                                                                                                 |
-| GET   | `/admin/questions`                  | Hämtar alla frågor                                                                                                                                                                                                                                                                  |
+| GET   | `/api/admin/questions`              | Hämtar alla frågor. Kräver admin                                                                                                                                                                                                                                                    |
 
-Middlewaren `loadUser` slår upp spelaren från cookien `braindead_token` och sätter `req.user`. `loadUser()` svarar `401` utan giltig cookie, och används av alla `/api/sessions`-endpoints, `/api/auth/me` och `/api/auth/logout`. `loadUser({ required: false })` släpper igenom anropet även utan spelare. Det används av `/api/auth/signup` och `/api/auth/login`, som ska fungera både för gäster och för nya besökare. Endpoints med `:sessionId` kontrollerar dessutom att omgången tillhör spelaren. En annans omgång ger `404`, samma svar som en omgång som inte finns, så det avslöjas inte att den finns. `/api/highscores` och `/api/auth/guest` är öppna.
+Middlewaren `loadUser` slår upp spelaren från cookien `braindead_token` och sätter `req.user`. `loadUser()` svarar `401` utan giltig cookie, och används av alla `/api/sessions`-endpoints, `/api/auth/me` och `/api/auth/logout`. `loadUser({ required: false })` släpper igenom anropet även utan spelare. Det används av `/api/auth/signup` och `/api/auth/login`, som ska fungera både för gäster och för nya besökare. Endpoints med `:sessionId` kontrollerar dessutom att omgången tillhör spelaren. En annans omgång ger `404`, samma svar som en omgång som inte finns, så det avslöjas inte att den finns. `/api/highscores` och `/api/auth/guest` är öppna. Alla endpoints under `/api/admin` går genom `loadUser()` och `requireAdmin`, som svarar `403` om spelaren inte har rollen `ADMIN`.
 
 ### Felsvar
 
@@ -191,6 +199,7 @@ Fel returneras som `{ "error": "..." }`.
 | ------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | 400    | Svaret hör inte till den aktuella frågan, signup eller login saknar värden, spelaren är redan registrerad, eller en gäst försöker logga ut |
 | 401    | Ingen eller ogiltig spelare, cookien saknas, eller fel användarnamn eller lösenord vid login                                               |
+| 403    | Inloggad men inte admin (`/api/admin`)                                                                                                     |
 | 404    | Omgången finns inte, eller tillhör en annan spelare                                                                                        |
 | 409    | Omgången är redan avslutad (`POST .../answer`), eller användarnamnet är upptaget (signup)                                                  |
 | 429    | För många misslyckade inloggningar från samma IP. Lyckade inloggningar räknas inte                                                         |
