@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useGame } from '@/composables/useGame';
 import { useAuth } from '@/composables/useAuth';
@@ -22,6 +22,8 @@ const { player, loadPlayer } = useAuth();
 const isDesktop = useMediaQuery(
   '(min-width: 768px) and (min-height: 501px) and (orientation: landscape) and (pointer: fine)',
 );
+
+const isCompact = computed(() => !isDesktop.value);
 
 // <dialog> längst ner i templaten ger bakgrund, stängning med Esc och håller fokus i menyn.
 // Variabelnamnet matchar ref="menu" i templaten, så Vue lägger elementet här efter rendering
@@ -83,12 +85,12 @@ function handleResume() {
         />
       </div>
       <div class="area-prolog">
-        <PrologueNotebook :pages="prologuePages" />
+        <PrologueNotebook :pages="prologuePages" :popup="isCompact" />
       </div>
     </div>
     <div class="col">
       <div class="area-id">
-        <LoginCard :player="player" @player-changed="checkActiveSession" />
+        <LoginCard :player="player" :popup="isCompact" @player-changed="checkActiveSession" />
       </div>
       <div class="area-start">
         <StartButton @start="openMenu" />
