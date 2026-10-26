@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue';
+import { onMounted } from 'vue';
 import { useHighScores } from '@/composables/useHighscores';
 
 const { entries, isLoading, error, load } = useHighScores();
