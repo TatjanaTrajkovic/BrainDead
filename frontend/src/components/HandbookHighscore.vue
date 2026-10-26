@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue';
+import HighScoreBoard from '@/components/HighScoreBoard.vue';
 
 const props = defineProps({
   // 'both' (desktop), 'handbook' eller 'highscore' (mobil)
@@ -45,16 +46,17 @@ const triggerHandbook = () => {
 <template>
   <div class="button-container">
     <div class="buttons" :class="{ single: isSingle }">
-      <button
-        v-if="showHighscore"
-        class="highscore"
-        :class="{ 'is-animating': animatingHighscore }"
-        type="button"
-        aria-label="Topplista"
-        @click="triggerHighscore"
-      >
-        <img src="../assets/images/highscore.webp" alt="" />
-      </button>
+      <div v-if="showHighscore" class="highscore" :class="{ 'is-animating': animatingHighscore }">
+        <HighScoreBoard v-if="part === 'highscore'" />
+        <img v-else src="../assets/images/highscore.webp" alt="" />
+        <!-- Osynlig knapp över hela ytan, brädet ligger alltså inte inuti en button -->
+        <button
+          type="button"
+          class="hit-area"
+          aria-label="Öppna topplistan"
+          @click="triggerHighscore"
+        />
+      </div>
       <button
         v-if="showHandbook"
         class="handbook"
@@ -73,6 +75,18 @@ const triggerHandbook = () => {
 /* ==========================================
    Mobil-first (standard: staplat / enkelt)
    ========================================== */
+
+/* Osynlig knapp över hela ytan, så hela bilden går att trycka på */
+.hit-area {
+  position: absolute;
+  inset: 0;
+  cursor: pointer;
+}
+
+.highscore :deep(.highscore-board) {
+  pointer-events: none;
+}
+
 .button-container {
   display: flex;
   flex-direction: column;
