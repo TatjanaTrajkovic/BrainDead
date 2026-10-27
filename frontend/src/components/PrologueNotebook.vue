@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, onUnmounted, ref, watch } from 'vue';
 
 const props = defineProps({
   // Prologens sidor, t.ex. prologuePages från data/prologue.js. Varje sida är en textsträng
@@ -7,9 +7,15 @@ const props = defineProps({
     type: Array,
     required: true,
   },
+  popup: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const pageIndex = ref(0);
+
+const expanded = ref(false);
 
 const isFirst = computed(() => pageIndex.value === 0);
 const isLast = computed(() => pageIndex.value === props.pages.length - 1);
@@ -31,44 +37,122 @@ function next() {
     pageIndex.value++;
   }
 }
+
+function expand(event) {
+  if (props.popup && !expanded.value && !event.target.closest('button')) {
+    expanded.value = true;
+  }
+}
+
+function collapse() {
+  expanded.value = false;
+}
+
+function handleKeydown(event) {
+  if (event.key === 'Escape') {
+    collapse();
+  }
+}
+
+watch(expanded, (isExpanded) => {
+  if (isExpanded) {
+    window.addEventListener('keydown', handleKeydown);
+  } else {
+    window.removeEventListener('keydown', handleKeydown);
+  }
+});
+onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
+
+watch(
+  () => props.popup,
+  (isPopup) => {
+    if (!isPopup) {
+      expanded.value = false;
+    }
+  },
+);
 </script>
 
 <template>
-  <section class="notebook" aria-label="Prolog">
-    <h2 class="title">prolog</h2>
-    <p class="page-number">{{ pageLabel }}</p>
+  <Teleport to="body" :disabled="!expanded">
+    <!-- wrap-div för tryck på bakgrund stänger -->
+    <div class="wrap" :class="{ expanded }" @click.self="collapse">
+      <section
+        class="notebook"
+        :class="{ clickable: popup && !expanded }"
+        aria-label="Prolog"
+        @click="expand"
+      >
+        <h2 class="title">prolog</h2>
+        <p class="page-number">{{ pageLabel }}</p>
 
-    <!-- :key ändras vid bläddring, så Vue kör toningen mellan sidorna -->
-    <Transition name="page-fade" mode="out-in">
-      <p :key="pageIndex" class="text" aria-live="polite">{{ pages[pageIndex] }}</p>
-    </Transition>
+        <!-- :key ändras vid bläddring, så Vue kör toningen mellan sidorna -->
+        <Transition name="page-fade" mode="out-in">
+          <p :key="pageIndex" class="text" aria-live="polite">{{ pages[pageIndex] }}</p>
+        </Transition>
 
-    <p class="footer">Vässa sinnet – rädda skinnet!</p>
+        <p class="footer">Vässa sinnet – rädda skinnet!</p>
 
-    <!-- Samma pil som pekar uppåt, roteras nedåt med CSS för nästa sida -->
-    <button
-      v-if="!isFirst"
-      type="button"
-      class="arrow arrow-previous"
-      aria-label="Föregående sida"
-      @click="previous"
-    >
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16 L12 7 L19 16" /></svg>
-    </button>
+        <!-- Samma pil som pekar uppåt, roteras nedåt med CSS för nästa sida -->
+        <button
+          v-if="!isFirst"
+          type="button"
+          class="arrow arrow-previous"
+          aria-label="Föregående sida"
+          @click="previous"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16 L12 7 L19 16" /></svg>
+        </button>
 
-    <button
-      v-if="!isLast"
-      type="button"
-      class="arrow arrow-next"
-      aria-label="Nästa sida"
-      @click="next"
-    >
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16 L12 7 L19 16" /></svg>
-    </button>
-  </section>
+        <button
+          v-if="!isLast"
+          type="button"
+          class="arrow arrow-next"
+          aria-label="Nästa sida"
+          @click="next"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16 L12 7 L19 16" /></svg>
+        </button>
+      </section>
+      <button v-if="expanded" type="button" class="close" aria-label="Stäng" @click="collapse">
+        ✕
+      </button>
+    </div>
+  </Teleport>
 </template>
 
 <style scoped>
+.wrap {
+  display: contents;
+}
+
+.wrap.expanded {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  background: rgb(0 0 0 / 85%);
+}
+
+.expanded .notebook {
+  width: min(92vw, calc((100dvh - 1rem) * 1640 / 2292));
+}
+
+.close {
+  position: fixed;
+  top: max(0.5rem, env(safe-area-inset-top));
+  right: max(0.5rem, env(safe-area-inset-right));
+  width: 2.75rem;
+  height: 2.75rem;
+  font-size: 1.5rem;
+  color: var(--color-text);
+}
+
+.clickable {
+  cursor: pointer;
+}
+
 .notebook {
   position: relative;
   /* Bildens proportioner, max 410px bred som i Figma */
