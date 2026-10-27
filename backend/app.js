@@ -14,12 +14,12 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const questionRoute = require('./routes/questionRoute');
 const sessionRoute = require('./routes/sessionRoute');
 const highScoreRoute = require('./routes/highScoreRoute');
 const authRoute = require('./routes/authRoute');
+const adminRoute = require('./routes/adminRoute');
 
-app.use('/admin', questionRoute);
+app.use('/api/admin', adminRoute);
 app.use('/api', sessionRoute);
 app.use('/api', highScoreRoute);
 app.use('/api', authRoute);
