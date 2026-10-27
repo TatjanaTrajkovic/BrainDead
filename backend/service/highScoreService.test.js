@@ -23,4 +23,3 @@ test('topplistan visar bara aktiva spelare med rollen PLAYER', async () => {
   assert.match(sql, /u\.status = 'ACTIVE'/);
   assert.match(sql, /u\.role = 'PLAYER'/);
 });
-
