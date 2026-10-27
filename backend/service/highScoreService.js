@@ -9,7 +9,7 @@ async function getHighScores() {
   const [rows] = await database.query(
     `SELECT username, score
      FROM (
-        SELECT COALESCE(u.username, CONCAT('Gäst-', u.user_id)) as username,
+      SELECT COALESCE(u.username, CONCAT('Gäst-', u.user_id)) as username,
               gs.current_health AS score,
               gs.finished_at,
               -- Numrerar varje spelares omgångar från bäst (1) till sämst
@@ -17,10 +17,10 @@ async function getHighScores() {
                 PARTITION BY gs.user_id
                 ORDER BY gs.current_health DESC, gs.finished_at ASC
               ) AS rn
-        FROM game_session gs
-        JOIN users u ON u.user_id = gs.user_id
-        WHERE gs.status = 'COMPLETED' AND gs.current_health > 0
-         AND u.status = 'ACTIVE' AND u.role = 'PLAYER'
+      FROM game_session gs
+      JOIN users u ON u.user_id = gs.user_id
+      WHERE gs.status = 'COMPLETED' AND gs.current_health > 0
+          AND u.status = 'ACTIVE' AND u.role = 'PLAYER'
      ) best
      WHERE rn = 1
      ORDER BY score DESC, finished_at ASC
