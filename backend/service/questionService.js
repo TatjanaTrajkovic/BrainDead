@@ -93,4 +93,62 @@ async function createQuestion(question) {
   }
 }
 
-module.exports = { getAllQuestions, createQuestion };
+async function updateQuestion(questionId, question) {
+  const connection = await database.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    const [existing] = await connection.query(
+      `SELECT question_id
+      FROM question
+      WHERE question_id = ?`,
+      [questionId],
+    );
+    if (existing.length === 0) {
+      await connection.rollback();
+      return { error: 'QUESTION_NOT_FOUND' };
+    }
+
+    const [answers] = await connection.query(`SELECT answer_id FROM answer WHERE question_id = ?`, [
+      questionId,
+    ]);
+
+    const existingIds = new Set(answers.map((a) => a.answer_id));
+    const sentIds = new Set(question.answers.map((a) => a.answer_id));
+    const sameAnswers =
+      sentIds.size === existingIds.size && [...sentIds].every((id) => existingIds.has(id));
+    if (!sameAnswers) {
+      await connection.rollback();
+      return { error: 'INVALID_ANSWER' };
+    }
+
+    await connection.query(`UPDATE question SET scenario = ?, text = ? WHERE question_id = ?`, [
+      question.scenario.trim(),
+      question.text.trim(),
+      questionId,
+    ]);
+    for (const answer of question.answers) {
+      await connection.query(
+        `UPDATE answer
+         SET text = ?, health_change = ?, feedback = ?
+         WHERE answer_id = ? AND question_id = ?`,
+        [
+          answer.text.trim(),
+          answer.health_change,
+          answer.feedback.trim(),
+          answer.answer_id,
+          questionId,
+        ],
+      );
+    }
+    await connection.commit();
+    return { question_id: Number(questionId) };
+  } catch (err) {
+    await connection.rollback();
+    throw err;
+  } finally {
+    connection.release();
+  }
+}
+
+module.exports = { getAllQuestions, createQuestion, updateQuestion };

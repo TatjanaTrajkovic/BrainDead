@@ -25,3 +25,23 @@ exports.createQuestion = async (req, res) => {
     return res.status(500).json({ error: 'Kunde inte spara frågan' });
   }
 };
+
+exports.updateQuestion = async (req, res) => {
+  const validationError = validateQuestion(req.body, { requireAnswerId: true });
+  if (validationError) {
+    return res.status(400).json({ error: validationError });
+  }
+  try {
+    const result = await questionService.updateQuestion(req.params.questionId, req.body);
+    if (result.error === 'QUESTION_NOT_FOUND') {
+      return res.status(404).json({ error: 'Frågan finns inte' });
+    }
+    if (result.error === 'INVALID_ANSWER') {
+      return res.status(400).json({ error: 'Svaren hör inte till frågan' });
+    }
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Kunde inte uppdatera frågan' });
+  }
+};

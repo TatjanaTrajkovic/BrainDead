@@ -8,5 +8,6 @@ router.use(loadUser(), requireAdmin);
 
 router.get('/questions', questionController.getAllQuestions);
 router.post('/questions', questionController.createQuestion);
+router.put('/questions/:questionId', questionController.updateQuestion);
 
 module.exports = router;

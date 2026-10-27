@@ -1,12 +1,15 @@
 <script setup>
-import { computed, nextTick, ref } from 'vue';
+import { computed, nextTick, ref, watch, onUnmounted } from 'vue';
 import { useAuth } from '@/composables/useAuth';
 import IdForm from '@/components/IdForm.vue';
 
 const props = defineProps({
   // Spelaren från useAuth, null för en ny besökare. Gäster har is_guest = true
   player: { type: Object, default: null },
+  popup: { type: Boolean, default: false },
 });
+
+const expanded = ref(false);
 
 // Skickas efter inloggning, registrering och utloggning, så att HomeView kan kolla
 // om den nya spelaren har en pågående omgång
@@ -64,51 +67,130 @@ async function handleLogout() {
     // så spelaren kan vara inloggad igen efter en omladdning
     logoutFailed.value = true;
   }
-  emit('player-changed');
 }
+
+function expand(event) {
+  if (props.popup && !expanded.value) {
+    event.stopPropagation();
+    event.preventDefault();
+    expanded.value = true;
+  }
+}
+
+function collapse() {
+  expanded.value = false;
+  isFlipped.value = false;
+}
+
+function handleKeydown(event) {
+  if (event.key === 'Escape') {
+    collapse();
+  }
+}
+
+watch(expanded, (isExpanded) => {
+  if (isExpanded) {
+    window.addEventListener('keydown', handleKeydown);
+  } else {
+    window.removeEventListener('keydown', handleKeydown);
+  }
+});
+onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
+
+watch(
+  () => props.popup,
+  (isPopup) => {
+    if (!isPopup) {
+      expanded.value = false;
+    }
+  },
+);
+emit('player-changed');
 </script>
 
 <template>
-  <section class="id-card" :class="{ flipped: isFlipped }">
-    <div class="card-inner">
-      <!-- inert: sidan som är vänd bort går inte att klicka eller tabba till -->
-      <div class="face front" :inert="isFlipped">
-        <div class="text">
-          <h2>ID-KORT</h2>
-          <p class="company">Skumma Aktier AB</p>
-          <!-- display_name är samma namn som i topplistan: användarnamnet eller Gäst-<id> -->
-          <p class="status" :class="{ known: isRegistered }">
-            {{ player ? player.display_name : 'OIDENTIFIERAD' }}
-          </p>
-          <p v-if="logoutFailed" class="notice" role="alert">Kunde inte stämpla ut</p>
-          <div v-if="!isRegistered" class="actions">
-            <button type="button" class="stamp" @click="showForm('login', $event)">
-              IDENTIFIERA
-            </button>
-            <button type="button" class="stamp new-id" @click="showForm('signup', $event)">
-              NY IDENTITET
-            </button>
+  <Teleport to="body" :disabled="!expanded">
+    <!-- wrap-div för tryck på bakgrund stänger -->
+    <div class="wrap" :class="{ expanded }" @click.self="collapse">
+      <section
+        class="id-card"
+        :class="{ flipped: isFlipped, flipped: isFlipped, clickable: popup && !expanded }"
+        @click="expand"
+      >
+        <div class="card-inner">
+          <!-- inert: sidan som är vänd bort går inte att klicka eller tabba till -->
+          <div class="face front" :inert="isFlipped">
+            <div class="text">
+              <h2>ID-KORT</h2>
+              <p class="company">Skumma Aktier AB</p>
+              <!-- display_name är samma namn som i topplistan: användarnamnet eller Gäst-<id> -->
+              <p class="status" :class="{ known: isRegistered }">
+                {{ player ? player.display_name : 'OIDENTIFIERAD' }}
+              </p>
+              <p v-if="logoutFailed" class="notice" role="alert">Kunde inte stämpla ut</p>
+              <div v-if="!isRegistered" class="actions">
+                <button type="button" class="stamp" @click="showForm('login', $event)">
+                  IDENTIFIERA
+                </button>
+                <button type="button" class="stamp new-id" @click="showForm('signup', $event)">
+                  NY IDENTITET
+                </button>
+              </div>
+              <button v-else type="button" class="stamp logout" @click="handleLogout">
+                STÄMPLA UT
+              </button>
+            </div>
           </div>
-          <button v-else type="button" class="stamp logout" @click="handleLogout">
-            STÄMPLA UT
-          </button>
-        </div>
-      </div>
 
-      <div class="face back" :inert="!isFlipped">
-        <IdForm
-          ref="idForm"
-          :key="formKey"
-          :mode="formMode"
-          @done="handleDone"
-          @cancel="showFront"
-        />
-      </div>
+          <div class="face back" :inert="!isFlipped">
+            <IdForm
+              ref="idForm"
+              :key="formKey"
+              :mode="formMode"
+              @done="handleDone"
+              @cancel="showFront"
+            />
+          </div>
+        </div>
+      </section>
+      <button v-if="expanded" type="button" class="close" aria-label="Stäng" @click="collapse">
+        ✕
+      </button>
     </div>
-  </section>
+  </Teleport>
 </template>
 
 <style scoped>
+.wrap {
+  display: contents;
+}
+
+.wrap.expanded {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  background: rgb(0 0 0 / 85%);
+}
+
+.expanded .id-card {
+  width: min(92vw, calc((100dvh - 1rem) * 550 / 357));
+}
+
+.close {
+  position: fixed;
+  top: max(0.5rem, env(safe-area-inset-top));
+  right: max(0.5rem, env(safe-area-inset-right));
+  width: 2.75rem;
+  height: 2.75rem;
+  font-size: 1.5rem;
+  color: var(--color-text);
+}
+
+.clickable {
+  cursor: pointer;
+}
 .id-card {
   width: 100%;
   aspect-ratio: 550 / 357;
