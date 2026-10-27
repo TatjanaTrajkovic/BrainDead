@@ -1,4 +1,4 @@
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import {
   ensurePlayer as ensurePlayerApi,
   getMe,
@@ -10,6 +10,9 @@ import {
 // Delat state, som i useGame: alla vyer ser samma spelare.
 // null = ingen spelare än (ny besökare). Annars { user_id, username, role, is_guest, display_name }
 const player = ref(null);
+
+// true när den inloggade är admin. Styr bara vad som visas, backend kollar rollen själv (requireAdmin)
+const isAdmin = computed(() => player.value?.role === 'ADMIN');
 
 export function useAuth() {
   // Hämtar spelaren från cookien. 401 betyder att besökaren inte har spelat än
@@ -43,5 +46,5 @@ export function useAuth() {
     }
   }
 
-  return { player, loadPlayer, ensurePlayer, signup, login, logout };
+  return { player, isAdmin, loadPlayer, ensurePlayer, signup, login, logout };
 }
