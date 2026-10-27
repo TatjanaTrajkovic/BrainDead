@@ -156,7 +156,7 @@ Vid push och pull request mot `main` kör [CI-flödet](.github/workflows/ci.yaml
 | ------------------ | --------------------------------------------------------------------------------------------------------------------- |
 | `users`            | Spelare med roll och status. Gäster har bara `is_guest` och `auth_token`, registrerade även användarnamn och lösenord |
 | `game_session`     | En spelomgång med aktuell hälsa (0–100) och status                                                                    |
-| `question`         | Scenario, frågetext och ordning (`position`)                                                                          |
+| `question`         | Scenario, frågetext, ordning (`position`) och `created_at`. En omgång visar bara frågor som fanns när den startade    |
 | `answer`           | Svarsalternativ med feedback och `health_change`, hur mycket hälsa svaret drar av (positivt tal)                      |
 | `session_question` | Vilket svar spelaren valde på en fråga i en session                                                                   |
 
@@ -199,15 +199,15 @@ Middlewaren `loadUser` slår upp spelaren från cookien `braindead_token` och s�
 
 Fel returneras som `{ "error": "..." }`.
 
-| Status | När                                                                                                                                        |
-| ------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| 400    | Svaret hör inte till den aktuella frågan, signup eller login saknar värden, spelaren är redan registrerad, eller en gäst försöker logga ut |
-| 401    | Ingen eller ogiltig spelare, cookien saknas, eller fel användarnamn eller lösenord vid login                                               |
-| 403    | Inloggad men inte admin (`/api/admin`)                                                                                                     |
-| 404    | Omgången finns inte, eller tillhör en annan spelare                                                                                        |
-| 409    | Omgången är redan avslutad (`POST .../answer`), eller användarnamnet är upptaget (signup)                                                  |
-| 429    | För många misslyckade inloggningar från samma IP. Lyckade inloggningar räknas inte                                                         |
-| 500    | Serverfel                                                                                                                                  |
+| Status | När                                                                                                                                                                |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 400    | Svaret hör inte till den aktuella frågan, signup eller login saknar värden, spelaren är redan registrerad, en gäst försöker logga ut, eller en ny fråga är ogiltig |
+| 401    | Ingen eller ogiltig spelare, cookien saknas, eller fel användarnamn eller lösenord vid login                                                                       |
+| 403    | Inloggad men inte admin (`/api/admin`)                                                                                                                             |
+| 404    | Omgången finns inte, eller tillhör en annan spelare                                                                                                                |
+| 409    | Omgången är redan avslutad (`POST .../answer`), eller användarnamnet är upptaget (signup)                                                                          |
+| 429    | För många misslyckade inloggningar från samma IP. Lyckade inloggningar räknas inte                                                                                 |
+| 500    | Serverfel                                                                                                                                                          |
 
 ## Spelflöde i frontend
 
