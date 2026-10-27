@@ -9,44 +9,49 @@ const emit = defineEmits(['start-new', 'resume', 'show-played']);
 
 <template>
   <nav class="session-menu">
-    <button type="button" @click="emit('start-new')">Initiera omgång</button>
-
-    <button type="button" :disabled="!hasActiveSession" @click="emit('resume')">
-      Återuppta omgång
+    <button type="button" class="btn btn-large" @click="emit('start-new')">
+      <span>Initiera omgång</span>
     </button>
-
+    <button
+      type="button"
+      class="btn btn-large"
+      :disabled="!hasActiveSession"
+      @click="emit('resume')"
+    >
+      <span>Återuppta omgång</span>
+    </button>
     <!-- Ingen endpoint för spelade omgångar än -->
-    <button type="button" disabled title="Kommer snart" @click="emit('show-played')">
-      Spelade omgångar
-    </button>
+    <!-- <button
+      type="button"
+      class="btn btn-large bottom-btn"
+      disabled
+      title="Kommer snart"
+      @click="emit('show-played')"
+    >
+      <span>Spelade omgångar</span>
+    </button> -->
   </nav>
 </template>
 
 <style scoped>
 .session-menu {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3, 12px);
-  max-width: 240px;
+  display: grid;
+  width: min(200px, 100vw - 4rem);
+  gap: var(--space-3, 20px);
+  grid-template-columns: minmax(0, 1fr);
+  container-type: inline-size;
 }
 
-button {
-  padding: var(--space-3, 12px);
-  background: var(--color-bg-purple, #5c2b78);
-  border: 3px solid var(--color-border-outer, #c7bc90);
-  border-radius: 6px;
-  color: var(--color-text, #e7dcaa);
-  font-family: var(--font-main, 'Special Elite', monospace);
-  text-transform: uppercase;
-  cursor: pointer;
+.bottom-btn {
+  grid-column: 1 / -1; /* Sträcker sig över alla kolumner (hamnar i mitten) */
+  justify-self: center;
 }
 
-button:hover:not(:disabled) {
-  filter: brightness(1.2);
-}
-
-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
+@media (orientation: landscape) {
+  .session-menu {
+    width: min(768px, 100vw - 4rem);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3, 60px);
+  }
 }
 </style>

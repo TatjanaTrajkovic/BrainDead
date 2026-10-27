@@ -1,6 +1,7 @@
 <script setup>
 import HandbookPage from './HandbookPage.vue';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { useMediaQuery } from '../composables/useMediaQuery';
 
 const props = defineProps({
   // Sidorna i boken, t.ex. handbookPages från data/handbook.js. Varje sida är { sections: [...] }
@@ -13,16 +14,16 @@ const props = defineProps({
 const emit = defineEmits(['close']);
 
 // Samma brytpunkt som @media i CSS:en nedan. Ändras den ena måste den andra ändras också
-const mobileQuery = window.matchMedia('(max-width: 767px)');
+const isDesktop = useMediaQuery('(orientation: landscape)');
 // På smal skärm visas en sida i taget, annars ett uppslag med två sidor
-const isSinglePage = ref(mobileQuery.matches);
+const isSinglePage = computed(() => !isDesktop.value);
 const pagesPerView = computed(() => (isSinglePage.value ? 1 : 2));
 
 // Index för sidan spelaren senast bläddrade till
 const pageIndex = ref(0);
 
 // Första sidan som visas. Ett uppslag börjar alltid på en jämn sida (0, 2, 4 …), så när skärmen
-// växlar från en till två sidor hamnar sidan spelaren läste i rätt uppslag
+// växer från en till två sidor hamnar sidan spelaren läste i rätt uppslag
 const firstPageIndex = computed(() =>
   isSinglePage.value ? pageIndex.value : pageIndex.value - (pageIndex.value % 2),
 );
@@ -48,10 +49,6 @@ function next() {
   }
 }
 
-function handleScreenChange(event) {
-  isSinglePage.value = event.matches;
-}
-
 function handleKeydown(event) {
   if (event.key === 'Escape') {
     emit('close');
@@ -62,15 +59,9 @@ function handleKeydown(event) {
   }
 }
 
-// Lyssnarna ligger på window och lever längre än komponenten, så de måste tas bort när boken stängs
-onMounted(() => {
-  window.addEventListener('keydown', handleKeydown);
-  mobileQuery.addEventListener('change', handleScreenChange);
-});
-onUnmounted(() => {
-  window.removeEventListener('keydown', handleKeydown);
-  mobileQuery.removeEventListener('change', handleScreenChange);
-});
+// Lyssnaren ligger på window och lever längre än komponenten, så den måste tas bort när boken stängs
+onMounted(() => window.addEventListener('keydown', handleKeydown));
+onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
 </script>
 
 <template>
@@ -139,10 +130,11 @@ onUnmounted(() => {
 
 .handbook {
   position: relative;
-  /* Lika bred som fönstret, max 1000px, och aldrig högre än fönstret */
-  width: min(100%, 1000px, calc((100dvh - 2rem) * 2000 / 1552));
-  aspect-ratio: 2000 / 1552;
-  background: url('../assets/images/handbook_open.webp') center / contain no-repeat;
+  /* Mobil: en sida i taget — lika bred som fönstret men aldrig högre än det */
+  width: min(100%, calc((100dvh - 2rem) * 1000 / 1552));
+  aspect-ratio: 1000 / 1552;
+  /* Visa bara vänstra halvan av uppslagsbilden */
+  background: url('../assets/images/handbook_open.webp') left center / 200% 100% no-repeat;
   /* Gör att cqi nedan räknas i procent av bokens bredd, så texten skalar med boken */
   container-type: inline-size;
   color: var(--color-ink);
@@ -151,21 +143,18 @@ onUnmounted(() => {
   text-align: left;
 }
 
-/* Textytorna, uppmätta i procent av bilden så att de följer med när boken skalar */
+/* Textytan, uppmätt i procent av bilden så att den följer med när boken skalas */
 .page {
   position: absolute;
   top: 8%;
   bottom: 14%;
   overflow-y: auto;
+  container-type: inline-size;
 }
 
+/* Mobil: textytan täcker den synliga halvan */
 .page-left {
-  left: 9%;
-  right: 54%;
-}
-
-.page-right {
-  left: 55%;
+  left: 18%;
   right: 8%;
 }
 
@@ -191,8 +180,8 @@ onUnmounted(() => {
 /* Navigering med föregående, stäng och nästa, stäng i mitten */
 .controls {
   position: absolute;
-  left: 20%;
-  right: 20%;
+  left: 18%;
+  right: 8%;
   bottom: 6%;
   display: flex;
   align-items: center;
@@ -201,7 +190,8 @@ onUnmounted(() => {
 
 .arrow,
 .close {
-  width: 6cqi;
+  /* Större grepp på mobil där boken är smal */
+  width: 11cqi;
   color: var(--color-ink);
 }
 
@@ -234,35 +224,6 @@ onUnmounted(() => {
   outline-offset: 3px;
 }
 
-/* En sida i taget: visa bara vänstra halvan av bokbilden */
-@media (max-width: 767px) {
-  .handbook {
-    width: min(100%, calc((100dvh - 2rem) * 1000 / 1552));
-    aspect-ratio: 1000 / 1552;
-    background-size: 200% 100%;
-    background-position: left;
-  }
-
-  .page {
-    top: 8%;
-  }
-
-  .page-left {
-    left: 18%;
-    right: 8%;
-  }
-
-  .controls {
-    left: 18%;
-    right: 8%;
-  }
-
-  .arrow,
-  .close {
-    width: 11cqi;
-  }
-}
-
 svg {
   display: block;
   width: 100%;
@@ -271,5 +232,35 @@ svg {
   stroke-width: 2.5;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+/* Desktop: hela uppslaget med två sidor */
+@media (orientation: landscape) {
+  .handbook {
+    width: min(100%, calc((90dvh - 2rem) * 2000 / 1552));
+    aspect-ratio: 2000 / 1552;
+    background-size: 100% 100%;
+    background-position: center;
+  }
+
+  .page-left {
+    left: 9%;
+    right: 54%;
+  }
+
+  .page-right {
+    left: 55%;
+    right: 8%;
+  }
+
+  .controls {
+    left: 20%;
+    right: 20%;
+  }
+
+  .arrow,
+  .close {
+    width: 6cqi;
+  }
 }
 </style>

@@ -8,6 +8,8 @@
   --color-ink: #2b1d0e;
   --font-main: 'Special Elite', monospace;
   --font-handwritten: 'Reenie Beanie', cursive;
+  --header-h: calc(clamp(280px, 80dvw, 500px) * 0.184 + 1dvw);
+  --content-w: min(90dvw, 2840px, calc((100dvh - 0.084dvw - 0.5rem) * 1.5));
   /* Gör det tunna handskriftstypsnittet tjockare och lättare att läsa */
   --font-handwritten-stroke: 0.02em currentColor;
 }
@@ -36,6 +38,8 @@ button {
   font: inherit;
   color: inherit;
   cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .btn {
@@ -47,19 +51,42 @@ button {
   cursor: pointer;
   border: var(--btn-border) solid var(--color-border-outer);
   --btn-border: 4px;
-  --btn-border-large: 6px;
 }
 
+/* Gör att varje förälder med en .btn-large agerar container
+behövs för att cqi ska kunna mäta bredd */
+:has(> .btn-large) {
+  container-type: inline-size;
+}
+
+/* Texten i en .btn-large måste ligga i en <span>.
+  Knappen är själv en container, så cqi på span mäts mot knappens bredd.
+  Kräver att knappens bredd bestäms utifrån förälder (width: 100% satt
+  i klassen så knappen fyller föräldern) eller overridea med fast värde.
+  Ligger den i en förälder som saknar egen bredd kollapsar den.
+
+  Användning: 
+  <button class="btn-large"><span>Text</span></button> */
 .btn-large {
+  position: relative;
+  width: 100%;
+  height: auto;
+  container-type: inline-size;
   font-family: var(--font-main);
-  font-size: 4rem;
-  width: 320px;
-  height: 176px;
-  border-radius: 20px;
-  padding: 28px 20px 14px 20px;
+  text-transform: uppercase;
+  text-wrap: balance;
+  border-radius: 1rem;
+  padding: 15% 5% 10%;
   background-color: var(--color-bg-purple);
+  --btn-border-large: max(5px, 1cqi);
+  /* yttre beige ram */
   border: var(--btn-border-large) solid var(--color-border-outer);
+  /* inre grå ram */
   box-shadow: inset 0 0 0 var(--btn-border-large) var(--color-border-inner);
+}
+
+.btn-large span {
+  font-size: 18cqi;
 }
 
 .btn-purple {
@@ -99,7 +126,7 @@ html {
 }
 
 body {
-  min-height: 100vh;
+  min-height: 100dvh;
   color: var(--color-text);
   background: var(--color-bg) url('./images/background.webp') center bottom / cover no-repeat;
   font-family: 'Special Elite', system-ui, sans-serif;
@@ -113,9 +140,14 @@ body {
   }
 }
 
-/* Bilder ska inte gå att markera eller dra iväg (#86) */
-img {
-  -webkit-user-select: none; /* För äldre Safari */
+/* Hindra markering */
+img,
+button {
+  -webkit-user-select: none;
   user-select: none;
+}
+
+/* Hindra drag */
+img {
   -webkit-user-drag: none;
 }

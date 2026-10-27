@@ -1,19 +1,27 @@
 @import './base.css';
 
 #app {
-  max-width: 1280px;
-  min-height: 100vh;
+  min-height: 100dvh;
   margin: 0 auto;
-  padding: 0 0.5rem;
   display: flex;
+  align-items: center;
   flex-direction: column;
+  overflow: hidden;
+}
+
+header {
+  text-align: center;
+  margin: 0 auto;
+  width: clamp(280px, 90dvw, 500px);
+  max-width: 100%;
+  margin-top: 1%;
 }
 
 main {
   text-align: center;
-  width: min(95vw, 1024px);
+  width: clamp(280px, 95vw, 768px);
+  max-width: 100%;
   margin: 0 auto;
-  padding: 0.5rem 0;
 }
 
 .content-wrapper {
@@ -28,11 +36,67 @@ main {
 }
 
 .logo {
-  max-width: 100%;
+  width: 100%;
 }
 
-@media (min-width: 768px) {
+/* Om stor bildskärm och muspekare */
+@media (min-width: 768px) and (min-height: 501px) and (orientation: landscape) and (pointer: fine) {
+  main {
+    width: var(--content-w);
+  }
+  header {
+    width: calc(var(--content-w) * 4 / 7);
+  }
   .content-wrapper {
     padding: 1rem;
+  }
+}
+
+/* Liten liggande skärm (mobil, och surfplatta med touch) */
+@media (orientation: landscape) and (max-width: 767px),
+  (orientation: landscape) and (pointer: coarse),
+  (orientation: landscape) and (max-height: 500px) {
+  :root {
+    /* Höjden på de fyra bilderna. Den minsta av bredd och höjd väljs */
+    --bild-h: min(calc((100vw - 1.5rem) / 3.1), calc((100dvh - 1rem) / 1.55));
+
+    /* Avstånd överst så att allt hamnar mitt på skärmen */
+    --topp: calc((100dvh - var(--bild-h) * 1.55) / 2);
+  }
+
+  #app {
+    position: relative;
+    display: block;
+    height: 100dvh;
+  }
+
+  header {
+    position: absolute;
+    top: var(--topp);
+    /* Halva gridens bredd (3.07 / 2) till vänster om mitten */
+    left: calc(50% - var(--bild-h) * 1.53);
+    /* Tre av fyra kolumner */
+    width: calc(var(--bild-h) * 2.2);
+    /* Samma höjd som ID-kortet */
+    height: calc(var(--bild-h) * 0.52);
+    max-width: none;
+    margin: 0;
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-end; /* loggan ligger nere mot bilderna */
+  }
+
+  .logo {
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    object-position: left bottom;
+  }
+
+  main {
+    width: 100%;
+    margin: 0;
   }
 }

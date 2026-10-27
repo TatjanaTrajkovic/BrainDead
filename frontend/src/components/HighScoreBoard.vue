@@ -1,22 +1,15 @@
 <script setup>
-import { onMounted, ref } from 'vue';
-import { getHighScores } from '@/api/gameApi';
+import { onMounted } from 'vue';
+import { useHighScores } from '@/composables/useHighscores';
 
-const entries = ref([]);
-const isLoading = ref(true);
-const error = ref('');
+const { entries, isLoading, error, load } = useHighScores();
 
-async function loadHighScores() {
-  try {
-    entries.value = await getHighScores();
-  } catch (err) {
-    error.value = err.status ? err.message : 'Kunde inte nå servern';
-  } finally {
-    isLoading.value = false;
+// Visar redan hämtad lista direkt, hämtar om den saknas
+onMounted(() => {
+  if (isLoading.value) {
+    load();
   }
-}
-
-onMounted(loadHighScores);
+});
 </script>
 
 <template>
@@ -42,7 +35,6 @@ onMounted(loadHighScores);
   position: relative;
   container-type: inline-size;
   width: 100%;
-  max-width: 480px;
   aspect-ratio: 1232 / 1552;
   background: url('../assets/images/highscore.webp') center / contain no-repeat;
   color: var(--color-ink);

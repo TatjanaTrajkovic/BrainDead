@@ -5,7 +5,7 @@ import { RouterView, RouterLink } from 'vue-router';
 <template>
   <main>
     <header>
-      <RouterLink to="/">
+      <RouterLink to="/" aria-label="Till startsidan">
         <img src="./assets/images/logo.webp" alt="BrainDead" class="logo" />
       </RouterLink>
     </header>

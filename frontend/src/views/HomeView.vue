@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useGame } from '@/composables/useGame';
 import { useAuth } from '@/composables/useAuth';
+import { useMediaQuery } from '../composables/useMediaQuery';
 import SessionMenu from '@/components/SessionMenu.vue';
 import HandbookOpen from '@/components/HandbookOpen.vue';
 import StartButton from '@/components/StartButton.vue';
@@ -17,6 +18,10 @@ import ConfirmDialog from '@/components/ConfirmDialog.vue';
 const router = useRouter();
 const { error, start, resume, hasActiveSession, checkActiveSession } = useGame();
 const { player, loadPlayer } = useAuth();
+
+const isDesktop = useMediaQuery(
+  '(min-width: 768px) and (min-height: 501px) and (orientation: landscape) and (pointer: fine)',
+);
 
 // <dialog> längst ner i templaten ger bakgrund, stängning med Esc och håller fokus i menyn.
 // Variabelnamnet matchar ref="menu" i templaten, så Vue lägger elementet här efter rendering
@@ -69,18 +74,28 @@ function handleResume() {
   <p v-if="error">{{ error }}</p>
 
   <div class="home">
-    <div class="area-handbook">
-      <HandbookHighscore
-        @open-handbook="isHandbookOpen = true"
-        @open-highscore="isHighScoreOpen = true"
-      />
+    <div class="col">
+      <div class="area-handbook">
+        <HandbookHighscore
+          :part="isDesktop ? 'both' : 'handbook'"
+          @open-handbook="isHandbookOpen = true"
+          @open-highscore="isHighScoreOpen = true"
+        />
+      </div>
+      <div class="area-prolog">
+        <PrologueNotebook :pages="prologuePages" />
+      </div>
     </div>
-    <div class="area-prolog">
-      <PrologueNotebook :pages="prologuePages" />
-    </div>
-    <LoginCard class="area-id" :player="player" @player-changed="checkActiveSession" />
-    <div class="area-start">
-      <StartButton @start="openMenu" />
+    <div class="col">
+      <div class="area-id">
+        <LoginCard :player="player" @player-changed="checkActiveSession" />
+      </div>
+      <div class="area-start">
+        <StartButton @start="openMenu" />
+      </div>
+      <div v-if="!isDesktop" class="area-highscore">
+        <HandbookHighscore part="highscore" @open-highscore="isHighScoreOpen = true" />
+      </div>
     </div>
   </div>
 
@@ -111,51 +126,39 @@ function handleResume() {
 
 <style scoped>
 .home {
-  display: grid;
-  /* Bredderna är valda så att prologen och ID-kort + startknapp blir lika höga */
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.7fr);
-  grid-template-rows: auto 1fr;
-  grid-template-areas:
-    'handbook prolog id'
-    'handbook prolog start';
-  gap: 2rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  width: 100%;
+  /* Taket: kolumnerna blir aldrig högre än skärmen.
+     -header-h = loggans höjd */
+  max-width: calc((100dvh - var(--header-h) - 0.5rem) * 0.63);
+  margin-inline: auto;
 }
 
-.area-handbook {
-  grid-area: handbook;
-  width: 100%;
-  height: 100%;
+.col {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
 }
-.area-prolog {
-  grid-area: prolog;
-}
-.area-id {
-  grid-area: id;
-}
+
 .area-start {
-  grid-area: start;
   display: flex;
   justify-content: center;
-  align-items: flex-end;
-}
-
-/* Tillfälligt, tas bort när alla komponenter är inkopplade */
-.placeholder {
-  min-height: 120px;
-  border: 2px dashed var(--color-border-outer);
+  margin-top: -10%;
 }
 
 .menu-overlay {
   margin: auto;
   padding: 0;
-  background: var(--color-bg-gray);
-  border: 3px solid var(--color-border-outer);
-  border-radius: 1rem;
-  color: var(--color-text);
+  background: transparent;
+  border: none;
 }
 
 .menu-overlay::backdrop {
-  background: rgb(0 0 0 / 70%);
+  background: rgb(0 0 0 / 90%);
 }
 
 .menu-content {
@@ -164,5 +167,134 @@ function handleResume() {
   align-items: center;
   gap: 1rem;
   padding: 2rem;
+}
+
+/* Om stor bildskärm och muspekare */
+@media (min-width: 768px) and (min-height: 501px) and (orientation: landscape) and (pointer: fine) {
+  .home {
+    display: grid;
+    max-width: none;
+    /* Tre lika breda kolumner så att prologen ligger mitt under loggan.
+   ID-kort och startknapp görs mindre med width: 70% nedan */
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: 1fr auto;
+    grid-template-areas:
+      'handbook prolog id'
+      'handbook prolog start';
+  }
+
+  .col {
+    display: contents;
+  }
+
+  .area-handbook {
+    grid-area: handbook;
+  }
+
+  .area-prolog {
+    grid-area: prolog;
+  }
+
+  .area-id,
+  .area-start {
+    display: flex;
+    justify-content: start;
+  }
+
+  .area-id :deep(.id-card),
+  .area-start :deep(.nuke) {
+    width: 70%;
+  }
+
+  .area-id {
+    align-self: center;
+  }
+}
+
+/* Liggande kompakt skärm: --bild-h och --topp definieras i main.css */
+@media (orientation: landscape) and (max-width: 767px),
+  (orientation: landscape) and (pointer: coarse),
+  (orientation: landscape) and (max-height: 500px) {
+  .home {
+    display: grid;
+    align-items: stretch;
+    gap: 0.4rem;
+    max-width: none;
+    margin-inline: auto;
+    margin-top: var(--topp);
+    width: calc(var(--bild-h) * 3.07);
+    height: calc(var(--bild-h) * 1.55);
+    /* Räknat på bildernas bredd/höjd */
+    grid-template-columns: 0.794fr 0.755fr 0.716fr 0.803fr;
+    grid-template-rows: calc(var(--bild-h) * 0.52) 1fr;
+    grid-template-areas:
+      'logo      logo     logo  id'
+      'highscore handbook prolog start';
+  }
+
+  .col {
+    display: contents;
+  }
+
+  .area-handbook {
+    grid-area: handbook;
+  }
+  .area-highscore {
+    grid-area: highscore;
+  }
+  .area-prolog {
+    grid-area: prolog;
+  }
+  .area-start {
+    grid-area: start;
+    margin-top: 0;
+  }
+
+  .area-handbook,
+  .area-highscore,
+  .area-prolog,
+  .area-id,
+  .area-start {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    container-type: size;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  .area-id {
+    grid-area: id;
+    align-items: start;
+  }
+
+  .area-prolog :deep(.notebook) {
+    width: min(100cqw, calc(100cqh * 1640 / 2292));
+    height: auto;
+    aspect-ratio: 1640 / 2292;
+  }
+
+  .area-handbook :deep(.buttons) {
+    width: min(100cqw, calc(100cqh * 800 / 1060));
+    height: auto;
+    aspect-ratio: 800 / 1060;
+  }
+
+  .area-highscore :deep(.buttons) {
+    width: min(100cqw, calc(100cqh * 1232 / 1552));
+    height: auto;
+    aspect-ratio: 1232 / 1552;
+  }
+
+  .area-start :deep(.nuke) {
+    width: min(100cqw, calc(100cqh * 1226 / 1526));
+    height: auto;
+    aspect-ratio: 1226 / 1526;
+  }
+  .area-id :deep(.id-card) {
+    width: min(100cqw, calc(100cqh * 550 / 357));
+    height: auto;
+    aspect-ratio: 550 / 357;
+  }
 }
 </style>
