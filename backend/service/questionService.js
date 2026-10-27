@@ -39,4 +39,50 @@ async function getAllQuestions() {
   return [...questions.values()];
 }
 
-module.exports = { getAllQuestions };
+// Frågan läggs sist. Fråga och svar sparas i samma transaktion, så att ett fel aldrig
+// lämnar en fråga utan svar. Svarar i samma form som getAllQuestions
+async function createQuestion({ scenario, text, answers }) {
+  const connection = await database.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    // FOR UPDATE låser frågorna, så att två admins som sparar samtidigt inte får samma position
+    const [[{ maxPosition }]] = await connection.query(
+      'SELECT COALESCE(MAX(position), 0) AS maxPosition FROM question FOR UPDATE',
+    );
+    const position = maxPosition + 1;
+
+    const [questionResult] = await connection.execute(
+      'INSERT INTO question (scenario, text, position) VALUES (?, ?, ?)',
+      [scenario, text, position],
+    );
+    const questionId = questionResult.insertId;
+
+    const savedAnswers = [];
+    for (const answer of answers) {
+      const [answerResult] = await connection.execute(
+        'INSERT INTO answer (question_id, text, health_change, feedback) VALUES (?, ?, ?, ?)',
+        [questionId, answer.text, answer.health_change, answer.feedback],
+      );
+      savedAnswers.push({ answer_id: answerResult.insertId, ...answer });
+    }
+
+    await connection.commit();
+
+    return {
+      question_id: questionId,
+      scenario,
+      text,
+      position,
+      status: 'ACTIVE',
+      answers: savedAnswers,
+    };
+  } catch (err) {
+    await connection.rollback();
+    throw err;
+  } finally {
+    connection.release();
+  }
+}
+
+module.exports = { getAllQuestions, createQuestion };

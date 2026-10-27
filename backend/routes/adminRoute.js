@@ -7,5 +7,6 @@ const questionController = require('../controllers/questionController');
 router.use(loadUser(), requireAdmin);
 
 router.get('/questions', questionController.getAllQuestions);
+router.post('/questions', questionController.createQuestion);
 
 module.exports = router;
