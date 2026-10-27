@@ -39,4 +39,36 @@ async function getAllQuestions() {
   return [...questions.values()];
 }
 
+async function updateQuestion(questionId, question) {
+  const connection = await database.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    const [existing] = await connection.query(
+      `SELECT question_id, status
+      FROM question
+      WHERE question_id = ?`,
+      [questionId],
+    );
+    if (existing.length === 0) {
+      await connection.rollback();
+      return { error: 'QUESTION_NOT_FOUND' };
+    }
+
+    const [answers] = await connection.query(`SELECT answer_id FROM answer WHERE question_id = ?`, [
+      questionId,
+    ]);
+
+    if (answers.length !== 4) {
+      await connection.rollback();
+      return { error: 'INVALID_ANSWER' };
+    }
+  } catch (err) {
+    await connection.rollback();
+    throw err;
+  } finally {
+    connection.release();
+  }
+}
+
 module.exports = { getAllQuestions };
