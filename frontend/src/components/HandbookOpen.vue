@@ -148,7 +148,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
   position: absolute;
   top: 8%;
   bottom: 14%;
-  overflow-y: auto;
+  /* Själva scrollen sker inne i HandbookPage, som har scrollpilarna */
   container-type: inline-size;
 }
 
