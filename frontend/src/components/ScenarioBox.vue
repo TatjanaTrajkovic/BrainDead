@@ -1,5 +1,6 @@
 <script setup>
-import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { nextTick, ref, watch } from 'vue';
+import { useScrollArrows } from '../composables/useScrollArrows';
 
 const props = defineProps({
   text: {
@@ -14,51 +15,15 @@ const props = defineProps({
 });
 
 const scroller = ref(null);
-// Pilarna visas bara när det finns mer text åt det hållet
-const canScrollUp = ref(false);
-const canScrollDown = ref(false);
+const { canScrollUp, canScrollDown, updateArrows, scrollStep, scrollToTop } =
+  useScrollArrows(scroller);
 
-function updateArrows() {
-  const el = scroller.value;
-  if (!el) {
-    return;
-  }
-  canScrollUp.value = el.scrollTop > 0;
-  // -1 för att scrollTop kan bli ett decimaltal som aldrig riktigt når botten
-  canScrollDown.value = el.scrollTop + el.clientHeight < el.scrollHeight - 1;
-}
-
-// Ett klick scrollar 80 % av rutans höjd, så att en rad från förra vyn syns kvar
-function scrollStep(direction) {
-  const el = scroller.value;
-  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  el.scrollBy({
-    top: direction * el.clientHeight * 0.8,
-    behavior: reduceMotion ? 'auto' : 'smooth',
-  });
-}
-
-// Rutan och texten kan ändra storlek (fönstret, typsnitt som laddas), då kan pilarna behöva visas eller döljas
-let observer = null;
-
-onMounted(() => {
-  observer = new ResizeObserver(updateArrows);
-  observer.observe(scroller.value);
-  observer.observe(scroller.value.firstElementChild);
-  updateArrows();
-});
-
-onBeforeUnmount(() => {
-  observer?.disconnect();
-});
-
-// Ny text (nästa fråga eller feedback) börjar från toppen. Elementet är detsamma, så scrollen ligger annars kvar
+// Ny text (nästa fråga eller feedback) börjar från toppen
 watch(
   () => props.text,
   async () => {
     await nextTick();
-    scroller.value.scrollTop = 0;
-    updateArrows();
+    scrollToTop();
   },
 );
 </script>
