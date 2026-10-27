@@ -33,16 +33,18 @@ async function getActiveSession(userId, db = database) {
 }
 
 async function getNextQuestion(sessionId, db = database) {
+  // Bara frågor som fanns när omgången startade, så att en ny fråga inte dyker upp mitt i en omgång
   const [questions] = await db.query(
     `SELECT question_id, scenario, text, position
      FROM question
      WHERE status = 'ACTIVE'
+       AND created_at <= (SELECT started_at FROM game_session WHERE session_id = ?)
        AND question_id NOT IN (
          SELECT question_id FROM session_question WHERE session_id = ?
        )
      ORDER BY position
      LIMIT 1`,
-    [sessionId],
+    [sessionId, sessionId],
   );
   if (questions.length === 0) {
     return null;
@@ -55,9 +57,11 @@ async function getNextQuestion(sessionId, db = database) {
   );
   const [counts] = await db.query(
     `SELECT
-  (SELECT COUNT(*) FROM question WHERE status = 'ACTIVE') AS total_questions,
+  (SELECT COUNT(*) FROM question
+   WHERE status = 'ACTIVE'
+     AND created_at <= (SELECT started_at FROM game_session WHERE session_id = ?)) AS total_questions,
   (SELECT COUNT(*) FROM session_question WHERE session_id = ?) AS answered_count`,
-    [sessionId],
+    [sessionId, sessionId],
   );
 
   return {
