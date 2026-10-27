@@ -11,6 +11,21 @@ exports.getAllQuestions = async (req, res) => {
   }
 };
 
+exports.createQuestion = async (req, res) => {
+  const validationError = validateQuestion(req.body);
+  if (validationError) {
+    return res.status(400).json({ error: validationError });
+  }
+
+  try {
+    const created = await questionService.createQuestion(req.body);
+    return res.status(201).json(created);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Kunde inte spara frågan' });
+  }
+};
+
 exports.updateQuestion = async (req, res) => {
   const validationError = validateQuestion(req.body, { requireAnswerId: true });
   if (validationError) {

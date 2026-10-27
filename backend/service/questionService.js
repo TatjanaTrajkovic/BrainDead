@@ -39,6 +39,60 @@ async function getAllQuestions() {
   return [...questions.values()];
 }
 
+// Frågan läggs sist. Fråga och svar sparas i samma transaktion, så att ett fel aldrig
+// lämnar en fråga utan svar. Svarar i samma form som getAllQuestions.
+// validateQuestion trimmar bara när den mäter, så texterna trimmas här innan de sparas
+async function createQuestion(question) {
+  const scenario = question.scenario.trim();
+  const text = question.text.trim();
+  const connection = await database.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    // FOR UPDATE låser frågorna, så att två admins som sparar samtidigt inte får samma position
+    const [[{ maxPosition }]] = await connection.query(
+      'SELECT COALESCE(MAX(position), 0) AS maxPosition FROM question FOR UPDATE',
+    );
+    const position = maxPosition + 1;
+
+    const [questionResult] = await connection.execute(
+      'INSERT INTO question (scenario, text, position) VALUES (?, ?, ?)',
+      [scenario, text, position],
+    );
+    const questionId = questionResult.insertId;
+
+    const savedAnswers = [];
+    for (const answer of question.answers) {
+      const saved = {
+        text: answer.text.trim(),
+        health_change: answer.health_change,
+        feedback: answer.feedback.trim(),
+      };
+      const [answerResult] = await connection.execute(
+        'INSERT INTO answer (question_id, text, health_change, feedback) VALUES (?, ?, ?, ?)',
+        [questionId, saved.text, saved.health_change, saved.feedback],
+      );
+      savedAnswers.push({ answer_id: answerResult.insertId, ...saved });
+    }
+
+    await connection.commit();
+
+    return {
+      question_id: questionId,
+      scenario,
+      text,
+      position,
+      status: 'ACTIVE',
+      answers: savedAnswers,
+    };
+  } catch (err) {
+    await connection.rollback();
+    throw err;
+  } finally {
+    connection.release();
+  }
+}
+
 async function updateQuestion(questionId, question) {
   const connection = await database.getConnection();
   try {
@@ -108,4 +162,4 @@ async function setQuestionStatus(questionId, status) {
   return { question_id: Number(questionId), status };
 }
 
-module.exports = { getAllQuestions, updateQuestion, setQuestionStatus };
+module.exports = { getAllQuestions, createQuestion, updateQuestion, setQuestionStatus };
