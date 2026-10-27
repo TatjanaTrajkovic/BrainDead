@@ -45,7 +45,7 @@ async function updateQuestion(questionId, question) {
     await connection.beginTransaction();
 
     const [existing] = await connection.query(
-      `SELECT question_id, status
+      `SELECT question_id
       FROM question
       WHERE question_id = ?`,
       [questionId],
@@ -59,10 +59,36 @@ async function updateQuestion(questionId, question) {
       questionId,
     ]);
 
-    if (answers.length !== 4) {
+    const existingIds = new Set(answers.map((a) => a.answer_id));
+    const sentIds = new Set(question.answers.map((a) => a.answer_id));
+    const sameAnswers =
+      sentIds.size === existingIds.size && [...sentIds].every((id) => existingIds.has(id));
+    if (!sameAnswers) {
       await connection.rollback();
       return { error: 'INVALID_ANSWER' };
     }
+
+    await connection.query(`UPDATE question SET scenario = ?, text = ? WHERE question_id = ?`, [
+      question.scenario.trim(),
+      question.text.trim(),
+      questionId,
+    ]);
+    for (const answer of question.answers) {
+      await connection.query(
+        `UPDATE answer
+         SET text = ?, health_change = ?, feedback = ?
+         WHERE answer_id = ? AND question_id = ?`,
+        [
+          answer.text.trim(),
+          answer.health_change,
+          answer.feedback.trim(),
+          answer.answer_id,
+          questionId,
+        ],
+      );
+    }
+    await connection.commit();
+    return { question_id: Number(questionId) };
   } catch (err) {
     await connection.rollback();
     throw err;
@@ -71,4 +97,4 @@ async function updateQuestion(questionId, question) {
   }
 }
 
-module.exports = { getAllQuestions };
+module.exports = { getAllQuestions, updateQuestion };
