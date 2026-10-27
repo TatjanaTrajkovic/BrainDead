@@ -40,8 +40,11 @@ async function getAllQuestions() {
 }
 
 // Frågan läggs sist. Fråga och svar sparas i samma transaktion, så att ett fel aldrig
-// lämnar en fråga utan svar. Svarar i samma form som getAllQuestions
-async function createQuestion({ scenario, text, answers }) {
+// lämnar en fråga utan svar. Svarar i samma form som getAllQuestions.
+// validateQuestion trimmar bara när den mäter, så texterna trimmas här innan de sparas
+async function createQuestion(question) {
+  const scenario = question.scenario.trim();
+  const text = question.text.trim();
   const connection = await database.getConnection();
   try {
     await connection.beginTransaction();
@@ -59,12 +62,17 @@ async function createQuestion({ scenario, text, answers }) {
     const questionId = questionResult.insertId;
 
     const savedAnswers = [];
-    for (const answer of answers) {
+    for (const answer of question.answers) {
+      const saved = {
+        text: answer.text.trim(),
+        health_change: answer.health_change,
+        feedback: answer.feedback.trim(),
+      };
       const [answerResult] = await connection.execute(
         'INSERT INTO answer (question_id, text, health_change, feedback) VALUES (?, ?, ?, ?)',
-        [questionId, answer.text, answer.health_change, answer.feedback],
+        [questionId, saved.text, saved.health_change, saved.feedback],
       );
-      savedAnswers.push({ answer_id: answerResult.insertId, ...answer });
+      savedAnswers.push({ answer_id: answerResult.insertId, ...saved });
     }
 
     await connection.commit();

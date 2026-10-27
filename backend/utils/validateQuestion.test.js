@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { normalizeQuestion, validateQuestion } = require('./validateQuestion');
+const { validateQuestion } = require('./validateQuestion');
 
 function answer(overrides = {}) {
   return { text: 'Springer', health_change: 10, feedback: 'Det gick bra.', ...overrides };
@@ -15,17 +15,19 @@ function question(overrides = {}) {
   };
 }
 
-function check(body) {
-  return validateQuestion(normalizeQuestion(body));
+function withAnswer(index, overrides) {
+  const answers = [answer(), answer(), answer(), answer()];
+  answers[index] = answer(overrides);
+  return question({ answers });
 }
 
 test('godkänner en giltig fråga', () => {
-  assert.equal(check(question()), null);
+  assert.equal(validateQuestion(question()), null);
 });
 
 test('godkänner exakt maxlängd', () => {
   assert.equal(
-    check(
+    validateQuestion(
       question({
         scenario: 'a'.repeat(500),
         text: 'a'.repeat(255),
@@ -41,51 +43,51 @@ test('godkänner exakt maxlängd', () => {
   );
 });
 
-test('trimmar kanterna innan längden kontrolleras', () => {
-  assert.deepEqual(normalizeQuestion(question({ scenario: '  hej  ' })).scenario, 'hej');
-  assert.equal(check(question({ scenario: '   ' })), 'Scenario saknas');
+test('längden räknas efter trim', () => {
+  assert.equal(validateQuestion(question({ scenario: `  ${'a'.repeat(500)}  ` })), null);
+  assert.equal(validateQuestion(question({ scenario: '   ' })), 'Scenariot saknas');
 });
 
 test('saknad body eller saknade fält', () => {
-  assert.equal(check(undefined), 'Scenario saknas');
-  assert.equal(check(question({ text: undefined })), 'Frågetext saknas');
-  assert.equal(check(question({ text: 42 })), 'Frågetext saknas');
-  assert.match(
-    check(question({ answers: [answer({ feedback: '' }), answer(), answer(), answer()] })),
-    /Svar 1: feedback saknas/,
-  );
+  assert.equal(validateQuestion(undefined), 'Fråga saknas');
+  assert.equal(validateQuestion(question({ text: undefined })), 'Frågetexten saknas');
+  assert.equal(validateQuestion(question({ text: 42 })), 'Frågetexten saknas');
+  assert.equal(validateQuestion(question({ answers: undefined })), 'Svar saknas');
+  assert.equal(validateQuestion(withAnswer(0, { feedback: '' })), 'Svar 1: feedback saknas');
 });
 
 test('för lång text', () => {
-  assert.match(check(question({ scenario: 'a'.repeat(501) })), /max 500/);
-  assert.match(check(question({ text: 'a'.repeat(256) })), /max 255/);
+  assert.match(validateQuestion(question({ scenario: 'a'.repeat(501) })), /max 500/);
+  assert.match(validateQuestion(question({ text: 'a'.repeat(256) })), /max 255/);
   assert.match(
-    check(question({ answers: [answer(), answer({ text: 'a'.repeat(151) }), answer(), answer()] })),
-    /Svar 2: text får vara max 150/,
+    validateQuestion(withAnswer(1, { text: 'a'.repeat(151) })),
+    /Svar 2: texten.*max 150/,
+  );
+  assert.match(
+    validateQuestion(withAnswer(1, { feedback: 'a'.repeat(501) })),
+    /Svar 2: feedback.*max 500/,
   );
 });
 
 test('kräver exakt 4 svar', () => {
-  assert.match(check(question({ answers: [answer(), answer(), answer()] })), /exakt 4/);
+  assert.match(validateQuestion(question({ answers: [answer(), answer(), answer()] })), /4 svar/);
   assert.match(
-    check(question({ answers: [answer(), answer(), answer(), answer(), answer()] })),
-    /exakt 4/,
+    validateQuestion(question({ answers: [answer(), answer(), answer(), answer(), answer()] })),
+    /4 svar/,
   );
-  assert.match(check(question({ answers: undefined })), /exakt 4/);
-  assert.match(check(question({ answers: answer() })), /exakt 4/);
 });
 
 test('health_change måste vara ett heltal', () => {
   for (const value of [1.5, '10', null, undefined, NaN]) {
-    assert.match(
-      check(
-        question({ answers: [answer(), answer(), answer({ health_change: value }), answer()] }),
-      ),
-      /Svar 3: health_change måste vara ett heltal/,
+    assert.equal(
+      validateQuestion(withAnswer(2, { health_change: value })),
+      'Svar 3: health_change måste vara ett heltal',
     );
   }
-  assert.equal(
-    check(question({ answers: [answer({ health_change: 0 }), answer(), answer(), answer()] })),
-    null,
-  );
+  assert.equal(validateQuestion(withAnswer(0, { health_change: 0 })), null);
+});
+
+test('answer_id krävs bara vid redigering', () => {
+  assert.equal(validateQuestion(question()), null);
+  assert.equal(validateQuestion(question(), { requireAnswerId: true }), 'Svar 1: answer_id saknas');
 });
