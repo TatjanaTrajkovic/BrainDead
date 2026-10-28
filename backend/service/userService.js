@@ -1,0 +1,56 @@
+const database = require('../connectionMySQL');
+const { escapeLike } = require('../utils/escapeLike');
+
+// Gäster blir många, så listan visar bara de nyaste. Paginering behövs först om det inte räcker
+const USER_LIST_LIMIT = 100;
+
+const TYPE_FILTERS = {
+  registered: 'u.is_guest = FALSE',
+  guest: 'u.is_guest = TRUE',
+  banned: `u.status = 'BANNED'`,
+};
+
+// Spelarlistan för admin, nyast först. Kolumnerna väljs en och en,
+// så att password_hash och auth_token aldrig följer med.
+// best_score följer samma regel som topplistan: bästa avslutade omgång med hälsa över 0.
+// Sökningen går mot display_name, så att gäster går att hitta som "Gäst-<id>"
+async function getAllUsers({ type, search } = {}) {
+  const conditions = [];
+  const params = [];
+
+  if (type) {
+    conditions.push(TYPE_FILTERS[type]);
+  }
+  if (search) {
+    conditions.push(`COALESCE(u.username, CONCAT('Gäst-', u.user_id)) LIKE ?`);
+    params.push(`%${escapeLike(search)}%`);
+  }
+  const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+  const [rows] = await database.query(
+    `SELECT u.user_id,
+            COALESCE(u.username, CONCAT('Gäst-', u.user_id)) AS display_name,
+            u.role,
+            u.status,
+            u.is_guest,
+            u.created_at,
+            COUNT(gs.session_id) AS session_count,
+            MAX(CASE WHEN gs.status = 'COMPLETED' AND gs.current_health > 0
+                     THEN gs.current_health END) AS best_score
+     FROM users u
+     LEFT JOIN game_session gs ON gs.user_id = u.user_id
+     ${where}
+     GROUP BY u.user_id
+     ORDER BY u.created_at DESC, u.user_id DESC
+     LIMIT ?`,
+    [...params, USER_LIST_LIMIT],
+  );
+
+  return rows.map((row) => ({
+    ...row,
+    is_guest: Boolean(row.is_guest),
+    session_count: Number(row.session_count),
+  }));
+}
+
+module.exports = { USER_LIST_LIMIT, TYPE_FILTERS, getAllUsers };
