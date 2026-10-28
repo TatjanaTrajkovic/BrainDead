@@ -51,4 +51,44 @@ async function getAnswerCounts() {
   return rows;
 }
 
+// Gör om de platta raderna från SQL till en fråga per objekt med svaren i en lista.
+// Frågor som saknas i deathRows har inga dödsfall och får 0
+function buildQuestionStats(answerRows, deathRows) {
+  const deathsByQuestion = new Map();
+  for (const row of deathRows) {
+    deathsByQuestion.set(row.question_id, row.deaths);
+  }
+
+  const questions = new Map();
+  for (const row of answerRows) {
+    if (!questions.has(row.question_id)) {
+      questions.set(row.question_id, {
+        question_id: row.question_id,
+        text: row.question_text,
+        position: row.position,
+        status: row.status,
+        times_answered: 0,
+        deaths: deathsByQuestion.get(row.question_id) ?? 0,
+        answers: [],
+      });
+    }
+    const question = questions.get(row.question_id);
+    question.answers.push({
+      answer_id: row.answer_id,
+      text: row.answer_text,
+      health_change: row.health_change,
+      times_chosen: row.times_chosen,
+    });
+    question.times_answered += row.times_chosen;
+  }
+
+  return [...questions.values()];
+}
+
+async function getQuestionStats() {
+  const answerRows = await getAnswerCounts();
+  const deathRows = await getDeathsPerQuestion();
+  return buildQuestionStats(answerRows, deathRows);
+}
+
 module.exports = { getDeathsPerQuestion, getAnswerCounts, buildQuestionStats, getQuestionStats };
