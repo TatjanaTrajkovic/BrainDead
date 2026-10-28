@@ -22,12 +22,33 @@ async function getDeathsPerQuestion() {
   return rows;
 }
 
+// Alla frågor och svar, även inaktiva och ospelade, med hur många gånger varje svar valts.
+// Admins val räknas inte. Filtret ligger i subqueryn och inte i WHERE, annars skulle
+// svar som aldrig valts försvinna i stället för att få 0
 async function getAnswerCounts() {
   const [rows] = await database.query(
-    `SELECT question_id, COUNT(*) AS answer_count
-     FROM session_question
-     GROUP BY question_id`,
+    `SELECT q.question_id,
+            q.text AS question_text,
+            q.position,
+            q.status,
+            a.answer_id,
+            a.text AS answer_text,
+            a.health_change,
+            -- Räknar bara träffar. Ett svar utan träff har NULL här och får 0
+            COUNT(pa.answer_id) AS times_chosen
+     FROM question q
+     JOIN answer a ON a.question_id = q.question_id
+     LEFT JOIN (
+       SELECT sq.answer_id
+       FROM session_question sq
+       JOIN game_session gs ON gs.session_id = sq.session_id
+       JOIN users u ON u.user_id = gs.user_id
+       WHERE u.role = 'PLAYER'
+     ) AS pa ON pa.answer_id = a.answer_id
+     GROUP BY q.question_id, a.answer_id
+     ORDER BY q.position, a.answer_id`,
   );
+  return rows;
 }
 
-module.exports = { getDeathsPerQuestion };
+module.exports = { getDeathsPerQuestion, getAnswerCounts, buildQuestionStats, getQuestionStats };
