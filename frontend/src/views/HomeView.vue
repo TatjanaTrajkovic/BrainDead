@@ -17,7 +17,7 @@ import ConfirmDialog from '@/components/ConfirmDialog.vue';
 
 const router = useRouter();
 const { error, start, resume, hasActiveSession, checkActiveSession } = useGame();
-const { player, loadPlayer } = useAuth();
+const { player, isAdmin, loadPlayer } = useAuth();
 
 const isDesktop = useMediaQuery(
   '(min-width: 768px) and (min-height: 501px) and (orientation: landscape) and (pointer: fine)',
@@ -37,10 +37,24 @@ const isHandbookOpen = ref(false);
 // Styr om topplistan visas
 const isHighScoreOpen = ref(false);
 
+// LoginCard skickar player-changed redan när den skapas, före onMounted.
+// Flaggan gör att bara riktiga inloggningar skickar admin vidare, så admin kan gå till startsidan via loggan
+let isMounted = false;
+
 onMounted(() => {
+  isMounted = true;
   checkActiveSession();
   loadPlayer();
 });
+
+// Admin som loggar in skickas till adminsidan, alla andra kollar om de har en pågående omgång
+function handlePlayerChanged() {
+  if (isMounted && isAdmin.value) {
+    router.push({ name: 'admin' });
+    return;
+  }
+  checkActiveSession();
+}
 
 function openMenu() {
   menu.value.showModal();
@@ -90,10 +104,16 @@ function handleResume() {
     </div>
     <div class="col">
       <div class="area-id">
-        <LoginCard :player="player" :popup="isCompact" @player-changed="checkActiveSession" />
+        <LoginCard :player="player" :popup="isCompact" @player-changed="handlePlayerChanged" />
       </div>
       <div class="area-start">
-        <StartButton @start="openMenu" />
+        <!-- Admin spelar inte, så startknappen byts mot en länk till adminsidan -->
+        <div v-if="isAdmin" class="admin-slot">
+          <RouterLink :to="{ name: 'admin' }" class="btn btn-large admin-link">
+            <span>Till adminsidan</span>
+          </RouterLink>
+        </div>
+        <StartButton v-else @start="openMenu" />
       </div>
       <div v-if="!isDesktop" class="area-highscore">
         <HandbookHighscore part="highscore" @open-highscore="isHighScoreOpen = true" />
@@ -159,6 +179,22 @@ function handleResume() {
   border: none;
 }
 
+.admin-slot {
+  width: 100%;
+}
+
+.admin-link {
+  display: block;
+  color: var(--color-text);
+  text-decoration: none;
+  padding: 12% 5%;
+}
+
+/* Mindre text än i startknappen, "Till adminsidan" är längre */
+.admin-link span {
+  font-size: 13cqi;
+}
+
 .menu-overlay::backdrop {
   background: rgb(0 0 0 / 90%);
 }
@@ -204,8 +240,16 @@ function handleResume() {
   }
 
   .area-id :deep(.id-card),
-  .area-start :deep(.nuke) {
+  .area-start :deep(.nuke),
+  .area-start .admin-slot {
     width: 70%;
+  }
+
+  /* Lika hög som startknappens bild, så att ID-kortet hamnar på samma plats för admin och spelare.
+     Knappen ligger överst i rutan, direkt under ID-kortet */
+  .admin-slot {
+    aspect-ratio: 1226 / 1526;
+    padding-top: 8%;
   }
 
   .area-id {

@@ -1,6 +1,10 @@
 const sessionService = require('../service/sessionService');
 
 exports.createSession = async (req, res) => {
+  // Admin spelar inte, så omgångar och topplistan bara innehåller riktiga spelare (#171)
+  if (req.user.role === 'ADMIN') {
+    return res.status(403).json({ error: 'Admin kan inte spela' });
+  }
   try {
     const forceNew = req.body?.forceNew === true;
     const { session, created } = await sessionService.createSession(req.user.user_id, forceNew);
