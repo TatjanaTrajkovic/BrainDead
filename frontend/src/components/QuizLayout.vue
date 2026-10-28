@@ -28,9 +28,10 @@
   height: var(--panel-h);
   width: 100%;
   padding: clamp(8px, 1.5dvh, 14px);
-  /* på riktigt låga skärmar scrollar panelen istället
-     för att klippa innehållet */
+  /* på riktigt låga skärmar scrollar istället
+för att klippa innehållet */
   overflow: auto;
+  /* se till att innenhållet kan utgå från quiz-layouts dimensioner */
   container-type: size;
 }
 .answers {
@@ -62,6 +63,7 @@
    samma som HomeView och main.css */
 @media (min-width: 768px) and (min-height: 501px) and (orientation: landscape) and (pointer: fine) {
   .quiz-layout {
+    display: grid;
     grid-template-columns: auto 1fr auto;
     grid-template-rows: 1fr auto auto auto;
     grid-template-areas:
