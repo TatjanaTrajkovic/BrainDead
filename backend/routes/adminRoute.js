@@ -11,5 +11,6 @@ router.get('/questions', questionController.getAllQuestions);
 router.post('/questions', questionController.createQuestion);
 router.put('/questions/:questionId', questionController.updateQuestion);
 router.get('/users', userController.getAllUsers);
+router.patch('/questions/:questionId/status', questionController.setQuestionStatus);
 
 module.exports = router;
