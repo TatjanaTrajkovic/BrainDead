@@ -2,7 +2,7 @@
 // Varje objekt är en sida, två sidor visas per uppslag.
 // Varje sida har avsnitt med valfri title (h2), subtitle (h3), text och image.
 // Använd backticks (``) för formatering eller \n för radbrytning (white-space: pre-line i HandbookPage.vue).
-// Sidan har overflow-y: auto;, se över textlängd eller dela upp på flera sidor om scroll är oönskat.
+// Får texten inte plats visas scrollpilar (useScrollArrows i HandbookPage.vue). Dela upp på flera sidor om scroll är oönskat.
 // För bild import först sedan "image: { src: import_namn, alt: 'alt-text' }"
 //***********************************************************************************************************//
 
