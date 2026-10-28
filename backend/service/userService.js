@@ -53,4 +53,18 @@ async function getAllUsers({ type, search } = {}) {
   }));
 }
 
-module.exports = { USER_LIST_LIMIT, TYPE_FILTERS, getAllUsers };
+// Villkoren ligger i UPDATE, så att en spelare som bannas samtidigt inte hinner bli admin.
+// Matchar ingen rad avgör en SELECT om spelaren saknas eller är gäst, bannad eller inaktiv
+async function setUserRole(userId, role) {
+  const [result] = await database.query(
+    `UPDATE users SET role = ? WHERE user_id = ? AND is_guest = FALSE AND status = 'ACTIVE'`,
+    [role, userId],
+  );
+  if (result.affectedRows === 0) {
+    const [rows] = await database.query(`SELECT user_id FROM users WHERE user_id = ?`, [userId]);
+    return { error: rows.length === 0 ? 'USER_NOT_FOUND' : 'NOT_ELIGIBLE' };
+  }
+  return { user_id: Number(userId), role };
+}
+
+module.exports = { USER_LIST_LIMIT, TYPE_FILTERS, getAllUsers, setUserRole };
