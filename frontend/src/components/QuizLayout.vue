@@ -85,5 +85,22 @@
 @media (orientation: landscape) and (max-width: 767px),
   (orientation: landscape) and (pointer: coarse),
   (orientation: landscape) and (max-height: 500px) {
+  .quiz-layout {
+    grid-template-columns: auto 1fr auto;
+    grid-template-rows: 1fr auto auto auto;
+    grid-template-areas:
+      'progress story    health'
+      'progress question health'
+      'progress answers  health'
+      'progress submit   health';
+    gap: 6px;
+    --panel-h: min(calc(100dvh - var(--header-h) - 2rem), 34rem);
+    height: var(--panel-h);
+    width: min(100%, var(--content-w));
+    padding: 6px;
+  }
+  .answers {
+    grid-template-columns: 1fr 1fr; /* 2x2 */
+  }
 }
 </style>
