@@ -86,9 +86,8 @@ function buildQuestionStats(answerRows, deathRows) {
 }
 
 async function getQuestionStats() {
-  const answerRows = await getAnswerCounts();
-  const deathRows = await getDeathsPerQuestion();
+  const [answerRows, deathRows] = await Promise.all([getAnswerCounts(), getDeathsPerQuestion()]);
   return buildQuestionStats(answerRows, deathRows);
 }
 
-module.exports = { getDeathsPerQuestion, getAnswerCounts, buildQuestionStats, getQuestionStats };
+module.exports = { buildQuestionStats, getQuestionStats };
