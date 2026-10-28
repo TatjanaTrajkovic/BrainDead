@@ -48,4 +48,16 @@
 .health {
   grid-area: health;
 }
+
+/* Stor skärm med mus: vågrät layout som växer,
+   samma som HomeView och main.css */
+@media (min-width: 768px) and (min-height: 501px) and (orientation: landscape) and (pointer: fine) {
+}
+
+/* Liggande kompakt skärm (mobil och surfplatta med touch),
+   samma vågräta layout men mindre */
+@media (orientation: landscape) and (max-width: 767px),
+  (orientation: landscape) and (pointer: coarse),
+  (orientation: landscape) and (max-height: 500px) {
+}
 </style>
