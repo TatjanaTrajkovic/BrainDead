@@ -51,6 +51,33 @@ BrainDead/
 └── pull_request_template.md   # PR-mall med Definition of Done
 ```
 
+Så här hänger lagren ihop när frontend anropar backend:
+
+```mermaid
+flowchart LR
+  subgraph FE["Frontend · Vue 3 + Vite"]
+    direction TB
+    Router["router/router.js"] --> Views["views/<br/>HomeView · GameView · AdminView"]
+    Views --> Comp["components/"]
+    Views --> Composables["composables/<br/>useGame · useAuth · useHighscores"]
+    Comp --> Composables
+    Composables --> Api["api/gameApi.js"]
+  end
+
+  subgraph BE["Backend · Express 5"]
+    direction TB
+    App["app.js"] --> Routes["routes/<br/>session · auth · highScore · admin"]
+    Routes --> MW["middleware/<br/>loadUser · requireAdmin · loginLimiter"]
+    MW --> Ctrl["controllers/"]
+    Ctrl --> Svc["service/"]
+    Ctrl -.-> Utils["utils/<br/>validering · authCookie"]
+    Svc --> Conn["connectionMySQL.js"]
+  end
+
+  Api -- "fetch /api/*<br/>cookie: braindead_token" --> App
+  Conn --> DB[("MySQL<br/>schema.sql")]
+```
+
 ## Kom igång
 
 ### Förutsättningar
@@ -168,7 +195,55 @@ Lösenord hashas med Nodes inbyggda `crypto.scrypt` och ett slumpat salt per lö
 
 Notera: finished_at i game_session är tiden när omgången lämnat aktivt läge. Sätts både vid COMPLETED och PAUSED, tolkas tillsammans med status.
 
-<!-- TODO: lägg till ER-diagram -->
+```mermaid
+erDiagram
+  users ||--o{ game_session : "spelar"
+  game_session ||--o{ session_question : "innehåller"
+  question ||--o{ session_question : "visas i"
+  question ||--|{ answer : "har"
+  answer |o--o{ session_question : "valt svar"
+
+  users {
+    int user_id PK
+    varchar username UK
+    varchar email UK
+    varchar password_hash
+    enum role "PLAYER | ADMIN"
+    enum status "ACTIVE | INACTIVE | BANNED"
+    boolean is_guest
+    varchar auth_token UK "SHA-256"
+    timestamp created_at
+  }
+  game_session {
+    int session_id PK
+    int user_id FK
+    int current_health "0–100"
+    enum status "ACTIVE | COMPLETED | PAUSED"
+    timestamp started_at
+    timestamp finished_at
+  }
+  question {
+    int question_id PK
+    varchar scenario
+    varchar text
+    int position
+    enum status "ACTIVE | INACTIVE"
+    timestamp created_at
+  }
+  answer {
+    int answer_id PK
+    int question_id FK
+    varchar text
+    int health_change
+    varchar feedback
+  }
+  session_question {
+    int session_question_id PK
+    int session_id FK
+    int question_id FK
+    int answer_id FK
+  }
+```
 
 ## API
 
@@ -233,8 +308,20 @@ All spellogik ligger i composablen `frontend/src/composables/useGame.js`. Kompon
 
 `phase` styr vad som visas:
 
-```
-idle → loading → question ⇄ feedback → finished
+```mermaid
+stateDiagram-v2
+  direction LR
+  [*] --> idle
+  idle --> loading : start() / resume()
+  loading --> question
+  loading --> finished : inga frågor kvar / omgången redan klar
+  loading --> idle : fel
+  question --> feedback : answer()
+  feedback --> question : next()
+  feedback --> finished : next() utan fler frågor
+  question --> idle : quit()
+  feedback --> idle : quit()
+  finished --> loading : start() (Spela igen)
 ```
 
 | Funktion               | Vad den gör                                                                                                                                                           |
