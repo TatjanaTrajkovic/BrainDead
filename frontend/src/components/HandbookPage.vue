@@ -66,8 +66,6 @@ const { canScrollUp, canScrollDown, updateArrows, scrollStep } = useScrollArrows
   height: 100%;
   overflow-y: auto;
   overscroll-behavior: contain;
-  /* Plats för pilarna, så att texten inte hamnar under dem */
-  padding-right: 2.25rem;
   /* Döljer scrollbaren men behåller scrollningen, pilarna visar att det finns mer */
   scrollbar-width: none;
 }
