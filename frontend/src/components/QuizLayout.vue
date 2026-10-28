@@ -10,20 +10,6 @@
 </template>
 
 <style scoped>
-.quiz-layout {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  grid-template-rows: 1fr auto auto auto;
-  grid-template-areas:
-    'progress story    health'
-    'progress question health'
-    'progress answers  health'
-    'progress submit   health';
-  gap: var(--space-3, 12px);
-  /* Fast höjd så att panelen inte ändrar storlek mellan frågor; story-raden tar resten av höjden */
-  height: var(--quiz-panel-height, 520px);
-  padding: var(--space-4, 16px);
-}
 .progress {
   grid-area: progress;
 }
@@ -36,12 +22,6 @@
 .question {
   grid-area: question;
 }
-.answers {
-  grid-area: answers;
-  display: grid;
-  grid-template-columns: 1fr 1fr; /* 2×2-rutnätet för svaren */
-  gap: var(--space-3, 12px);
-}
 .submit {
   grid-area: submit;
 }
@@ -52,6 +32,23 @@
 /* Stor skärm med mus: vågrät layout som växer,
    samma som HomeView och main.css */
 @media (min-width: 768px) and (min-height: 501px) and (orientation: landscape) and (pointer: fine) {
+  .quiz-layout {
+    grid-template-columns: auto 1fr auto;
+    grid-template-rows: 1fr auto auto auto;
+    grid-template-areas:
+      'progress story    health'
+      'progress question health'
+      'progress answers  health'
+      'progress submit   health';
+    gap: clamp(8px, 1.5dvh, 16px);
+    --panel-h: min(calc(100dvh - var(--header-h) - 2.5rem), 54rem);
+    height: var(--panel-h);
+    width: min(100%, var(--content-w));
+    padding: clamp(8px, 1.5dvh, 16px);
+  }
+  .answers {
+    grid-template-columns: 1fr 1fr; /* 2×2 */
+  }
 }
 
 /* Liggande kompakt skärm (mobil och surfplatta med touch),
