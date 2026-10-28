@@ -45,3 +45,20 @@ exports.updateQuestion = async (req, res) => {
     return res.status(500).json({ error: 'Kunde inte uppdatera frågan' });
   }
 };
+
+exports.setQuestionStatus = async (req, res) => {
+  const { status } = req.body;
+  if (status !== 'ACTIVE' && status !== 'INACTIVE') {
+    return res.status(400).json({ error: 'Ogiltig status' });
+  }
+  try {
+    const result = await questionService.setQuestionStatus(req.params.questionId, status);
+    if (result.error === 'QUESTION_NOT_FOUND') {
+      return res.status(404).json({ error: 'Frågan finns inte' });
+    }
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Kunde inte ändra frågans status' });
+  }
+};

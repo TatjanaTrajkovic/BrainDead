@@ -151,4 +151,15 @@ async function updateQuestion(questionId, question) {
   }
 }
 
-module.exports = { getAllQuestions, createQuestion, updateQuestion };
+async function setQuestionStatus(questionId, status) {
+  const [result] = await database.query(`UPDATE question SET status = ? WHERE question_id = ?`, [
+    status,
+    questionId,
+  ]);
+  if (result.affectedRows === 0) {
+    return { error: 'QUESTION_NOT_FOUND' };
+  }
+  return { question_id: Number(questionId), status };
+}
+
+module.exports = { getAllQuestions, createQuestion, updateQuestion, setQuestionStatus };
