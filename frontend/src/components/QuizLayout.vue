@@ -10,6 +10,35 @@
 </template>
 
 <style scoped>
+.quiz-layout {
+  --panel-h: min(calc(100dvh - var(--header-h) - 2rem), 40rem);
+
+  grid-template-columns: 1fr;
+  /* story-raden tar just nu resten av höjden (ändras till något som ser bra ut) och scrollar inne i ScenarioBox */
+  grid-template-rows: auto minmax(4.5rem, 1fr) auto auto auto auto;
+  grid-template-areas:
+    'progress'
+    'story'
+    'question'
+    'answers'
+    'submit'
+    'health';
+
+  gap: clamp(8px, 1.5dvh, 14px);
+  height: var(--panel-h);
+  width: 100%;
+  padding: clamp(8px, 1.5dvh, 14px);
+  /* på riktigt låga skärmar scrollar panelen istället
+     för att klippa innehållet */
+  overflow: auto;
+  container-type: size;
+}
+.answers {
+  grid-area: answers;
+  display: grid;
+  grid-template-columns: 1fr; /* 1x1 */
+  gap: 8px;
+}
 .progress {
   grid-area: progress;
 }
