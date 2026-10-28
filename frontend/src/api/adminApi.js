@@ -29,3 +29,8 @@ export function setQuestionStatus(questionId, status) {
     body: JSON.stringify({ status }),
   });
 }
+
+// Statistik per fråga: hur många gånger varje svar valts och antal dödsfall
+export function getStats() {
+  return request('/admin/stats');
+}
