@@ -101,4 +101,29 @@ async function getUserSessions(userId) {
   }));
 }
 
-module.exports = { USER_LIST_LIMIT, TYPE_FILTERS, getAllUsers, setUserRole, getUserSessions };
+// Vid bann blir auth_token NULL i samma UPDATE. findByToken släpper bara igenom ACTIVE,
+// men utan NULL skulle en gammal cookie fungera igen när spelaren avbannas.
+// role = 'PLAYER' ligger i UPDATE, så att en spelare som blir admin samtidigt inte bannas
+async function setBanStatus(userId, status) {
+  const [result] = await database.query(
+    `UPDATE users
+     SET status = ?,
+         auth_token = IF(? = 'BANNED', NULL, auth_token)
+     WHERE user_id = ? AND is_guest = FALSE AND role = 'PLAYER'`,
+    [status, status, userId],
+  );
+  if (result.affectedRows === 0) {
+    const [rows] = await database.query(`SELECT user_id FROM users WHERE user_id = ?`, [userId]);
+    return { error: rows.length === 0 ? 'USER_NOT_FOUND' : 'NOT_ELIGIBLE' };
+  }
+  return { user_id: Number(userId), status };
+}
+
+module.exports = {
+  USER_LIST_LIMIT,
+  TYPE_FILTERS,
+  getAllUsers,
+  setUserRole,
+  getUserSessions,
+  setBanStatus,
+};
