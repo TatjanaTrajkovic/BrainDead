@@ -1,20 +1,4 @@
-const BASE_URL = import.meta.env.VITE_API_URL;
-
-async function request(path, options = {}) {
-  const response = await fetch(`${BASE_URL}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include', // skickar med token till backend
-    ...options,
-  });
-  const data = await response.json().catch(() => null);
-
-  if (!response.ok) {
-    const err = new Error(data?.error || 'Något gick fel mot servern');
-    err.status = response.status;
-    throw err;
-  }
-  return data;
-}
+import { request } from './request';
 
 // forceNew: true pausar en pågående omgång och startar en ny (se README, POST /api/sessions)
 export function startSession(forceNew = false) {
