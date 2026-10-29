@@ -27,10 +27,28 @@ const router = createRouter({
       // /admin öppnar första fliken. Flikarna är egna routes, så en omladdning stannar på rätt flik
       redirect: { name: 'admin-questions' },
       children: [
+        // Listan och formuläret är syskon under questions, så fliken Frågor är markerad även
+        // när en fråga redigeras. Föräldern har ingen komponent och renderar bara barnen
         {
           path: 'questions',
-          name: 'admin-questions',
-          component: () => import('@/components/admin/QuestionList.vue'),
+          children: [
+            {
+              path: '',
+              name: 'admin-questions',
+              component: () => import('@/components/admin/QuestionList.vue'),
+            },
+            {
+              path: 'new',
+              name: 'admin-question-new',
+              component: () => import('@/components/admin/QuestionForm.vue'),
+            },
+            {
+              // Id:t i URL:en gör att en omladdning stannar på samma fråga
+              path: ':questionId/edit',
+              name: 'admin-question-edit',
+              component: () => import('@/components/admin/QuestionForm.vue'),
+            },
+          ],
         },
         {
           path: 'users',
