@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { getStats } from '@/api/adminApi';
 
 const questions = ref([]);
@@ -12,6 +12,30 @@ const legend = [
   { level: 'mid', label: '16–25' },
   { level: 'high', label: '26+' },
 ];
+
+const FEW_ANSWERS = 20;
+
+const maxDeaths = computed(() => Math.max(0, ...questions.value.map((q) => q.deaths)));
+
+const rows = computed(() =>
+  questions.value.map((question) => {
+    const played = question.times_answered > 0;
+    const totalDamage = question.answers.reduce(
+      (sum, answer) => sum + answer.times_chosen * answer.health_change,
+      0,
+    );
+
+    return {
+      ...question,
+      averageDamage: played ? totalDamage / question.times_answered : null,
+      deathRate: played ? question.deaths / question.times_answered : null,
+      isUnplayed: !played,
+      isInactive: question.status === 'INACTIVE',
+      isFewAnswers: played && question.times_answered < FEW_ANSWERS,
+      isWorst: maxDeaths.value > 0 && question.deaths === maxDeaths.value,
+    };
+  }),
+);
 
 async function load() {
   isLoading.value = true;
@@ -47,6 +71,20 @@ function damageText(healthChange) {
   return healthChange === 0 ? 'Ingen skada' : `−${healthChange} hälsa`;
 }
 
+const decimalFormat = new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 1 });
+const percentFormat = new Intl.NumberFormat('sv-SE', {
+  style: 'percent',
+  maximumFractionDigits: 1,
+});
+
+function formatDecimal(value) {
+  return value === null ? '–' : decimalFormat.format(value);
+}
+
+function formatPercent(value) {
+  return value === null ? '–' : percentFormat.format(value);
+}
+
 onMounted(load);
 </script>
 
@@ -79,18 +117,26 @@ onMounted(load);
       </ul>
 
       <ol class="stats-list">
-        <li v-for="question in questions" :key="question.question_id" class="admin-card stats-card">
+        <li v-for="question in rows" :key="question.question_id" class="admin-card stats-card">
           <h2 class="stats-card-title">Fråga {{ question.position }}</h2>
           <p class="stats-card-text">{{ question.text }}</p>
 
           <dl class="stats-numbers">
-            <div>
+            <div class="stats-number stats-number--main">
+              <dt>Snittskada</dt>
+              <dd>{{ formatDecimal(question.averageDamage) }}</dd>
+            </div>
+            <div class="stats-number">
               <dt>Svar</dt>
               <dd>{{ question.times_answered }}</dd>
             </div>
-            <div>
+            <div class="stats-number">
               <dt>Dödsfall</dt>
               <dd>{{ question.deaths }}</dd>
+            </div>
+            <div class="stats-number">
+              <dt>Dödlighet</dt>
+              <dd>{{ formatPercent(question.deathRate) }}</dd>
             </div>
           </dl>
 
@@ -180,9 +226,14 @@ onMounted(load);
 }
 
 .stats-numbers {
-  display: flex;
-  gap: 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem 1.5rem;
   margin: 0.75rem 0;
+}
+
+.stats-number--main dd {
+  color: var(--admin-accent);
 }
 
 .stats-numbers dt {
@@ -265,5 +316,12 @@ onMounted(load);
 
 .stats-damage--high {
   background: var(--stats-damage-high);
+}
+
+@media (min-width: 600px) {
+  .stats-numbers {
+    grid-template-columns: repeat(4, auto);
+    justify-content: start;
+  }
 }
 </style>
