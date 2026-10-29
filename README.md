@@ -603,6 +603,39 @@ All CSS för adminsidan ligger i `AdminView.vue`, inte i `main.css` eller `base.
 
 Färgerna heter `--admin-bg`, `--admin-surface`, `--admin-text`, `--admin-muted`, `--admin-border`, `--admin-accent`, `--admin-success-bg`, `--admin-success-text`, `--admin-neutral-bg` och `--admin-danger`. Använd variablerna i komponenternas egna scoped-stilar i stället för egna färgkoder. Spelets klasser (`.btn`, `.content-card`) används inte på adminsidan.
 
+### Bekräftelserutor
+
+`ConfirmDialog` (`components/ConfirmDialog.vue`) används både i spelet och på adminsidan. Propen `variant` styr utseendet, logiken är densamma (`<dialog>`, Esc, klick utanför och fokus på Avbryt).
+
+| Prop          | Standard   | Beskrivning                                          |
+| ------------- | ---------- | ---------------------------------------------------- |
+| `title`       | `''`       | Rubrik, visas bara om den är satt                    |
+| `message`     | (krävs)    | Frågan som ställs                                    |
+| `confirmText` | `'OK'`     | Text på bekräfta-knappen                             |
+| `cancelText`  | `'Avbryt'` | Text på avbryt-knappen                               |
+| `variant`     | `'game'`   | `'game'` ger spelets utseende, `'admin'` adminsidans |
+| `danger`      | `false`    | Bara för admin: röd bekräfta-knapp, t.ex. för bann   |
+
+Föräldern öppnar rutan via en ref och lyssnar på `confirm`:
+
+```vue
+<ConfirmDialog
+  ref="banDialog"
+  variant="admin"
+  danger
+  title="Banna spelare?"
+  message="Spelaren kan inte logga in och syns inte i topplistan."
+  confirm-text="Banna"
+  @confirm="banPlayer"
+/>
+```
+
+```js
+banDialog.value.open();
+```
+
+Med `variant="admin"` måste rutan ligga inuti adminsidan (i en flik), eftersom klasserna och `--admin-`-variablerna bara gäller under `.admin`.
+
 ## Arbetssätt
 
 - **Brancher:** Ny branch för varje feature (feat/) och (fix/).
