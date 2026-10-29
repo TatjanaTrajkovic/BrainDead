@@ -560,7 +560,7 @@ Bilder och knappar går inte att markera, och bilder går inte att dra iväg. De
 | `/admin/users`     | `admin-users`     | `components/admin/UserList.vue`     | #180  |
 | `/admin/stats`     | `admin-stats`     | `components/admin/StatsTable.vue`   | #181  |
 
-`/admin` skickar vidare till första fliken. Flikarna är egna routes, så en omladdning stannar på rätt flik och det går att länka direkt till en flik. Logga ut loggar ut via `useAuth` och går till startsidan.
+`/admin` skickar vidare till första fliken. Flikarna är egna routes, så en omladdning stannar på rätt flik och det går att länka direkt till en flik. Logga ut loggar ut via `useAuth` och går till startsidan. Misslyckas utloggningen stannar admin kvar och får ett felmeddelande, eftersom cookien då kan gälla i backend och admin annars vore inloggad igen efter en omladdning.
 
 ### Layout
 

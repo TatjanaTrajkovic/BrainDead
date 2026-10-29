@@ -1,9 +1,16 @@
 <script setup>
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuth } from '@/composables/useAuth';
 
 const router = useRouter();
 const { player, logout } = useAuth();
+
+// Guarden har hämtat spelaren innan vyn visas. Namnet sparas, eftersom logout() nollar player
+// även när utloggningen misslyckas, och då ska namnet fortfarande synas
+const adminName = player.value?.display_name;
+const isLoggingOut = ref(false);
+const logoutFailed = ref(false);
 
 const tabs = [
   { name: 'admin-questions', label: 'Frågor' },
@@ -11,9 +18,20 @@ const tabs = [
   { name: 'admin-stats', label: 'Statistik' },
 ];
 
+// Går bara till startsidan om utloggningen lyckades. Misslyckas den kan cookien fortfarande
+// gälla i backend, och då vore admin inloggad igen efter en omladdning. Admin stannar därför
+// kvar och kan försöka igen, samma lösning som i LoginCard
 async function handleLogout() {
-  await logout();
-  router.push({ name: 'home' });
+  isLoggingOut.value = true;
+  logoutFailed.value = false;
+  try {
+    await logout();
+    router.push({ name: 'home' });
+  } catch {
+    logoutFailed.value = true;
+  } finally {
+    isLoggingOut.value = false;
+  }
 }
 </script>
 
@@ -39,12 +57,18 @@ async function handleLogout() {
 
         <div class="admin-user">
           <span class="admin-user-name">
-            Inloggad som <strong>{{ player?.display_name }}</strong>
+            Inloggad som <strong>{{ adminName }}</strong>
           </span>
-          <button type="button" class="admin-button" @click="handleLogout">Logga ut</button>
+          <button type="button" class="admin-button" :disabled="isLoggingOut" @click="handleLogout">
+            Logga ut
+          </button>
         </div>
       </div>
     </header>
+
+    <p v-if="logoutFailed" class="admin-logout-error" role="alert">
+      Kunde inte logga ut. Kontrollera anslutningen och försök igen.
+    </p>
 
     <main class="admin-main">
       <RouterView />
@@ -154,6 +178,18 @@ async function handleLogout() {
   border-bottom-color: var(--admin-accent);
 }
 
+/* Ligger under topraden, i samma bredd som innehållet */
+.admin-logout-error {
+  width: calc(100% - 2rem);
+  max-width: calc(var(--admin-max-width) - 2rem);
+  margin: 1rem auto 0;
+  padding: 0.75rem 1rem;
+  color: var(--admin-danger);
+  background: color-mix(in srgb, var(--admin-danger) 8%, var(--admin-surface));
+  border: 1px solid color-mix(in srgb, var(--admin-danger) 30%, transparent);
+  border-radius: var(--admin-radius);
+}
+
 .admin-main {
   width: auto;
   max-width: var(--admin-max-width);
@@ -189,6 +225,11 @@ async function handleLogout() {
 
   .admin-main {
     padding: 2rem 2rem 3rem;
+  }
+
+  .admin-logout-error {
+    width: calc(100% - 4rem);
+    max-width: calc(var(--admin-max-width) - 4rem);
   }
 }
 </style>
@@ -268,6 +309,11 @@ async function handleLogout() {
 
 .admin .admin-button:hover {
   background: var(--admin-bg);
+}
+
+.admin .admin-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .admin .admin-button--primary {
