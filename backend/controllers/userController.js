@@ -70,3 +70,35 @@ exports.getUserSessions = async (req, res) => {
     res.status(500).json({ error: 'Kunde inte hämta omgångarna' });
   }
 };
+
+// "Ta bort spelare" blir BANNED, eftersom game_session pekar på users och DELETE inte går.
+// Allt valideras innan något sparas, så att ett 400 aldrig lämnar en ändring efter sig
+exports.setBanStatus = async (req, res) => {
+  const userId = Number(req.params.userId);
+  const status = req.body?.status;
+
+  if (!Number.isInteger(userId) || userId <= 0) {
+    return res.status(400).json({ error: 'Ogiltigt spelar-id' });
+  }
+  if (status !== 'ACTIVE' && status !== 'BANNED') {
+    return res.status(400).json({ error: 'status måste vara ACTIVE eller BANNED' });
+  }
+  if (userId === req.user.user_id) {
+    return res.status(400).json({ error: 'Du kan inte ändra din egen status' });
+  }
+
+  try {
+    const result = await userService.setBanStatus(userId, status);
+    if (result.error === 'USER_NOT_FOUND') {
+      return res.status(404).json({ error: 'Spelaren finns inte' });
+    }
+    if (result.error === 'NOT_ELIGIBLE') {
+      return res.status(400).json({ error: 'Admins och gäster kan inte bannas' });
+    }
+
+    return res.status(200).json(result);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Kunde inte banna spelaren' });
+  }
+};
