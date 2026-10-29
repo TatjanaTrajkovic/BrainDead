@@ -15,24 +15,44 @@ const legend = [
 
 const FEW_ANSWERS = 20;
 
-const maxDeaths = computed(() => Math.max(0, ...questions.value.map((q) => q.deaths)));
+function averageDamage(question) {
+  if (question.times_answered === 0) {
+    return null;
+  }
+  const totalDamage = question.answers.reduce(
+    (sum, answer) => sum + answer.times_chosen * answer.health_change,
+    0,
+  );
+  return totalDamage / question.times_answered;
+}
+
+const playedDamages = computed(() =>
+  questions.value.map(averageDamage).filter((damage) => damage !== null),
+);
+
+const maxAverageDamage = computed(() =>
+  playedDamages.value.length > 0 ? Math.max(...playedDamages.value) : null,
+);
+
+const minAverageDamage = computed(() =>
+  playedDamages.value.length > 0 ? Math.min(...playedDamages.value) : null,
+);
 
 const rows = computed(() =>
   questions.value.map((question) => {
     const played = question.times_answered > 0;
-    const totalDamage = question.answers.reduce(
-      (sum, answer) => sum + answer.times_chosen * answer.health_change,
-      0,
-    );
+    const damage = averageDamage(question);
+    const hasSpread = maxAverageDamage.value !== minAverageDamage.value;
 
     return {
       ...question,
-      averageDamage: played ? totalDamage / question.times_answered : null,
+      averageDamage: damage,
       deathRate: played ? question.deaths / question.times_answered : null,
       isUnplayed: !played,
       isInactive: question.status === 'INACTIVE',
       isFewAnswers: played && question.times_answered < FEW_ANSWERS,
-      isWorst: maxDeaths.value > 0 && question.deaths === maxDeaths.value,
+      isHighestDamage: played && maxAverageDamage.value > 0 && damage === maxAverageDamage.value,
+      isLowestDamage: played && hasSpread && damage === minAverageDamage.value,
     };
   }),
 );
@@ -117,8 +137,28 @@ onMounted(load);
       </ul>
 
       <ol class="stats-list">
-        <li v-for="question in rows" :key="question.question_id" class="admin-card stats-card">
-          <h2 class="stats-card-title">Fråga {{ question.position }}</h2>
+        <li
+          v-for="question in rows"
+          :key="question.question_id"
+          class="admin-card stats-card"
+          :class="{
+            'stats-card--highest': question.isHighestDamage,
+            'stats-card--inactive': question.isInactive,
+          }"
+        >
+          <div class="stats-card-head">
+            <h2 class="stats-card-title">Fråga {{ question.position }}</h2>
+            <span v-if="question.isHighestDamage" class="admin-badge stats-badge--danger">
+              Högst snittskada
+            </span>
+            <span v-if="question.isLowestDamage" class="admin-badge stats-badge--info">
+              Lägst snittskada
+            </span>
+            <span v-if="question.isInactive" class="admin-badge">Inaktiv</span>
+            <span v-if="question.isUnplayed" class="admin-badge stats-badge--warning">
+              Ej spelad
+            </span>
+          </div>
           <p class="stats-card-text">{{ question.text }}</p>
 
           <dl class="stats-numbers">
@@ -127,15 +167,15 @@ onMounted(load);
               <dd>{{ formatDecimal(question.averageDamage) }}</dd>
             </div>
             <div class="stats-number">
-              <dt>Svar</dt>
+              <dt>Svarade</dt>
               <dd>{{ question.times_answered }}</dd>
             </div>
             <div class="stats-number">
-              <dt>Dödsfall</dt>
+              <dt>Dog här</dt>
               <dd>{{ question.deaths }}</dd>
             </div>
             <div class="stats-number">
-              <dt>Dödlighet</dt>
+              <dt>Andel som dog här</dt>
               <dd>{{ formatPercent(question.deathRate) }}</dd>
             </div>
           </dl>
@@ -173,6 +213,8 @@ onMounted(load);
   --stats-damage-low: #ffc48a;
   --stats-damage-mid: #e16f24;
   --stats-damage-high: #7a2e0b;
+  --stats-warning-bg: #fff8c5;
+  --stats-warning-text: #7d4e00;
 }
 
 .stats-error {
@@ -219,6 +261,36 @@ onMounted(load);
 .stats-card-title {
   font-size: 1rem;
   font-weight: 700;
+}
+
+.stats-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem 0.5rem;
+}
+
+.stats-badge--danger {
+  color: var(--admin-danger);
+  background: color-mix(in srgb, var(--admin-danger) 10%, var(--admin-surface));
+}
+
+.stats-badge--info {
+  color: var(--admin-accent);
+  background: color-mix(in srgb, var(--admin-accent) 10%, var(--admin-surface));
+}
+
+.stats-badge--warning {
+  color: var(--stats-warning-text);
+  background: var(--stats-warning-bg);
+}
+
+.stats-card--highest {
+  border-color: var(--admin-danger);
+}
+
+.stats-card--inactive {
+  background: var(--admin-bg);
 }
 
 .stats-card-text {
