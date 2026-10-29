@@ -21,7 +21,28 @@ const router = createRouter({
       name: 'admin',
       // Laddas först när någon går till /admin, så spelare slipper hämta adminkoden
       component: () => import('@/views/AdminView.vue'),
-      meta: { requiresAdmin: true },
+      // fullPage: egen layout utan spelets logga (App.vue). Barnens meta slås ihop med denna,
+      // så requiresAdmin gäller även flikarna
+      meta: { requiresAdmin: true, fullPage: true },
+      // /admin öppnar första fliken. Flikarna är egna routes, så en omladdning stannar på rätt flik
+      redirect: { name: 'admin-questions' },
+      children: [
+        {
+          path: 'questions',
+          name: 'admin-questions',
+          component: () => import('@/components/admin/QuestionList.vue'),
+        },
+        {
+          path: 'users',
+          name: 'admin-users',
+          component: () => import('@/components/admin/UserList.vue'),
+        },
+        {
+          path: 'stats',
+          name: 'admin-stats',
+          component: () => import('@/components/admin/StatsTable.vue'),
+        },
+      ],
     },
   ],
 });
