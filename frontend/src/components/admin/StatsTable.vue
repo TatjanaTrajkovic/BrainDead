@@ -6,6 +6,13 @@ const questions = ref([]);
 const isLoading = ref(true);
 const error = ref('');
 
+const legend = [
+  { level: 'none', label: '0' },
+  { level: 'low', label: '1–15' },
+  { level: 'mid', label: '16–25' },
+  { level: 'high', label: '26+' },
+];
+
 async function load() {
   isLoading.value = true;
   error.value = '';
@@ -18,11 +25,33 @@ async function load() {
   }
 }
 
+function letter(index) {
+  return String.fromCharCode(65 + index);
+}
+
+function percent(answer, question) {
+  if (question.times_answered === 0) {
+    return 0;
+  }
+  return Math.round((answer.times_chosen / question.times_answered) * 100);
+}
+
+function damageLevel(healthChange) {
+  if (healthChange === 0) return 'none';
+  if (healthChange <= 15) return 'low';
+  if (healthChange <= 25) return 'mid';
+  return 'high';
+}
+
+function damageText(healthChange) {
+  return healthChange === 0 ? 'Ingen skada' : `−${healthChange} hälsa`;
+}
+
 onMounted(load);
 </script>
 
 <template>
-  <section>
+  <section class="stats">
     <div class="admin-page-head">
       <div>
         <h1 class="admin-title">Statistik per fråga</h1>
@@ -36,17 +65,205 @@ onMounted(load);
     <p v-else-if="error" class="stats-error" role="alert">{{ error }}</p>
     <p v-else-if="questions.length === 0" class="admin-subtitle">Det finns inga frågor än.</p>
 
-    <ul v-else>
-      <li v-for="question in questions" :key="question.question_id">
-        {{ question.position }}. {{ question.text }} – {{ question.times_answered }} svar,
-        {{ question.deaths }} dödsfall
-      </li>
-    </ul>
+    <template v-else>
+      <ul class="stats-legend" aria-label="Färgförklaring för hälsoavdrag">
+        <li class="stats-legend-title">Hälsoavdrag:</li>
+        <li v-for="item in legend" :key="item.level" class="stats-legend-item">
+          <span
+            class="stats-swatch"
+            :class="`stats-damage--${item.level}`"
+            aria-hidden="true"
+          ></span>
+          {{ item.label }}
+        </li>
+      </ul>
+
+      <ol class="stats-list">
+        <li v-for="question in questions" :key="question.question_id" class="admin-card stats-card">
+          <h2 class="stats-card-title">Fråga {{ question.position }}</h2>
+          <p class="stats-card-text">{{ question.text }}</p>
+
+          <dl class="stats-numbers">
+            <div>
+              <dt>Svar</dt>
+              <dd>{{ question.times_answered }}</dd>
+            </div>
+            <div>
+              <dt>Dödsfall</dt>
+              <dd>{{ question.deaths }}</dd>
+            </div>
+          </dl>
+
+          <ul class="stats-answers">
+            <li
+              v-for="(answer, index) in question.answers"
+              :key="answer.answer_id"
+              class="stats-answer"
+            >
+              <span class="stats-answer-letter">{{ letter(index) }}</span>
+              <span class="stats-answer-text">
+                {{ answer.text }}
+                <span class="stats-answer-damage">{{ damageText(answer.health_change) }}</span>
+              </span>
+              <span class="stats-bar" aria-hidden="true">
+                <span
+                  class="stats-bar-fill"
+                  :class="`stats-damage--${damageLevel(answer.health_change)}`"
+                  :style="{ width: `${percent(answer, question)}%` }"
+                ></span>
+              </span>
+              <span class="stats-answer-percent">{{ percent(answer, question) }} %</span>
+            </li>
+          </ul>
+        </li>
+      </ol>
+    </template>
   </section>
 </template>
 
 <style scoped>
+.stats {
+  --stats-damage-none: #1f6feb;
+  --stats-damage-low: #ffc48a;
+  --stats-damage-mid: #e16f24;
+  --stats-damage-high: #7a2e0b;
+}
+
 .stats-error {
   color: var(--admin-danger);
+}
+
+.stats-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 1rem;
+  margin-bottom: 1rem;
+  padding: 0;
+  list-style: none;
+  font-size: 0.8125rem;
+  color: var(--admin-muted);
+}
+
+.stats-legend-title {
+  font-weight: 600;
+  color: var(--admin-text);
+}
+
+.stats-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.stats-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.stats-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0;
+  list-style: none;
+}
+
+.stats-card-title {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.stats-card-text {
+  color: var(--admin-muted);
+}
+
+.stats-numbers {
+  display: flex;
+  gap: 1.5rem;
+  margin: 0.75rem 0;
+}
+
+.stats-numbers dt {
+  font-size: 0.75rem;
+  color: var(--admin-muted);
+}
+
+.stats-numbers dd {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.stats-answers {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0;
+  list-style: none;
+}
+
+.stats-answer {
+  display: grid;
+  grid-template-columns: 1.25rem 1fr 3rem;
+  grid-template-areas:
+    'letter text text'
+    '. bar percent';
+  align-items: center;
+  gap: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+.stats-answer-letter {
+  grid-area: letter;
+  align-self: start;
+  font-weight: 700;
+}
+
+.stats-answer-text {
+  grid-area: text;
+}
+
+.stats-answer-damage {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--admin-muted);
+}
+
+.stats-bar {
+  grid-area: bar;
+  height: 10px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--admin-neutral-bg);
+}
+
+.stats-bar-fill {
+  display: block;
+  height: 100%;
+}
+
+.stats-answer-percent {
+  grid-area: percent;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.stats-damage--none {
+  background: var(--stats-damage-none);
+}
+
+.stats-damage--low {
+  background: var(--stats-damage-low);
+}
+
+.stats-damage--mid {
+  background: var(--stats-damage-mid);
+}
+
+.stats-damage--high {
+  background: var(--stats-damage-high);
 }
 </style>
