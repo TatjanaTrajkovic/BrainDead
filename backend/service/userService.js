@@ -53,4 +53,52 @@ async function getAllUsers({ type, search } = {}) {
   }));
 }
 
-module.exports = { USER_LIST_LIMIT, TYPE_FILTERS, getAllUsers };
+// Villkoren ligger i UPDATE, så att en spelare som bannas samtidigt inte hinner bli admin.
+// Matchar ingen rad avgör en SELECT om spelaren saknas eller är gäst, bannad eller inaktiv
+async function setUserRole(userId, role) {
+  const [result] = await database.query(
+    `UPDATE users SET role = ? WHERE user_id = ? AND is_guest = FALSE AND status = 'ACTIVE'`,
+    [role, userId],
+  );
+  if (result.affectedRows === 0) {
+    const [rows] = await database.query(`SELECT user_id FROM users WHERE user_id = ?`, [userId]);
+    return { error: rows.length === 0 ? 'USER_NOT_FOUND' : 'NOT_ELIGIBLE' };
+  }
+  return { user_id: Number(userId), role };
+}
+
+// En spelares omgångar för admin, nyast först. null om spelaren inte finns.
+// Omgången får en rad i session_question per fråga när den startar (#163), så
+// total_questions är antalet rader och answered_count de besvarade. Siffrorna ändras
+// därför inte i efterhand när frågor läggs till eller inaktiveras
+async function getUserSessions(userId) {
+  const [users] = await database.query('SELECT user_id FROM users WHERE user_id = ?', [userId]);
+  if (users.length === 0) {
+    return null;
+  }
+
+  // COUNT(sq.answer_id) räknar bara besvarade rader, eftersom NULL inte räknas
+  const [rows] = await database.query(
+    `SELECT gs.session_id,
+            gs.started_at,
+            gs.finished_at,
+            gs.status,
+            gs.current_health,
+            COUNT(sq.answer_id) AS answered_count,
+            COUNT(sq.session_question_id) AS total_questions
+     FROM game_session gs
+     LEFT JOIN session_question sq ON sq.session_id = gs.session_id
+     WHERE gs.user_id = ?
+     GROUP BY gs.session_id
+     ORDER BY gs.started_at DESC, gs.session_id DESC`,
+    [userId],
+  );
+
+  return rows.map((row) => ({
+    ...row,
+    answered_count: Number(row.answered_count),
+    total_questions: Number(row.total_questions),
+  }));
+}
+
+module.exports = { USER_LIST_LIMIT, TYPE_FILTERS, getAllUsers, setUserRole, getUserSessions };

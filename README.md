@@ -184,15 +184,17 @@ Vid push och pull request mot `main` kör [CI-flödet](.github/workflows/ci.yaml
 | ------------------ | --------------------------------------------------------------------------------------------------------------------- |
 | `users`            | Spelare med roll och status. Gäster har bara `is_guest` och `auth_token`, registrerade även användarnamn och lösenord |
 | `game_session`     | En spelomgång med aktuell hälsa (0–100) och status                                                                    |
-| `question`         | Scenario, frågetext, ordning (`position`) och `created_at`. En omgång visar bara frågor som fanns när den startade    |
+| `question`         | Scenario, frågetext, ordning (`position`), status och `created_at`                                                    |
 | `answer`           | Svarsalternativ med feedback och `health_change`, hur mycket hälsa svaret drar av (positivt tal)                      |
-| `session_question` | Vilket svar spelaren valde på en fråga i en session                                                                   |
+| `session_question` | Omgångens frågor och vilket svar spelaren valde. `answer_id` är `NULL` tills frågan är besvarad                       |
 
 Varje spelare identifieras av en slumpad nyckel som ligger i cookien `braindead_token`. Databasen sparar bara en SHA-256-hash av nyckeln i `auth_token`, så en läckt databas räcker inte för att logga in som någon annan. Gäster och registrerade spelare är vanliga rader i `users`, så resten av backend behöver inte skilja på dem. `role` styr behörighet (`PLAYER` eller `ADMIN`), och `is_guest` visar om spelaren har ett konto.
 
 Varje inloggning skapar en ny nyckel som ersätter den gamla, och utloggning sätter `auth_token` till `NULL`. Eftersom varje spelare bara har en nyckel går det att vara inloggad på en enhet åt gången: loggar man in på en ny enhet blir den gamla utloggad, och utloggning gäller alla enheter. Cookien gäller i ett år, men databasen har ingen egen utgångstid för nyckeln.
 
 Lösenord hashas med Nodes inbyggda `crypto.scrypt` och ett slumpat salt per lösenord, och sparas som `salt:hash` i `password_hash`. Nyckeln i cookien kan hashas med snabba SHA-256 eftersom den är slumpad, men lösenord väljs av människor och går att gissa, så de behöver en långsam hash.
+
+En omgång låser sina frågor när den startar. `POST /api/sessions` skapar en rad i `session_question` per aktiv fråga, i `position`-ordning och med `answer_id = NULL`. Nästa fråga är den första obesvarade raden, och ett svar fyller i `answer_id`. `total_questions` är antalet rader i omgången och `answered_count` antalet besvarade. Frågor som läggs till, inaktiveras eller flyttas efteråt påverkar därför bara nya omgångar, och `total_questions` ändras aldrig under en omgång.
 
 Notera: finished_at i game_session är tiden när omgången lämnat aktivt läge. Sätts både vid COMPLETED och PAUSED, tolkas tillsammans med status.
 
@@ -269,8 +271,12 @@ erDiagram
 | PATCH | `/api/admin/questions/:questionId/status` | Inaktiverar eller återaktiverar en fråga (soft delete). Body: `{ "status": "ACTIVE" \| "INACTIVE" }`. Inaktiva frågor kommer inte med i nya omgångar. Samma status två gånger ger `200`. Annat värde ger `400`, fråga som inte finns ger `404`. Kräver admin                                            |
 | GET   | `/api/admin/stats`                        | Statistik per fråga: antal svar per alternativ och dödsfall. Admins omgångar räknas inte. Kräver admin                                                                                                                                                                                                  |
 | GET   | `/api/admin/users`                        | Hämtar spelare, nyast först, max 100. Valfritt `?type=registered\|guest\|banned` och `?search=<text>`. Se nedan. Kräver admin                                                                                                                                                                           |
+| PATCH | `/api/admin/users/:userId/role`           | Ändrar roll. Body `{ "role": "PLAYER" \| "ADMIN" }`. Svarar `{ user_id, role }` och gäller direkt. Egen roll, gäst eller bannad ger `400`, okänd spelare `404`. Kräver admin                                                                                                                            |
+| GET   | `/api/admin/users/:userId/sessions`       | Hämtar en spelares omgångar, nyast först. Se nedan. Kräver admin                                                                                                                                                                                                                                        |
 
 `GET /api/admin/users` svarar `[{ user_id, display_name, role, status, is_guest, created_at, session_count, best_score }]`. Utan filter kommer alla. `type=banned` visar både registrerade och gäster, så flikarna kan överlappa. `search` söker på del av `display_name`, så gäster hittas som `Gäst-<id>`. `%` och `_` i söktexten matchar bara sig själva. `best_score` följer topplistans regel (bästa avslutade omgång med hälsa över 0) och är `null` om spelaren saknar en sådan. Ett okänt `type` ger `400`. `password_hash` och `auth_token` skickas aldrig.
+
+`GET /api/admin/users/:userId/sessions` svarar `[{ session_id, started_at, finished_at, status, current_health, answered_count, total_questions }]`. `total_questions` är antalet frågor omgången låste när den startade, och `answered_count` hur många av dem som är besvarade, så siffrorna ändras inte i efterhand. `finished_at` är `null` för en pågående omgång. En spelare utan omgångar ger `[]`, en spelare som inte finns ger `404` och ett `userId` som inte är ett heltal ger `400`.
 
 Middlewaren `loadUser` slår upp spelaren från cookien `braindead_token` och sätter `req.user`. `loadUser()` svarar `401` utan giltig cookie, och används av alla `/api/sessions`-endpoints, `/api/auth/me` och `/api/auth/logout`. `loadUser({ required: false })` släpper igenom anropet även utan spelare. Det används av `/api/auth/signup` och `/api/auth/login`, som ska fungera både för gäster och för nya besökare. Endpoints med `:sessionId` kontrollerar dessutom att omgången tillhör spelaren. En annans omgång ger `404`, samma svar som en omgång som inte finns, så det avslöjas inte att den finns. `/api/highscores` och `/api/auth/guest` är öppna. Alla endpoints under `/api/admin` går genom `loadUser()` och `requireAdmin`, som svarar `403` om spelaren inte har rollen `ADMIN`.
 
@@ -310,6 +316,8 @@ Funktioner i `adminApi.js`:
 | `setQuestionStatus(questionId, status)` | `PATCH /api/admin/questions/:questionId/status`                    |
 | `getUsers({ type, search })`            | `GET /api/admin/users`. Tomma `type` och `search` skickas inte med |
 | `getStats()`                            | `GET /api/admin/stats`                                             |
+| `getUserSessions(userId)`               | `GET /api/admin/users/:userId/sessions`                            |
+| `setUserRole(userId, role)`             | `PATCH /api/admin/users/:userId/role`                              |
 
 Nya admin-endpoints får en funktion i `adminApi.js`, så att ingen komponent anropar `fetch` direkt.
 

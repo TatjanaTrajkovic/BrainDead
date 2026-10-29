@@ -34,3 +34,16 @@ export function setQuestionStatus(questionId, status) {
 export function getStats() {
   return request('/admin/stats');
 }
+
+// En spelares omgångar, nyast först, med answered_count och total_questions
+export function getUserSessions(userId) {
+  return request(`/admin/users/${userId}/sessions`);
+}
+
+// role: 'PLAYER' eller 'ADMIN'. Egen roll, gäst eller bannad ger 400
+export function setUserRole(userId, role) {
+  return request(`/admin/users/${userId}/role`, {
+    method: 'PATCH',
+    body: JSON.stringify({ role }),
+  });
+}
