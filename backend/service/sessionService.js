@@ -1,23 +1,52 @@
 const database = require('../connectionMySQL');
 
+// En ny omgång får en rad i session_question per aktiv fråga, med answer_id = NULL.
+// Omgången låser alltså sina frågor och deras ordning vid start, så att frågor som läggs till,
+// inaktiveras eller flyttas efteråt bara påverkar nya omgångar (#163)
 async function createSession(userId, forceNew = false) {
-  const existing = await getActiveSession(userId);
-  if (existing && !forceNew) {
-    return { session: existing, created: false };
-  }
-  if (existing) {
-    await database.query(
-      `UPDATE game_session
-       SET status = 'PAUSED', finished_at = NOW()
-       WHERE session_id = ?`,
-      [existing.session_id],
+  const connection = await database.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    const existing = await getActiveSession(userId, connection);
+    if (existing && !forceNew) {
+      await connection.rollback();
+      return { session: existing, created: false };
+    }
+    if (existing) {
+      await connection.query(
+        `UPDATE game_session
+         SET status = 'PAUSED', finished_at = NOW()
+         WHERE session_id = ?`,
+        [existing.session_id],
+      );
+    }
+    const [result] = await connection.query('INSERT INTO game_session (user_id) VALUES (?)', [
+      userId,
+    ]);
+    const sessionId = result.insertId;
+
+    // ORDER BY gör att session_question_id följer position, och det är den ordningen frågorna spelas i
+    await connection.query(
+      `INSERT INTO session_question (session_id, question_id)
+       SELECT ?, question_id
+       FROM question
+       WHERE status = 'ACTIVE'
+       ORDER BY position, question_id`,
+      [sessionId],
     );
+
+    await connection.commit();
+    return {
+      session: { session_id: sessionId, current_health: 100, status: 'ACTIVE' },
+      created: true,
+    };
+  } catch (err) {
+    await connection.rollback();
+    throw err;
+  } finally {
+    connection.release();
   }
-  const [result] = await database.query('INSERT INTO game_session (user_id) VALUES (?)', [userId]);
-  return {
-    session: { session_id: result.insertId, current_health: 100, status: 'ACTIVE' },
-    created: true,
-  };
 }
 
 async function getActiveSession(userId, db = database) {
@@ -33,18 +62,16 @@ async function getActiveSession(userId, db = database) {
 }
 
 async function getNextQuestion(sessionId, db = database) {
-  // Bara frågor som fanns när omgången startade, så att en ny fråga inte dyker upp mitt i en omgång
+  // Nästa obesvarade fråga bland omgångens egna. Ingen status-kontroll här: en fråga som
+  // inaktiverats efter start finns kvar i omgången
   const [questions] = await db.query(
-    `SELECT question_id, scenario, text, position
-     FROM question
-     WHERE status = 'ACTIVE'
-       AND created_at <= (SELECT started_at FROM game_session WHERE session_id = ?)
-       AND question_id NOT IN (
-         SELECT question_id FROM session_question WHERE session_id = ?
-       )
-     ORDER BY position
+    `SELECT q.question_id, q.scenario, q.text, q.position
+     FROM session_question sq
+     JOIN question q ON q.question_id = sq.question_id
+     WHERE sq.session_id = ? AND sq.answer_id IS NULL
+     ORDER BY sq.session_question_id
      LIMIT 1`,
-    [sessionId, sessionId],
+    [sessionId],
   );
   if (questions.length === 0) {
     return null;
@@ -55,13 +82,12 @@ async function getNextQuestion(sessionId, db = database) {
     'SELECT answer_id, text FROM answer WHERE question_id = ? ORDER BY RAND()',
     [question.question_id],
   );
+  // COUNT(answer_id) räknar bara besvarade rader, eftersom NULL inte räknas
   const [counts] = await db.query(
-    `SELECT
-  (SELECT COUNT(*) FROM question
-   WHERE status = 'ACTIVE'
-     AND created_at <= (SELECT started_at FROM game_session WHERE session_id = ?)) AS total_questions,
-  (SELECT COUNT(*) FROM session_question WHERE session_id = ?) AS answered_count`,
-    [sessionId, sessionId],
+    `SELECT COUNT(*) AS total_questions, COUNT(answer_id) AS answered_count
+     FROM session_question
+     WHERE session_id = ?`,
+    [sessionId],
   );
 
   return {
@@ -112,9 +138,12 @@ async function answerQuestion(sessionId, answerId, userId) {
     }
     const answer = answers[0];
 
+    // Raden skapades när omgången startade, så svaret fylls i i stället för att läggas till
     await connection.query(
-      `INSERT INTO session_question (session_id, question_id, answer_id) VALUES (?, ?, ?)`,
-      [sessionId, question.question_id, answerId],
+      `UPDATE session_question
+       SET answer_id = ?
+       WHERE session_id = ? AND question_id = ? AND answer_id IS NULL`,
+      [answerId, sessionId, question.question_id],
     );
 
     const health = Math.max(0, Math.min(100, sessions[0].current_health - answer.health_change));
