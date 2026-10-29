@@ -24,6 +24,7 @@ Det enda som står mellan dig och dem är det som finns kvar i ditt huvud. Varje
 - [API](#api)
 - [API-anrop i frontend](#api-anrop-i-frontend)
 - [Spelflöde i frontend](#spelflöde-i-frontend)
+- [Adminsidan](#adminsidan)
 - [Arbetssätt](#arbetssätt)
 - [Team](#team)
 
@@ -363,12 +364,20 @@ State i `useGame` ligger utanför själva funktionen, så alla vyer som anropar 
 ### Sidor och navigering
 
 Routern ligger i `frontend/src/router/router.js` och vyerna i `frontend/src/views/`.
-`App.vue visar loggan (som länkar till /) och <RouterView />`.
+`App.vue` visar loggan, som länkar till `/`, och `<RouterView />`. Sidor med `meta.fullPage` (adminsidan) renderas utan loggan och har sin egen layout.
 
-| Route   | Vy         | Innehåll                                                                                                    |
-| ------- | ---------- | ----------------------------------------------------------------------------------------------------------- |
-| `/`     | `HomeView` | Startsidan. "Starta spelet" öppnar `SessionMenu` i en overlay (`<dialog>`) där man startar eller återupptar |
-| `/game` | `GameView` | Spelskärmen, se nedan                                                                                       |
+| Route    | Vy          | Innehåll                                                                                                    |
+| -------- | ----------- | ----------------------------------------------------------------------------------------------------------- |
+| `/`      | `HomeView`  | Startsidan. "Starta spelet" öppnar `SessionMenu` i en overlay (`<dialog>`) där man startar eller återupptar |
+| `/game`  | `GameView`  | Spelskärmen, se nedan                                                                                       |
+| `/admin` | `AdminView` | Adminsidan. Skickar vidare till `/admin/questions`, se [Adminsidan](#adminsidan)                            |
+
+Routerna kan ha flaggor i `meta`, som läses av guards och komponenter. För nästlade routes slås föräldrarnas och barnets `meta` ihop, så barnen ärver föräldrarnas flaggor:
+
+| Flagga          | Läses av                          | Gör                                                                                                                                                 |
+| --------------- | --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `requiresAdmin` | `router.beforeEach` i `router.js` | Skickar den som inte är admin till `/`. Hämtar spelaren först om sidan laddats direkt. Styr bara vad som visas, skyddet är `requireAdmin` i backend |
+| `fullPage`      | `App.vue`                         | Renderar sidan utan spelets logga och `<main>`                                                                                                      |
 
 `GameView` skickar själv tillbaka spelaren till `/` när `phase` blir `idle`, alltså när omgången avbryts eller en start misslyckas. Laddas `/game` om försöker den återuppta omgången, och finns ingen omgång skickas spelaren till `/`.
 
@@ -541,6 +550,45 @@ Färger och typsnitt ligger som CSS-variabler i `frontend/src/assets/base.css`, 
 - Sätt inga egna `font-size` på `span` i komponenten, de skriver över klassens värde.
 
 Bilder och knappar går inte att markera, och bilder går inte att dra iväg. Det styrs av reglerna längst ner i `base.css`.
+
+## Adminsidan
+
+`AdminView` (`frontend/src/views/AdminView.vue`) är skalet: topprad med varumärke, flikar, inloggad admin och Logga ut, och en `<RouterView />` för flikarna. Vyn laddas först när någon går till `/admin`, så spelare hämtar aldrig adminkoden eller dess CSS.
+
+| Route              | Namn              | Komponent                           | Issue |
+| ------------------ | ----------------- | ----------------------------------- | ----- |
+| `/admin/questions` | `admin-questions` | `components/admin/QuestionList.vue` | #177  |
+| `/admin/users`     | `admin-users`     | `components/admin/UserList.vue`     | #180  |
+| `/admin/stats`     | `admin-stats`     | `components/admin/StatsTable.vue`   | #181  |
+
+`/admin` skickar vidare till första fliken. Flikarna är egna routes, så en omladdning stannar på rätt flik och det går att länka direkt till en flik. Logga ut loggar ut via `useAuth` och går till startsidan. Misslyckas utloggningen stannar admin kvar och får ett felmeddelande, eftersom cookien då kan gälla i backend och admin annars vore inloggad igen efter en omladdning.
+
+### Layout
+
+Adminsidan har en neutral design, skild från spelets. Den byggs mobile first: grundstilarna gäller mobil och media queries lägger till för större skärmar.
+
+- **Mobil:** varumärke och Logga ut på första raden, flikarna lika breda på hela andra raden (minst 44 px höga)
+- **Från 600 px:** "Inloggad som" visas bredvid knappen
+- **Från 768 px:** allt på en rad, innehållet max 1200 px brett och centrerat
+
+`.admin` täcker hela skärmen och scrollar själv, eftersom `#app` har `overflow: hidden`. Topraden ligger kvar överst vid scroll (`position: sticky`). `main.css` styr elementen `header` och `main` globalt, så `AdminView` nollställer dem med egna klasser.
+
+### Stilar
+
+All CSS för adminsidan ligger i `AdminView.vue`, inte i `main.css` eller `base.css`, i två block:
+
+- **`<style scoped>`:** skalet (topprad, flikar, innehållsyta)
+- **`<style>` utan scoped:** färger som CSS-variabler och klasser som flikarnas komponenter kan använda. Allt ligger under `.admin`, och variablerna sätts på `.admin` i stället för `:root`, så inget når spelet
+
+| Klass                                    | Används till                                                |
+| ---------------------------------------- | ----------------------------------------------------------- |
+| `.admin-page-head`                       | Sidrubrik i en flik, med eventuell knapp till höger         |
+| `.admin-title`, `.admin-subtitle`        | Titel och undertext                                         |
+| `.admin-card`                            | Vit yta med kant                                            |
+| `.admin-button`, `--primary`, `--danger` | Knappar, t.ex. `class="admin-button admin-button--primary"` |
+| `.admin-badge`, `--success`              | Märken, t.ex. status Aktiv/Inaktiv                          |
+
+Färgerna heter `--admin-bg`, `--admin-surface`, `--admin-text`, `--admin-muted`, `--admin-border`, `--admin-accent`, `--admin-success-bg`, `--admin-success-text`, `--admin-neutral-bg` och `--admin-danger`. Använd variablerna i komponenternas egna scoped-stilar i stället för egna färgkoder. Spelets klasser (`.btn`, `.content-card`) används inte på adminsidan.
 
 ## Arbetssätt
 
