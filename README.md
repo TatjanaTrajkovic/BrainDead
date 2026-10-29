@@ -554,13 +554,25 @@ Bilder och knappar går inte att markera, och bilder går inte att dra iväg. De
 
 `AdminView` (`frontend/src/views/AdminView.vue`) är skalet: topprad med varumärke, flikar, inloggad admin och Logga ut, och en `<RouterView />` för flikarna. Vyn laddas först när någon går till `/admin`, så spelare hämtar aldrig adminkoden eller dess CSS.
 
-| Route              | Namn              | Komponent                           | Issue |
-| ------------------ | ----------------- | ----------------------------------- | ----- |
-| `/admin/questions` | `admin-questions` | `components/admin/QuestionList.vue` | #177  |
-| `/admin/users`     | `admin-users`     | `components/admin/UserList.vue`     | #180  |
-| `/admin/stats`     | `admin-stats`     | `components/admin/StatsTable.vue`   | #181  |
+| Route                               | Namn                  | Komponent                           | Issue |
+| ----------------------------------- | --------------------- | ----------------------------------- | ----- |
+| `/admin/questions`                  | `admin-questions`     | `components/admin/QuestionList.vue` | #177  |
+| `/admin/questions/new`              | `admin-question-new`  | `components/admin/QuestionForm.vue` | #178  |
+| `/admin/questions/:questionId/edit` | `admin-question-edit` | `components/admin/QuestionForm.vue` | #178  |
+| `/admin/users`                      | `admin-users`         | `components/admin/UserList.vue`     | #180  |
+| `/admin/stats`                      | `admin-stats`         | `components/admin/StatsTable.vue`   | #181  |
 
-`/admin` skickar vidare till första fliken. Flikarna är egna routes, så en omladdning stannar på rätt flik och det går att länka direkt till en flik. Logga ut loggar ut via `useAuth` och går till startsidan. Misslyckas utloggningen stannar admin kvar och får ett felmeddelande, eftersom cookien då kan gälla i backend och admin annars vore inloggad igen efter en omladdning.
+`/admin` skickar vidare till första fliken. Flikarna är egna routes, så en omladdning stannar på rätt flik och det går att länka direkt till en flik. Listan och formuläret för frågor är syskon under en `questions`-route utan egen komponent. Därför är fliken Frågor markerad även när en fråga skapas eller redigeras. Logga ut loggar ut via `useAuth` och går till startsidan. Misslyckas utloggningen stannar admin kvar och får ett felmeddelande, eftersom cookien då kan gälla i backend och admin annars vore inloggad igen efter en omladdning.
+
+### Frågor
+
+`QuestionList` hämtar alla frågor med `getQuestions()` varje gång fliken visas, så att en fråga som sparats i formuläret syns direkt.
+
+- **Filter och sökning:** Alla, Aktiva och Inaktiva med antal, och sökning i scenario och frågetext. Frågorna är få, så filtreringen sker i frontend
+- **Status:** Inaktivera och Återaktivera anropar `setQuestionStatus()` och uppdaterar bara den raden. Knappen är avstängd under anropet. Misslyckas det visas ett fel ovanför listan och listan ligger kvar
+- **Redigera och Ny fråga:** länkar till formuläret. Frågan skickas inte med, utan formuläret hämtar den själv, så att en omladdning fungerar
+- **Ordningspilarna:** visas avstängda tills det finns en endpoint för att ändra `position`
+- **Mobil:** varje fråga är ett kort. **Från 768 px:** en tabell med rubrikrad. Rubrikraden och raderna är separata grids med samma kolumner, så alla kolumner utom frågan har fast bredd
 
 ### Layout
 
@@ -579,13 +591,14 @@ All CSS för adminsidan ligger i `AdminView.vue`, inte i `main.css` eller `base.
 - **`<style scoped>`:** skalet (topprad, flikar, innehållsyta)
 - **`<style>` utan scoped:** färger som CSS-variabler och klasser som flikarnas komponenter kan använda. Allt ligger under `.admin`, och variablerna sätts på `.admin` i stället för `:root`, så inget når spelet
 
-| Klass                                    | Används till                                                |
-| ---------------------------------------- | ----------------------------------------------------------- |
-| `.admin-page-head`                       | Sidrubrik i en flik, med eventuell knapp till höger         |
-| `.admin-title`, `.admin-subtitle`        | Titel och undertext                                         |
-| `.admin-card`                            | Vit yta med kant                                            |
-| `.admin-button`, `--primary`, `--danger` | Knappar, t.ex. `class="admin-button admin-button--primary"` |
-| `.admin-badge`, `--success`              | Märken, t.ex. status Aktiv/Inaktiv                          |
+| Klass                                    | Används till                                                                               |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `.admin-page-head`                       | Sidrubrik i en flik, med eventuell knapp till höger                                        |
+| `.admin-title`, `.admin-subtitle`        | Titel och undertext                                                                        |
+| `.admin-card`                            | Vit yta med kant                                                                           |
+| `.admin-button`, `--primary`, `--danger` | Knappar, t.ex. `class="admin-button admin-button--primary"`. Fungerar även på `RouterLink` |
+| `.admin-badge`, `--success`              | Märken, t.ex. status Aktiv/Inaktiv                                                         |
+| `.admin-alert`                           | Röd felruta, t.ex. när en hämtning eller ändring misslyckas                                |
 
 Färgerna heter `--admin-bg`, `--admin-surface`, `--admin-text`, `--admin-muted`, `--admin-border`, `--admin-accent`, `--admin-success-bg`, `--admin-success-text`, `--admin-neutral-bg` och `--admin-danger`. Använd variablerna i komponenternas egna scoped-stilar i stället för egna färgkoder. Spelets klasser (`.btn`, `.content-card`) används inte på adminsidan.
 
