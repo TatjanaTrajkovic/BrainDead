@@ -133,7 +133,8 @@ function handleResume() {
         @start-new="handleStartNew"
         @resume="handleResume"
       />
-      <button type="button" class="btn btn-gray" @click="closeMenu">Stäng</button>
+      <!-- Kryss i hörnet, samma som i prologen och på id-kortet -->
+      <button type="button" class="close" aria-label="Stäng" @click="closeMenu">✕</button>
     </div>
   </dialog>
   <ConfirmDialog
@@ -205,6 +206,17 @@ function handleResume() {
   align-items: center;
   gap: 1rem;
   padding: 2rem;
+}
+
+/* Samma kryss som .close i PrologueNotebook och LoginCard */
+.close {
+  position: fixed;
+  top: max(0.5rem, env(safe-area-inset-top));
+  right: max(0.5rem, env(safe-area-inset-right));
+  width: 2.75rem;
+  height: 2.75rem;
+  font-size: 1.5rem;
+  color: var(--color-text);
 }
 
 /* Om stor bildskärm och muspekare */
