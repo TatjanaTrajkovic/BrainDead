@@ -47,3 +47,11 @@ export function setUserRole(userId, role) {
     body: JSON.stringify({ role }),
   });
 }
+
+// status: 'ACTIVE' (avbanna) eller 'BANNED'. Egen status, admin eller gäst ger 400
+export function setUserStatus(userId, status) {
+  return request(`/admin/users/${userId}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status }),
+  });
+}

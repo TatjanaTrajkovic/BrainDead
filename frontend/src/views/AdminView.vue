@@ -66,7 +66,7 @@ async function handleLogout() {
       </div>
     </header>
 
-    <p v-if="logoutFailed" class="admin-logout-error" role="alert">
+    <p v-if="logoutFailed" class="admin-alert admin-logout-error" role="alert">
       Kunde inte logga ut. Kontrollera anslutningen och försök igen.
     </p>
 
@@ -178,16 +178,11 @@ async function handleLogout() {
   border-bottom-color: var(--admin-accent);
 }
 
-/* Ligger under topraden, i samma bredd som innehållet */
+/* Ligger under topraden, i samma bredd som innehållet. Utseendet kommer från .admin-alert */
 .admin-logout-error {
   width: calc(100% - 2rem);
   max-width: calc(var(--admin-max-width) - 2rem);
   margin: 1rem auto 0;
-  padding: 0.75rem 1rem;
-  color: var(--admin-danger);
-  background: color-mix(in srgb, var(--admin-danger) 8%, var(--admin-surface));
-  border: 1px solid color-mix(in srgb, var(--admin-danger) 30%, transparent);
-  border-radius: var(--admin-radius);
 }
 
 .admin-main {
@@ -305,6 +300,8 @@ async function handleLogout() {
   border: 1px solid var(--admin-border);
   border-radius: var(--admin-radius);
   white-space: nowrap;
+  /* Klassen används även på RouterLink, som annars får länkens understrykning */
+  text-decoration: none;
 }
 
 .admin .admin-button:hover {
@@ -334,6 +331,15 @@ async function handleLogout() {
 .admin a:focus-visible {
   outline: 2px solid var(--admin-accent);
   outline-offset: 2px;
+}
+
+/* Felruta, till exempel när en hämtning eller ändring misslyckas */
+.admin .admin-alert {
+  padding: 0.75rem 1rem;
+  color: var(--admin-danger);
+  background: color-mix(in srgb, var(--admin-danger) 8%, var(--admin-surface));
+  border: 1px solid color-mix(in srgb, var(--admin-danger) 30%, transparent);
+  border-radius: var(--admin-radius);
 }
 
 .admin .admin-badge {
