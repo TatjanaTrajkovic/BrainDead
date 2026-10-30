@@ -650,6 +650,19 @@ banDialog.value.open();
 
 Med `variant="admin"` måste rutan ligga inuti adminsidan (i en flik), eftersom klasserna och `--admin-`-variablerna bara gäller under `.admin`.
 
+### Statistik
+
+`StatsTable` visar `GET /api/admin/stats` som ett kort per fråga, med summering och sortering överst. Värdena räknas ut i komponenten:
+
+| Mått              | Beräkning                                              |
+| ----------------- | ------------------------------------------------------ |
+| Snittskada        | Σ(`times_chosen` × `health_change`) / `times_answered` |
+| Svarade           | `times_answered`                                       |
+| Dog här           | `deaths`                                               |
+| Andel som dog här | `deaths` / `times_answered`                            |
+
+Frågorna spelas i fast ordning, så senare frågor får fler dödsfall eftersom spelarna har mindre hälsa kvar. Snittskadan påverkas inte av ordningen och är därför huvudmåttet: frågan med högst snittskada markeras som kanske för svår och den med lägst som kanske för lätt. Dödsfallen visar spelets svårighetskurva, och frågan med flest dödsfall markeras inte. En ospelad fråga visar `–`, och färre än 20 svar ger en varning.
+
 ## Arbetssätt
 
 - **Brancher:** Ny branch för varje feature (feat/) och (fix/).
