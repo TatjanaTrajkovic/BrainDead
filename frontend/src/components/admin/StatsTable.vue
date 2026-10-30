@@ -478,4 +478,51 @@ onMounted(load);
     justify-content: start;
   }
 }
+
+@media (min-width: 768px) {
+  .stats-list {
+    gap: 1rem;
+  }
+
+  .stats-card {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    grid-template-rows: auto auto auto 1fr;
+    grid-template-areas:
+      'head answers'
+      'text answers'
+      'numbers answers'
+      'note answers';
+    column-gap: 2rem;
+    padding: 1.25rem;
+  }
+
+  .stats-card-head {
+    grid-area: head;
+  }
+
+  .stats-card-text {
+    grid-area: text;
+  }
+
+  .stats-numbers {
+    grid-area: numbers;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stats-note {
+    grid-area: note;
+    align-self: start;
+  }
+
+  .stats-answers {
+    grid-area: answers;
+  }
+
+  .stats-answer {
+    grid-template-columns: 1.25rem minmax(0, 1fr) 8rem 3rem;
+    grid-template-areas: 'letter text bar percent';
+    column-gap: 0.75rem;
+  }
+}
 </style>
