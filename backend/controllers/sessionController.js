@@ -84,3 +84,21 @@ exports.getSession = async (req, res) => {
     res.status(500).json({ error: 'Fel vid hämtning av session' });
   }
 };
+
+// Genomgången efter en avslutad omgång (#205). En annans omgång ger 404, som getSession,
+// så det inte avslöjas att den finns. En omgång som inte är klar ger 403
+exports.getSessionReview = async (req, res) => {
+  try {
+    const result = await sessionService.getSessionReview(req.params.sessionId, req.user.user_id);
+    if (result.error === 'SESSION_NOT_FOUND') {
+      return res.status(404).json({ error: 'Ingen session hittad' });
+    }
+    if (result.error === 'SESSION_NOT_COMPLETED') {
+      return res.status(403).json({ error: 'Svaren visas först när omgången är avslutad' });
+    }
+    res.status(200).json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Kunde inte hämta svaren' });
+  }
+};
