@@ -580,6 +580,16 @@ Bilder och knappar går inte att markera, och bilder går inte att dra iväg. De
 - **Ordningspilarna:** visas avstängda tills det finns en endpoint för att ändra `position`
 - **Mobil:** varje fråga är ett kort. **Från 768 px:** en tabell med rubrikrad. Rubrikraden och raderna är separata grids med samma kolumner, så alla kolumner utom frågan har fast bredd
 
+### Frågeformulär
+
+`QuestionForm` används både för ny fråga och för redigering. Redigering känns igen på `questionId` i URL:en.
+
+- **Hämtning:** backend saknar en endpoint för en enskild fråga, så formuläret hämtar alla frågor med `getQuestions()` och letar upp rätt id. Formuläret arbetar på en kopia, så inget ändras förrän admin sparar. `answer_id` följer med, eftersom `PUT` kräver samma svar som finns i databasen
+- **Fält:** scenario, frågetext och alltid fyra svar med text, hälsoavdrag (heltal 0–100) och feedback. Teckenräknarna följer gränserna i `validateQuestion.js` (500 / 255 / 150 / 500), och `maxlength` stoppar längre texter
+- **Fel:** ett fält som är tomt eller har ogiltigt hälsoavdrag visar felet under sig när admin lämnar fältet, med `aria-invalid` och `aria-describedby` för skärmläsare. Spara är avstängd tills alla fält är rätt. Backend validerar ändå, och ett fel därifrån visas ovanför knapparna
+- **Spara:** `createQuestion()` eller `updateQuestion()`, sedan tillbaka till listan, som hämtar om frågorna
+- **Layout:** en kolumn på mobil, svarstext och hälsoavdrag bredvid varandra från 600 px, och formulär och förhandsvisning (#179) bredvid varandra från 1024 px. Förhandsvisningen stannar kvar när formuläret scrollas
+
 ### Spelare
 
 `UserList` hämtar spelarna med `getUsers()`. Backend filtrerar och söker, eftersom den skickar max 100 spelare åt gången.
