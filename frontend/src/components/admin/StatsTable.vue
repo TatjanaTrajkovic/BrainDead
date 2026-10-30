@@ -421,19 +421,23 @@ onMounted(load);
 }
 
 .stats-sort {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.5rem;
 }
 
 .stats-sort-label {
+  grid-column: 1 / -1;
   font-size: 0.875rem;
   font-weight: 600;
 }
 
 .stats-sort-button {
   min-height: 44px;
+  padding: 0.25rem 0.5rem;
+  line-height: 1.2;
+  text-align: center;
+  white-space: normal;
 }
 
 .stats-sort-button[aria-pressed='true'] {
@@ -629,8 +633,15 @@ onMounted(load);
     align-items: center;
   }
 
+  .stats-sort {
+    display: flex;
+    align-items: center;
+  }
+
   .stats-sort-button {
     min-height: 36px;
+    padding: 0 0.875rem;
+    white-space: nowrap;
   }
 
   .stats-list {
