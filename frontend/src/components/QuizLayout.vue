@@ -11,25 +11,26 @@
 
 <style scoped>
 .quiz-layout {
-  --panel-h: min(calc(100dvh - var(--header-h) - 2rem), 40rem);
+  --panel-h: min(calc(100dvh - var(--header-h) - 2rem));
 
+  display: grid;
   grid-template-columns: 1fr;
   /* story-raden tar just nu resten av höjden (ändras till något som ser bra ut) och scrollar inne i ScenarioBox */
-  grid-template-rows: auto minmax(4.5rem, 1fr) auto auto auto auto;
+  grid-template-rows: auto auto auto auto auto auto;
   grid-template-areas:
     'progress'
+    'health'
     'story'
     'question'
     'answers'
-    'submit'
-    'health';
+    'submit';
 
-  gap: clamp(8px, 1.5dvh, 14px);
+  gap: clamp(4px, 1.5dvh, 10px);
   height: var(--panel-h);
   width: 100%;
-  padding: clamp(8px, 1.5dvh, 14px);
+  padding: clamp(6px, 1dvh, 14px);
   /* på riktigt låga skärmar scrollar istället
-för att klippa innehållet */
+  för att klippa innehållet */
   overflow: auto;
   /* se till att innenhållet kan utgå från quiz-layouts dimensioner */
   container-type: size;
@@ -47,13 +48,15 @@ för att klippa innehållet */
   grid-area: story;
   /* Raden får krympa, så att långa scenarier inte trycker ut svaren och knappen ur panelen.
      Själva scrollen sker inne i ScenarioBox */
-  min-height: 0;
+  min-height: 100px;
 }
 .question {
   grid-area: question;
 }
 .submit {
+  display: flex;
   grid-area: submit;
+  gap: 10px;
 }
 .health {
   grid-area: health;
@@ -72,13 +75,18 @@ för att klippa innehållet */
       'progress answers  health'
       'progress submit   health';
     gap: clamp(8px, 1.5dvh, 16px);
-    --panel-h: min(calc(100dvh - var(--header-h) - 2.5rem), 54rem);
+    --panel-h: min(76dvh, 54rem);
     height: var(--panel-h);
     width: min(100%, var(--content-w));
     padding: clamp(8px, 1.5dvh, 16px);
   }
   .answers {
     grid-template-columns: 1fr 1fr; /* 2×2 */
+  }
+  .progress {
+    flex-direction: column;
+    justify-content: space-between;
+    justify-items: center;
   }
 }
 
