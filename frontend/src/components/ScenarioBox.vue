@@ -68,7 +68,7 @@ watch(
 .scenario-box {
   height: 100%;
   text-align: left;
-  font-size: 0.9rem;
+  font-size: clamp(1.2rem, 3cqw, 5rem);
   line-height: 1.5;
 }
 
@@ -112,7 +112,7 @@ watch(
 .feedback-title {
   font-family: var(--font-handwritten);
   -webkit-text-stroke: var(--font-handwritten-stroke);
-  font-size: 2.1rem;
+  font-size: clamp(1.5rem, 4cqw, 5rem);
   font-weight: normal;
   line-height: 1;
   margin-bottom: 8px;
