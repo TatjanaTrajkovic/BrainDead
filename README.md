@@ -59,9 +59,9 @@ Så här hänger lagren ihop när frontend anropar backend:
 flowchart LR
   subgraph FE["Frontend · Vue 3 + Vite"]
     direction TB
-    Router["router/router.js"] --> Views["views/<br/>HomeView · GameView · AdminView"]
+    Router["router/router.js"] --> Views["views/<br/>HomeView · GameView · ReviewView · AdminView"]
     Views --> Comp["components/"]
-    Views --> Composables["composables/<br/>useGame · useAuth · useHighscores"]
+    Views --> Composables["composables/<br/>useGame · useAuth · useHighscores · useReview"]
     Comp --> Composables
     Composables --> Api["api/gameApi.js"]
   end
@@ -274,6 +274,7 @@ erDiagram
 | GET    | `/api/sessions/:sessionId`                | Hämtar en pågående eller avslutad omgång                                                                                                                                                                                                                                                                                                                   |
 | GET    | `/api/sessions/:sessionId/question`       | Hämtar nästa fråga med svarsalternativ, `total_questions` och `answered_count`, eller `{ "finished": true }` när inga återstår                                                                                                                                                                                                                             |
 | POST   | `/api/sessions/:sessionId/answer`         | Sparar ett svar. Body: `{ "answerId": 1 }`                                                                                                                                                                                                                                                                                                                 |
+| GET    | `/api/sessions/:sessionId/review`         | Svaren efter en avslutad omgång: varje besvarad fråga med alla svar, hälsopåverkan, feedback, spelarens val och bästa svaret. Se nedan. `403` om omgången inte är avslutad, `404` om den inte finns eller är någon annans                                                                                                                                  |
 | GET    | `/api/highscores`                         | Hämtar topp 10: varje spelares bästa avslutade omgång med hälsa över 0, som `{ username, score }`. Bara aktiva spelare med rollen `PLAYER` är med, så bannade, inaktiva och admins syns inte. Gäster visas som `Gäst-<user_id>`. Vid lika poäng vinner den som blev klar först                                                                             |
 | GET    | `/api/admin/questions`                    | Hämtar alla frågor, även inaktiva, med `title` och svar sorterade på `position`. Spelet får aldrig `title`. Kräver admin                                                                                                                                                                                                                                   |
 | POST   | `/api/admin/questions`                    | Skapar en fråga med exakt 4 svar. Body `{ "title", "scenario", "text", "answers": [{ "text", "health_change", "feedback" }] }`. `title` krävs och får vara max 80 tecken. Frågan läggs sist (`position` = högsta + 1) och visas i nya omgångar, inte i pågående. Fråga och svar sparas i en transaktion. Svarar `201` i samma form som `GET`. Kräver admin |
@@ -376,13 +377,14 @@ State i `useGame` ligger utanför själva funktionen, så alla vyer som anropar 
 ### Sidor och navigering
 
 Routern ligger i `frontend/src/router/router.js` och vyerna i `frontend/src/views/`.
-`App.vue` visar loggan, som länkar till `/`, och `<RouterView />`. Sidor med `meta.fullPage` (adminsidan) renderas utan loggan och har sin egen layout.
+`App.vue` visar loggan, som länkar till `/`, och `<RouterView />`. Sidor med `meta.fullPage` (adminsidan och svaren) renderas utan loggan och har sin egen layout.
 
-| Route    | Vy          | Innehåll                                                                                                    |
-| -------- | ----------- | ----------------------------------------------------------------------------------------------------------- |
-| `/`      | `HomeView`  | Startsidan. "Starta spelet" öppnar `SessionMenu` i en overlay (`<dialog>`) där man startar eller återupptar |
-| `/game`  | `GameView`  | Spelskärmen, se nedan                                                                                       |
-| `/admin` | `AdminView` | Adminsidan. Skickar vidare till `/admin/questions`, se [Adminsidan](#adminsidan)                            |
+| Route                | Vy           | Innehåll                                                                                                    |
+| -------------------- | ------------ | ----------------------------------------------------------------------------------------------------------- |
+| `/`                  | `HomeView`   | Startsidan. "Starta spelet" öppnar `SessionMenu` i en overlay (`<dialog>`) där man startar eller återupptar |
+| `/game`              | `GameView`   | Spelskärmen, se nedan                                                                                       |
+| `/review/:sessionId` | `ReviewView` | Svaren efter en avslutad omgång, se [Svaren efter omgången](#svaren-efter-omgången)                         |
+| `/admin`             | `AdminView`  | Adminsidan. Skickar vidare till `/admin/questions`, se [Adminsidan](#adminsidan)                            |
 
 Routerna kan ha flaggor i `meta`, som läses av guards och komponenter. För nästlade routes slås föräldrarnas och barnets `meta` ihop, så barnen ärver föräldrarnas flaggor:
 
@@ -447,7 +449,48 @@ Samma komponenter används i båda faserna, `phase` styr vad de visar:
 
 `AnswerBox` läggs med `v-for` direkt i `#answers`, så att varje knapp blir en egen cell i 2×2-rutnätet. `QuitButton` ligger under panelen och tar spelaren tillbaka till startsidan.
 
-När `phase` blir `finished` visas `EndCard` i stället för rutnätet. Den visar en levande eller död hjärna beroende på `isAlive`, hur mycket hjärnkapacitet som finns kvar och knappen "Spela igen". Knappen skickar `play-again`, och `GameView` startar då en ny omgång.
+När `phase` blir `finished` visas `EndCard` i stället för rutnätet. Den visar en levande eller död hjärna beroende på `isAlive`, hur mycket hjärnkapacitet som finns kvar och knapparna "Se svaren", "Spela igen" och "Till startsidan". "Spela igen" skickar `play-again`, och `GameView` startar då en ny omgång. "Se svaren" skickar `show-review`, och `GameView` går till `/review/<sessionId>`.
+
+### Svaren efter omgången
+
+`ReviewView` visar varje fråga spelaren svarade på, med scenario, fråga och alla fyra svar. Hämtningen ligger i composablen `useReview`, som anropar `GET /api/sessions/:sessionId/review`.
+
+- Varje fråga får märket "✓ Rätt" eller "✗ Fel". Rätt betyder att spelaren valde ett av de bästa svaren
+- Bästa svaret är det som drar minst hälsa (lägst `health_change`). Drar två svar lika lite är båda bäst
+- Spelarens svar är lila med märket "Ditt svar", bästa svaret har grön ram och märket "Bästa svaret". Båda visar sin feedback, de andra svaren bara text och hälsopåverkan
+- Överst visas antal rätt och hjärnkapaciteten som var kvar. Tog hälsan slut står det hur många frågor spelaren hann svara på, eftersom frågor som aldrig nåddes inte visas
+- Omgångens id ligger i adressen, så sidan går att ladda om. Backend kollar att omgången är spelarens egen och avslutad, annars visas felet och en länk till startsidan
+- Sidan har `meta.fullPage` och scrollar själv, eftersom `#app` har `overflow: hidden` och sidan är längre än skärmen
+
+Svaret från backend ser ut så här (ett svar av fyra visas):
+
+```json
+{
+  "session_id": 8,
+  "current_health": 30,
+  "total_questions": 10,
+  "questions": [
+    {
+      "question_id": 1,
+      "scenario": "Du sprang ut genom Lisebergs grindar …",
+      "text": "Vad gör du?",
+      "chosen_answer_id": 1,
+      "is_correct": true,
+      "answers": [
+        {
+          "answer_id": 1,
+          "text": "Kollar att vagnen är tom innan du kliver in.",
+          "health_change": 0,
+          "feedback": "Smart. Tom vagn, ingen fara. …",
+          "is_best": true
+        }
+      ]
+    }
+  ]
+}
+```
+
+Svaren visar frågornas text och hälsopåverkan som de ser ut nu. Ändrar admin en fråga efter att omgången spelats, syns den nya versionen.
 
 ### Handboken
 
