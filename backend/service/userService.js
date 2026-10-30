@@ -7,7 +7,6 @@ const USER_LIST_LIMIT = 100;
 // Så gammal måste en gäst vara för att räknas som gammal och kunna rensas
 const GUEST_MAX_AGE_DAYS = 30;
 
-
 const TYPE_FILTERS = {
   registered: 'u.is_guest = FALSE',
   guest: 'u.is_guest = TRUE',

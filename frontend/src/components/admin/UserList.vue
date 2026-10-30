@@ -1,6 +1,12 @@
 <script setup>
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
-import { deleteOldGuests, getUsers, getUserSessions, setUserRole, setUserStatus } from '@/api/adminApi';
+import {
+  deleteOldGuests,
+  getUsers,
+  getUserSessions,
+  setUserRole,
+  setUserStatus,
+} from '@/api/adminApi';
 import { useAuth } from '@/composables/useAuth';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 
