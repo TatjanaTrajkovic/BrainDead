@@ -39,6 +39,18 @@ main {
   width: 100%;
 }
 
+/* Kryss i skärmens övre högra hörn för popups (prologen, id-kortet och omgångsmenyn).
+   Eget namn så att det inte krockar med .close i HandbookOpen och HighScoreOverlay */
+.close-corner {
+  position: fixed;
+  top: max(0.5rem, env(safe-area-inset-top));
+  right: max(0.5rem, env(safe-area-inset-right));
+  width: 2.75rem;
+  height: 2.75rem;
+  font-size: 1.5rem;
+  color: var(--color-text);
+}
+
 /* Om stor bildskärm och muspekare */
 @media (min-width: 768px) and (min-height: 501px) and (orientation: landscape) and (pointer: fine) {
   main {
