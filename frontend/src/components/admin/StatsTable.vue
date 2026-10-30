@@ -15,15 +15,26 @@ const legend = [
 
 const FEW_ANSWERS = 20;
 
+const sortOptions = [
+  { key: 'position', label: 'Ordning' },
+  { key: 'averageDamage', label: 'Snittskada' },
+  { key: 'deathRate', label: 'Andel som dog här' },
+];
+
+const sortKey = ref('position');
+
+function totalDamage(question) {
+  return question.answers.reduce(
+    (sum, answer) => sum + answer.times_chosen * answer.health_change,
+    0,
+  );
+}
+
 function averageDamage(question) {
   if (question.times_answered === 0) {
     return null;
   }
-  const totalDamage = question.answers.reduce(
-    (sum, answer) => sum + answer.times_chosen * answer.health_change,
-    0,
-  );
-  return totalDamage / question.times_answered;
+  return totalDamage(question) / question.times_answered;
 }
 
 const playedDamages = computed(() =>
@@ -56,6 +67,56 @@ const rows = computed(() =>
     };
   }),
 );
+
+const sortedRows = computed(() => {
+  const key = sortKey.value;
+  return [...rows.value].sort((a, b) => {
+    if (key === 'position') {
+      return a.position - b.position;
+    }
+    if (a[key] === null && b[key] === null) return a.position - b.position;
+    if (a[key] === null) return 1;
+    if (b[key] === null) return -1;
+    return b[key] - a[key] || a.position - b.position;
+  });
+});
+
+function positionsText(list) {
+  return list.length > 0
+    ? `Fråga ${list.map((q) => q.position).join(', ')}`
+    : 'Ingen fråga sticker ut';
+}
+
+const summary = computed(() => {
+  const highest = rows.value.filter((q) => q.isHighestDamage);
+  const lowest = rows.value.filter((q) => q.isLowestDamage);
+  const totalAnswered = questions.value.reduce((sum, q) => sum + q.times_answered, 0);
+  const allDamage = questions.value.reduce((sum, q) => sum + totalDamage(q), 0);
+  const unplayed = rows.value.filter((q) => q.isUnplayed).length;
+
+  return [
+    {
+      label: 'Högst snittskada',
+      value: formatDecimal(highest[0]?.averageDamage ?? null),
+      detail: positionsText(highest),
+    },
+    {
+      label: 'Lägst snittskada',
+      value: formatDecimal(lowest[0]?.averageDamage ?? null),
+      detail: positionsText(lowest),
+    },
+    {
+      label: 'Snittskada, alla svar',
+      value: formatDecimal(totalAnswered > 0 ? allDamage / totalAnswered : null),
+      detail: `${totalAnswered} svar totalt`,
+    },
+    {
+      label: 'Ej spelade',
+      value: String(unplayed),
+      detail: `av ${questions.value.length} frågor`,
+    },
+  ];
+});
 
 async function load() {
   isLoading.value = true;
@@ -124,6 +185,14 @@ onMounted(load);
     <p v-else-if="questions.length === 0" class="admin-subtitle">Det finns inga frågor än.</p>
 
     <template v-else>
+      <dl class="stats-summary">
+        <div v-for="item in summary" :key="item.label" class="admin-card stats-summary-item">
+          <dt>{{ item.label }}</dt>
+          <dd class="stats-summary-value">{{ item.value }}</dd>
+          <dd class="stats-summary-detail">{{ item.detail }}</dd>
+        </div>
+      </dl>
+
       <details class="stats-help">
         <summary>Så läser du siffrorna</summary>
         <dl>
@@ -152,21 +221,37 @@ onMounted(load);
         </p>
       </details>
 
-      <ul class="stats-legend" aria-label="Färgförklaring för hälsoavdrag">
-        <li class="stats-legend-title">Hälsoavdrag:</li>
-        <li v-for="item in legend" :key="item.level" class="stats-legend-item">
-          <span
-            class="stats-swatch"
-            :class="`stats-damage--${item.level}`"
-            aria-hidden="true"
-          ></span>
-          {{ item.label }}
-        </li>
-      </ul>
+      <div class="stats-toolbar">
+        <div class="stats-sort" role="group" aria-label="Sortera frågorna">
+          <span class="stats-sort-label" aria-hidden="true">Sortera:</span>
+          <button
+            v-for="option in sortOptions"
+            :key="option.key"
+            type="button"
+            class="admin-button stats-sort-button"
+            :aria-pressed="sortKey === option.key"
+            @click="sortKey = option.key"
+          >
+            {{ option.label }}
+          </button>
+        </div>
+
+        <ul class="stats-legend" aria-label="Färgförklaring för hälsoavdrag">
+          <li class="stats-legend-title">Hälsoavdrag:</li>
+          <li v-for="item in legend" :key="item.level" class="stats-legend-item">
+            <span
+              class="stats-swatch"
+              :class="`stats-damage--${item.level}`"
+              aria-hidden="true"
+            ></span>
+            {{ item.label }}
+          </li>
+        </ul>
+      </div>
 
       <ol class="stats-list">
         <li
-          v-for="question in rows"
+          v-for="question in sortedRows"
           :key="question.question_id"
           class="admin-card stats-card"
           :class="{
@@ -303,12 +388,65 @@ onMounted(load);
   border-radius: var(--admin-radius);
 }
 
+.stats-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0 0 1rem;
+}
+
+.stats-summary-item dt {
+  font-size: 0.8125rem;
+  color: var(--admin-muted);
+}
+
+.stats-summary-value {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.stats-summary-detail {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--admin-muted);
+}
+
+.stats-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.stats-sort {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.stats-sort-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.stats-sort-button {
+  min-height: 44px;
+}
+
+.stats-sort-button[aria-pressed='true'] {
+  color: var(--admin-accent);
+  background: color-mix(in srgb, var(--admin-accent) 10%, var(--admin-surface));
+  border-color: var(--admin-accent);
+}
+
 .stats-legend {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.25rem 1rem;
-  margin-bottom: 1rem;
   padding: 0;
   list-style: none;
   font-size: 0.8125rem;
@@ -480,6 +618,21 @@ onMounted(load);
 }
 
 @media (min-width: 768px) {
+  .stats-summary {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .stats-toolbar {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .stats-sort-button {
+    min-height: 36px;
+  }
+
   .stats-list {
     gap: 1rem;
   }
