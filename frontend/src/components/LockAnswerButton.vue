@@ -75,7 +75,7 @@ function handleClick() {
   border-radius: 8px;
   color: var(--color-text, #e7dcaa);
   font-family: var(--font-main, 'Special Elite', monospace);
-  font-size: 1.1rem;
+  font-size: clamp(1rem, 2.8cqw, 1.45rem);
   letter-spacing: 0.05em;
   text-transform: uppercase;
   cursor: pointer;

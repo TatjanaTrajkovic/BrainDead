@@ -15,7 +15,7 @@ defineProps({
 
 <style scoped>
 .question-box p {
-  font-size: 1rem;
+  font-size: clamp(1.2rem, 3cqw, 2rem);
   font-weight: normal;
   line-height: 1.4;
 }

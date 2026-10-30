@@ -29,20 +29,21 @@ defineProps({
 
 <style scoped>
 .progress-dots {
-  --dot-size: 32px;
-  --dot-gap: 16px;
-  --dot-border: 3px;
+  --dot-size: clamp(16px, 4cqw, 32px);
+  --dot-gap: clamp(8px, 2cqw, 18px);
+
+  --dot-border: 0.2cqw;
   --dot-empty: rgba(162, 162, 162, 0.4);
   --dot-filled: var(--color-progress, #5c2b78);
   --dot-current: var(--color-text, #e7dcaa);
 
   display: flex;
-  /* Fråga 1 längst ned, så att prickarna fylls nedifrån och upp mot IKEA */
-  flex-direction: column-reverse;
+  flex-direction: row;
   align-items: center;
+  justify-content: center;
+
   gap: var(--dot-gap);
   width: 100%;
-  height: 100%;
 }
 
 /* Start och mål lyser som neonskyltar, i krämgult med lila sken */
@@ -50,6 +51,7 @@ defineProps({
   margin: 0;
   white-space: nowrap;
   color: var(--dot-current);
+  font-size: clamp(0.4rem, 3cqw, 1.5rem);
   text-shadow:
     0 0 4px var(--dot-current),
     0 0 10px var(--dot-filled),
@@ -63,6 +65,9 @@ defineProps({
   box-sizing: border-box;
   border: var(--dot-border) solid var(--dot-empty);
   border-radius: 50%;
+  flex-shrink: 0;
+  min-width: var(--dot-size);
+  min-height: var(--dot-size);
 }
 
 .dot.done {
@@ -77,22 +82,40 @@ defineProps({
   box-shadow: 0 0 8px var(--dot-current);
 }
 
-/* Streck ned till pricken under. Bara prickar med en prick före sig i DOM:en får ett,
-   så den nedersta (fråga 1) får inget streck ned till Liseberg */
 .dot + .dot::after {
   content: '';
   position: absolute;
-  top: calc(100% + var(--dot-border));
-  left: 50%;
-  transform: translateX(-50%);
-  width: var(--dot-border);
-  height: var(--dot-gap);
+  top: 50%;
+  right: calc(100% + var(--dot-border));
+  transform: translateY(-50%);
+  width: var(--dot-gap);
+  height: var(--dot-border);
   background: var(--dot-empty);
 }
 
-/* Strecket ned från en besvarad eller pågående fråga leder till en besvarad prick */
 .dot.done::after,
 .dot.current::after {
   background: var(--dot-filled);
+}
+
+/* Liggande skärm, lodrät pelare som tidigare */
+@media (orientation: landscape) {
+  /* Start och mål lyser som neonskyltar, i krämgult med lila sken */
+  .progress-dots {
+    flex-direction: column-reverse;
+    height: 100%;
+    --dot-size: clamp(20px, 5cqh, 34px);
+    --dot-gap: clamp(12px, 3cqh, 18px);
+  }
+
+  /* Streck ned till pricken under. Bara prickar med en prick före sig i DOM:en får ett,
+   så den nedersta (fråga 1) får inget streck ned till Liseberg */
+  .dot + .dot::after {
+    top: calc(100% + var(--dot-border));
+    left: 50%;
+    transform: translateX(-50%);
+    width: var(--dot-border);
+    height: var(--dot-gap);
+  }
 }
 </style>

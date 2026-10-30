@@ -61,6 +61,9 @@ function goHome() {
   <div class="content-wrapper">
     <p v-if="error">{{ error }}</p>
     <QuizLayout v-if="phase === 'feedback' || phase === 'question'">
+      <template #health>
+        <HealthMeter :health="health" />
+      </template>
       <template #progress>
         <ProgressDots :total="totalQuestions" :answered="answeredCount" />
       </template>
@@ -84,6 +87,11 @@ function goHome() {
         />
       </template>
       <template #submit>
+        <QuitButton
+          v-if="phase === 'question' || phase === 'feedback'"
+          :disabled="submitting"
+          @quit="quit"
+        />
         <LockAnswerButton
           :has-selection="selectedAnswerId !== null"
           :submitting="submitting"
@@ -93,18 +101,9 @@ function goHome() {
           @next="next"
         />
       </template>
-      <template #health>
-        <HealthMeter :health="health" />
-      </template>
     </QuizLayout>
 
     <p v-if="phase === 'loading'">Laddar...</p>
-
-    <QuitButton
-      v-if="phase === 'question' || phase === 'feedback'"
-      :disabled="submitting"
-      @quit="quit"
-    />
 
     <EndCard
       v-if="phase === 'finished'"

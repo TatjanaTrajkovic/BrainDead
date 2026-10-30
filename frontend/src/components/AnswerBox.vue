@@ -24,7 +24,8 @@ const emit = defineEmits(['select']);
 .answer-box {
   width: 100%;
   height: 100%;
-  font-size: 0.8rem;
+  font-size: clamp(1rem, 2cqw, 1.8rem);
+  line-height: 1.3;
   text-transform: uppercase;
 }
 
