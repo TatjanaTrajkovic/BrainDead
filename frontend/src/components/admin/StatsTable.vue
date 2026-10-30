@@ -62,7 +62,7 @@ const rows = computed(() =>
       isUnplayed: !played,
       isInactive: question.status === 'INACTIVE',
       isFewAnswers: played && question.times_answered < FEW_ANSWERS,
-      isHighestDamage: played && maxAverageDamage.value > 0 && damage === maxAverageDamage.value,
+      isHighestDamage: played && hasSpread && damage === maxAverageDamage.value,
       isLowestDamage: played && hasSpread && damage === minAverageDamage.value,
     };
   }),
