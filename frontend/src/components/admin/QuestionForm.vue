@@ -18,11 +18,12 @@ const pageTitle = computed(() =>
 // Spelet förutsätter exakt fyra svar, samma som ANSWER_COUNT i backend
 const ANSWER_COUNT = 4;
 // Gränserna följer validateQuestion.js och databasens kolumner. Ändras de ska de ändras här också
-const LIMITS = { scenario: 500, text: 255, answerText: 150, feedback: 500 };
+const LIMITS = { title: 80, scenario: 500, text: 255, answerText: 150, feedback: 500 };
 const ANSWER_LETTERS = ['A', 'B', 'C', 'D'];
 
 // Hälsoavdraget är tomt ('') tills admin skriver något, så att det måste fyllas i
 const form = ref({
+  title: '',
   scenario: '',
   text: '',
   answers: Array.from({ length: ANSWER_COUNT }, () => ({
@@ -54,6 +55,7 @@ async function loadQuestion() {
     // Svaren kopieras, så att listans data inte ändras medan admin skriver.
     // answer_id följer med, eftersom PUT kräver samma svar som finns i databasen
     form.value = {
+      title: question.title,
       scenario: question.scenario,
       text: question.text,
       answers: question.answers.map((answer) => ({ ...answer })),
@@ -82,6 +84,7 @@ function healthError(value) {
 // För långa texter behöver inget fel, eftersom maxlength stoppar dem redan i fältet
 const errors = computed(() => {
   const result = {
+    'question-title': textError(form.value.title, 'Titel'),
     scenario: textError(form.value.scenario, 'Scenario'),
     'question-text': textError(form.value.text, 'Frågetext'),
   };
@@ -173,6 +176,23 @@ onMounted(() => {
       <form class="question-form" @submit.prevent="save">
         <fieldset class="admin-card">
           <legend class="card-title">Fråga</legend>
+
+          <div class="field">
+            <div class="field-head">
+              <label for="question-title">Titel</label>
+              <span class="counter">{{ form.title.length }} / {{ LIMITS.title }}</span>
+            </div>
+            <input
+              v-model="form.title"
+              v-bind="fieldAttrs('question-title')"
+              type="text"
+              :maxlength="LIMITS.title"
+            />
+            <p class="hint">Syns bara för admin, inte i spelet.</p>
+            <p v-if="shownError('question-title')" id="question-title-error" class="field-error">
+              {{ shownError('question-title') }}
+            </p>
+          </div>
 
           <div class="field">
             <div class="field-head">
