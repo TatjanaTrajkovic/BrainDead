@@ -273,7 +273,7 @@ erDiagram
 | GET   | `/api/admin/stats`                        | Statistik per fråga: antal svar per alternativ och dödsfall. Admins omgångar räknas inte. Kräver admin                                                                                                                                                                                                  |
 | GET   | `/api/admin/users`                        | Hämtar spelare, nyast först, max 100. Valfritt `?type=registered\|guest\|banned` och `?search=<text>`. Se nedan. Kräver admin                                                                                                                                                                           |
 | PATCH | `/api/admin/users/:userId/role`           | Ändrar roll. Body `{ "role": "PLAYER" \| "ADMIN" }`. Svarar `{ user_id, role }` och gäller direkt. Egen roll, gäst eller bannad ger `400`, okänd spelare `404`. Kräver admin                                                                                                                            |
-| PATCH | `/api/admin/users/:userId/status`         | Bannar eller avbannar. Body `{ "status": "ACTIVE" \| "BANNED" }`. Svarar `{ user_id, status }`. En bannad spelare loggas ut direkt och kan inte logga in (`401`). Egen status, admin eller gäst ger `400`, okänd spelare `404`. Kräver admin                                                                  |
+| PATCH | `/api/admin/users/:userId/status`         | Bannar eller avbannar. Body `{ "status": "ACTIVE" \| "BANNED" }`. Svarar `{ user_id, status }`. En bannad spelare loggas ut direkt och kan inte logga in (`401`). Egen status, admin eller gäst ger `400`, okänd spelare `404`. Kräver admin                                                            |
 | GET   | `/api/admin/users/:userId/sessions`       | Hämtar en spelares omgångar, nyast först. Se nedan. Kräver admin                                                                                                                                                                                                                                        |
 
 `GET /api/admin/users` svarar `[{ user_id, display_name, role, status, is_guest, created_at, session_count, best_score }]`. Utan filter kommer alla. `type=banned` visar både registrerade och gäster, så flikarna kan överlappa. `search` söker på del av `display_name`, så gäster hittas som `Gäst-<id>`. `%` och `_` i söktexten matchar bara sig själva. `best_score` följer topplistans regel (bästa avslutade omgång med hälsa över 0) och är `null` om spelaren saknar en sådan. Ett okänt `type` ger `400`. `password_hash` och `auth_token` skickas aldrig.
@@ -574,6 +574,16 @@ Bilder och knappar går inte att markera, och bilder går inte att dra iväg. De
 - **Redigera och Ny fråga:** länkar till formuläret. Frågan skickas inte med, utan formuläret hämtar den själv, så att en omladdning fungerar
 - **Ordningspilarna:** visas avstängda tills det finns en endpoint för att ändra `position`
 - **Mobil:** varje fråga är ett kort. **Från 768 px:** en tabell med rubrikrad. Rubrikraden och raderna är separata grids med samma kolumner, så alla kolumner utom frågan har fast bredd
+
+### Frågeformulär
+
+`QuestionForm` används både för ny fråga och för redigering. Redigering känns igen på `questionId` i URL:en.
+
+- **Hämtning:** backend saknar en endpoint för en enskild fråga, så formuläret hämtar alla frågor med `getQuestions()` och letar upp rätt id. Formuläret arbetar på en kopia, så inget ändras förrän admin sparar. `answer_id` följer med, eftersom `PUT` kräver samma svar som finns i databasen
+- **Fält:** scenario, frågetext och alltid fyra svar med text, hälsoavdrag (heltal 0–100) och feedback. Teckenräknarna följer gränserna i `validateQuestion.js` (500 / 255 / 150 / 500), och `maxlength` stoppar längre texter
+- **Fel:** ett fält som är tomt eller har ogiltigt hälsoavdrag visar felet under sig när admin lämnar fältet, med `aria-invalid` och `aria-describedby` för skärmläsare. Spara är avstängd tills alla fält är rätt. Backend validerar ändå, och ett fel därifrån visas ovanför knapparna
+- **Spara:** `createQuestion()` eller `updateQuestion()`, sedan tillbaka till listan, som hämtar om frågorna
+- **Layout:** en kolumn på mobil, svarstext och hälsoavdrag bredvid varandra från 600 px, och formulär och förhandsvisning (#179) bredvid varandra från 1024 px. Förhandsvisningen stannar kvar när formuläret scrollas
 
 ### Spelare
 
