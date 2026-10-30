@@ -575,6 +575,16 @@ Bilder och knappar går inte att markera, och bilder går inte att dra iväg. De
 - **Ordningspilarna:** visas avstängda tills det finns en endpoint för att ändra `position`
 - **Mobil:** varje fråga är ett kort. **Från 768 px:** en tabell med rubrikrad. Rubrikraden och raderna är separata grids med samma kolumner, så alla kolumner utom frågan har fast bredd
 
+### Spelare
+
+`UserList` hämtar spelarna med `getUsers()`. Backend filtrerar och söker, eftersom den skickar max 100 spelare åt gången.
+
+- **Filter och sökning:** Alla, Registrerade, Gäster och Bannade skickas som `?type=`, och sökningen som `?search=` 300 ms efter sista tangenttrycket. Ett äldre svar som kommer sent skriver inte över ett nyare
+- **Omgångar:** klick på ett namn fäller ut spelarens omgångar med datum, hälsa, besvarade frågor och resultat. De hämtas med `getUserSessions()` första gången raden öppnas
+- **Knappar:** Banna/Avbanna och Gör till admin/Gör till spelare, enligt samma regler som backend. Gäster får inga knappar, admins kan inte bannas och bannade kan inte byta roll. Den egna raden är markerad "(du)" och har inga knappar
+- **Bekräftelse:** varje ändring bekräftas med `ConfirmDialog variant="admin"`. Banna och Gör till admin har röd knapp (`danger`). Efter ändringen hämtas listan om, så att filtret stämmer. Misslyckas den visas ett fel ovanför listan
+- **Mobil:** varje spelare är ett kort. **Från 768 px:** en tabell med rubrikrad, som i `QuestionList`
+
 ### Layout
 
 Adminsidan har en neutral design, skild från spelets. Den byggs mobile first: grundstilarna gäller mobil och media queries lägger till för större skärmar.
