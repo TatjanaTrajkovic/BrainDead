@@ -17,5 +17,6 @@ router.patch('/users/:userId/role', userController.setUserRole);
 router.patch('/questions/:questionId/status', questionController.setQuestionStatus);
 router.get('/users/:userId/sessions', userController.getUserSessions);
 router.patch('/users/:userId/status', userController.setBanStatus);
+router.delete('/guests', userController.deleteOldGuests);
 
 module.exports = router;
