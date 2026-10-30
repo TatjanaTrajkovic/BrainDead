@@ -273,7 +273,7 @@ erDiagram
 | GET   | `/api/admin/stats`                        | Statistik per fråga: antal svar per alternativ och dödsfall. Admins omgångar räknas inte. Kräver admin                                                                                                                                                                                                  |
 | GET   | `/api/admin/users`                        | Hämtar spelare, nyast först, max 100. Valfritt `?type=registered\|guest\|banned` och `?search=<text>`. Se nedan. Kräver admin                                                                                                                                                                           |
 | PATCH | `/api/admin/users/:userId/role`           | Ändrar roll. Body `{ "role": "PLAYER" \| "ADMIN" }`. Svarar `{ user_id, role }` och gäller direkt. Egen roll, gäst eller bannad ger `400`, okänd spelare `404`. Kräver admin                                                                                                                            |
-| PATCH | `/api/admin/users/:userId/status`         | Bannar eller avbannar. Body `{ "status": "ACTIVE" \| "BANNED" }`. Svarar `{ user_id, status }`. En bannad spelare loggas ut direkt och kan inte logga in (`401`). Egen status, admin eller gäst ger `400`, okänd spelare `404`. Kräver admin                                                                  |
+| PATCH | `/api/admin/users/:userId/status`         | Bannar eller avbannar. Body `{ "status": "ACTIVE" \| "BANNED" }`. Svarar `{ user_id, status }`. En bannad spelare loggas ut direkt och kan inte logga in (`401`). Egen status, admin eller gäst ger `400`, okänd spelare `404`. Kräver admin                                                            |
 | GET   | `/api/admin/users/:userId/sessions`       | Hämtar en spelares omgångar, nyast först. Se nedan. Kräver admin                                                                                                                                                                                                                                        |
 
 `GET /api/admin/users` svarar `[{ user_id, display_name, role, status, is_guest, created_at, session_count, best_score }]`. Utan filter kommer alla. `type=banned` visar både registrerade och gäster, så flikarna kan överlappa. `search` söker på del av `display_name`, så gäster hittas som `Gäst-<id>`. `%` och `_` i söktexten matchar bara sig själva. `best_score` följer topplistans regel (bästa avslutade omgång med hälsa över 0) och är `null` om spelaren saknar en sådan. Ett okänt `type` ger `400`. `password_hash` och `auth_token` skickas aldrig.
@@ -589,6 +589,19 @@ All CSS för adminsidan ligger i `AdminView.vue`, inte i `main.css` eller `base.
 | `.admin-badge`, `--success`              | Märken, t.ex. status Aktiv/Inaktiv                          |
 
 Färgerna heter `--admin-bg`, `--admin-surface`, `--admin-text`, `--admin-muted`, `--admin-border`, `--admin-accent`, `--admin-success-bg`, `--admin-success-text`, `--admin-neutral-bg` och `--admin-danger`. Använd variablerna i komponenternas egna scoped-stilar i stället för egna färgkoder. Spelets klasser (`.btn`, `.content-card`) används inte på adminsidan.
+
+### Statistik
+
+`StatsTable` visar `GET /api/admin/stats` som ett kort per fråga, med summering och sortering överst. Värdena räknas ut i komponenten:
+
+| Mått              | Beräkning                                              |
+| ----------------- | ------------------------------------------------------ |
+| Snittskada        | Σ(`times_chosen` × `health_change`) / `times_answered` |
+| Svarade           | `times_answered`                                       |
+| Dog här           | `deaths`                                               |
+| Andel som dog här | `deaths` / `times_answered`                            |
+
+Frågorna spelas i fast ordning, så senare frågor får fler dödsfall eftersom spelarna har mindre hälsa kvar. Snittskadan påverkas inte av ordningen och är därför huvudmåttet: frågan med högst snittskada markeras som kanske för svår och den med lägst som kanske för lätt. Dödsfallen visar spelets svårighetskurva, och frågan med flest dödsfall markeras inte. En ospelad fråga visar `–`, och färre än 20 svar ger en varning.
 
 ## Arbetssätt
 

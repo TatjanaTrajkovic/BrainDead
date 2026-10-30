@@ -198,26 +198,36 @@ onMounted(load);
         <dl>
           <dt>Snittskada</dt>
           <dd>
-            Hur mycket hälsa en spelare i snitt förlorar på frågan. Den påverkas inte av var frågan
-            ligger i spelet, så använd den för att balansera hälsoavdraget.
+            Den genomsnittliga hälsa som spelarna förlorar på frågan. Måttet påverkas inte av
+            frågans plats i spelet och är därför det bästa underlaget för att justera hälsoavdraget.
           </dd>
           <dt>Högst och lägst snittskada</dt>
-          <dd>Frågan kan vara för svår eller för lätt jämfört med de andra.</dd>
+          <dd>
+            Markerar frågor som kan vara för svåra respektive för lätta i jämförelse med övriga
+            frågor.
+          </dd>
           <dt>Svarade</dt>
-          <dd>Hur många som tog sig fram till frågan och svarade.</dd>
+          <dd>Antalet spelare som har nått frågan och besvarat den.</dd>
           <dt>Dog här</dt>
           <dd>
-            Hur många omgångar som tog slut på frågan, alltså där hälsan nådde 0. Senare frågor får
-            fler, eftersom spelarna då har mindre hälsa kvar. Tillsammans med Svarade visar det
-            spelets svårighetskurva.
+            Antalet omgångar som avslutades på frågan, det vill säga där spelarens hälsa nådde 0.
+            Senare frågor får fler dödsfall, eftersom spelarna då har mindre hälsa kvar. Tillsammans
+            med antalet svar visar måttet spelets svårighetskurva.
           </dd>
           <dt>Andel som dog här</dt>
-          <dd>Dog här delat med Svarade.</dd>
+          <dd>
+            Hur stor andel av spelarna som besvarade frågan som också dog på den. Måttet beräknas
+            som antalet dödsfall i förhållande till antalet svar.
+          </dd>
           <dt>Staplarna</dt>
-          <dd>Hur svaren fördelas, färgade efter hur mycket hälsa svaret kostar.</dd>
+          <dd>
+            Visar hur svaren fördelar sig mellan alternativen. Färgen anger hur mycket hälsa
+            alternativet kostar.
+          </dd>
         </dl>
         <p>
-          Admins egna omgångar räknas inte. Med färre än {{ FEW_ANSWERS }} svar är siffrorna osäkra.
+          Administratörers egna omgångar ingår inte i statistiken. Frågor med färre än
+          {{ FEW_ANSWERS }} svar ger ett osäkert underlag.
         </p>
       </details>
 
