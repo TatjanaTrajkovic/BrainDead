@@ -28,6 +28,11 @@ export function getSession(sessionId) {
   return request(`/sessions/${sessionId}`);
 }
 
+// Genomgången efter en avslutad omgång (#205). 403 om omgången inte är klar, 404 om den är någon annans
+export function getSessionReview(sessionId) {
+  return request(`/sessions/${sessionId}/review`);
+}
+
 export function getHighScores() {
   return request('/highscores');
 }
