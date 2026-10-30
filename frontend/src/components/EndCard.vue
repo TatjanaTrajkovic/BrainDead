@@ -21,8 +21,11 @@ const brainImg = computed(() => (props.isAlive ? brainAlive : brainDead));
 
 const healthPercent = computed(() => props.health);
 
-const emit = defineEmits(['play-again', 'go-home']);
+const emit = defineEmits(['play-again', 'go-home', 'show-review']);
 
+function showReview() {
+  emit('show-review');
+}
 function playAgain() {
   emit('play-again');
 }
@@ -44,6 +47,8 @@ function goHome() {
     <p v-else>Din hjärnkapacitet är slut. Du har anslutit dig till majoriteten.</p>
 
     <p class="health">Hjärnkapacitet kvar: {{ healthPercent }} %</p>
+
+    <button type="button" class="btn btn-purple" @click="showReview">Se svaren</button>
 
     <div class="actions">
       <button type="button" class="btn btn-gray" @click="playAgain">Spela igen</button>
