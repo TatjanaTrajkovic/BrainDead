@@ -540,6 +540,8 @@ Färger och typsnitt ligger som CSS-variabler i `frontend/src/assets/base.css`, 
 | `.btn-gray`     | Grå knapp                                         |
 | `.btn-large`    | Stor knapp som skalar med sin bredd, se nedan     |
 
+En `.btn` med attributet `disabled` tonas ned och blir gråaktig, och den lyser inte upp vid hover. Den används till exempel på "Återuppta omgång" när spelaren inte har någon pågående omgång.
+
 #### Användning av `.btn-large`
 
 ```html

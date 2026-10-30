@@ -98,13 +98,21 @@ behövs för att cqi ska kunna mäta bredd */
   background-color: var(--color-bg-gray);
 }
 
-.btn:hover {
+/* :not(:disabled) så att en avstängd knapp inte lyser upp eller trycks ned */
+.btn:hover:not(:disabled) {
   filter: brightness(1.4);
 }
 
-.btn:active {
+.btn:active:not(:disabled) {
   filter: brightness(1.15);
   transform: translateY(2px);
+}
+
+/* Avstängd knapp, t.ex. "Återuppta omgång" när det inte finns någon omgång att återuppta */
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  filter: grayscale(0.6);
 }
 
 .btn:focus-visible {

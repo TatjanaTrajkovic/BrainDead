@@ -16,6 +16,7 @@ const emit = defineEmits(['start-new', 'resume', 'show-played']);
       type="button"
       class="btn btn-large"
       :disabled="!hasActiveSession"
+      :title="hasActiveSession ? undefined : 'Du har ingen pågående omgång'"
       @click="emit('resume')"
     >
       <span>Återuppta omgång</span>
