@@ -114,7 +114,7 @@ onMounted(load);
       <div>
         <h1 class="admin-title">Statistik per fråga</h1>
         <p class="admin-subtitle">
-          Ett dödsfall räknas på frågan som besvarades sist innan hälsan nådde 0.
+          Hitta frågor som är för svåra eller för lätta och justera hälsoavdraget.
         </p>
       </div>
     </div>
@@ -124,6 +124,34 @@ onMounted(load);
     <p v-else-if="questions.length === 0" class="admin-subtitle">Det finns inga frågor än.</p>
 
     <template v-else>
+      <details class="stats-help">
+        <summary>Så läser du siffrorna</summary>
+        <dl>
+          <dt>Snittskada</dt>
+          <dd>
+            Hur mycket hälsa en spelare i snitt förlorar på frågan. Den påverkas inte av var frågan
+            ligger i spelet, så använd den för att balansera hälsoavdraget.
+          </dd>
+          <dt>Högst och lägst snittskada</dt>
+          <dd>Frågan kan vara för svår eller för lätt jämfört med de andra.</dd>
+          <dt>Svarade</dt>
+          <dd>Hur många som tog sig fram till frågan och svarade.</dd>
+          <dt>Dog här</dt>
+          <dd>
+            Hur många omgångar som tog slut på frågan, alltså där hälsan nådde 0. Senare frågor får
+            fler, eftersom spelarna då har mindre hälsa kvar. Tillsammans med Svarade visar det
+            spelets svårighetskurva.
+          </dd>
+          <dt>Andel som dog här</dt>
+          <dd>Dog här delat med Svarade.</dd>
+          <dt>Staplarna</dt>
+          <dd>Hur svaren fördelas, färgade efter hur mycket hälsa svaret kostar.</dd>
+        </dl>
+        <p>
+          Admins egna omgångar räknas inte. Med färre än {{ FEW_ANSWERS }} svar är siffrorna osäkra.
+        </p>
+      </details>
+
       <ul class="stats-legend" aria-label="Färgförklaring för hälsoavdrag">
         <li class="stats-legend-title">Hälsoavdrag:</li>
         <li v-for="item in legend" :key="item.level" class="stats-legend-item">
@@ -180,6 +208,10 @@ onMounted(load);
             </div>
           </dl>
 
+          <p v-if="question.isFewAnswers" class="stats-note">
+            Färre än {{ FEW_ANSWERS }} svar, tolka siffrorna försiktigt.
+          </p>
+
           <ul class="stats-answers">
             <li
               v-for="(answer, index) in question.answers"
@@ -219,6 +251,56 @@ onMounted(load);
 
 .stats-error {
   color: var(--admin-danger);
+}
+
+.stats-help {
+  margin-bottom: 1rem;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+}
+
+.stats-help summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.stats-help summary:focus-visible {
+  outline: 2px solid var(--admin-accent);
+  outline-offset: 2px;
+}
+
+.stats-help dl,
+.stats-help p {
+  padding: 0 1rem;
+}
+
+.stats-help dt {
+  font-weight: 600;
+}
+
+.stats-help dd {
+  margin: 0 0 0.75rem;
+  color: var(--admin-muted);
+}
+
+.stats-help p {
+  padding-bottom: 1rem;
+  font-size: 0.875rem;
+  color: var(--admin-muted);
+}
+
+.stats-note {
+  margin-bottom: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+  color: var(--stats-warning-text);
+  background: var(--stats-warning-bg);
+  border-radius: var(--admin-radius);
 }
 
 .stats-legend {
