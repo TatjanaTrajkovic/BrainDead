@@ -8,6 +8,7 @@ function answer(overrides = {}) {
 
 function question(overrides = {}) {
   return {
+    title: 'Hållplatsen',
     scenario: 'Du står vid hållplatsen.',
     text: 'Vad gör du?',
     answers: [answer(), answer(), answer(), answer()],
