@@ -1,6 +1,6 @@
 <script setup>
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
-import { getUsers, getUserSessions, setUserRole, setUserStatus } from '@/api/adminApi';
+import { deleteOldGuests, getUsers, getUserSessions, setUserRole, setUserStatus } from '@/api/adminApi';
 import { useAuth } from '@/composables/useAuth';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 
@@ -118,6 +118,7 @@ const dialog = ref(null);
 const pending = ref({ title: '', message: '', confirmText: 'OK', danger: false, run: null });
 const busyIds = ref(new Set());
 const actionError = ref('');
+const actionMessage = ref('');
 
 async function ask(options) {
   pending.value = options;
@@ -136,7 +137,7 @@ function askBan(user) {
     confirmText: isBanned ? 'Avbanna' : 'Banna',
     danger: !isBanned,
     run: () => setUserStatus(user.user_id, isBanned ? 'ACTIVE' : 'BANNED'),
-    userId: user.user_id,
+    busyKey: user.user_id,
   });
 }
 
@@ -150,23 +151,43 @@ function askRole(user) {
     confirmText: isAdmin ? 'Gör till spelare' : 'Gör till admin',
     danger: !isAdmin,
     run: () => setUserRole(user.user_id, isAdmin ? 'PLAYER' : 'ADMIN'),
-    userId: user.user_id,
+    busyKey: user.user_id,
+  });
+}
+
+// Backend avgör vilka gäster som är gamla, så frontend visar bara antalet som raderades
+function askDeleteGuests() {
+  ask({
+    title: 'Rensa gamla gäster?',
+    message:
+      'Gäster som är äldre än 30 dagar och aldrig har spelat en omgång raderas. Det går inte att ångra.',
+    confirmText: 'Rensa',
+    danger: true,
+    run: async () => {
+      const { deleted } = await deleteOldGuests();
+      actionMessage.value =
+        deleted === 0
+          ? 'Det fanns inga gamla gäster att rensa.'
+          : `${deleted} ${deleted === 1 ? 'gammal gäst' : 'gamla gäster'} raderades.`;
+    },
+    busyKey: 'guests',
   });
 }
 
 // Listan hämtas om efter ändringen, så att filtret stämmer. En avbannad spelare
 // ska till exempel försvinna från Bannade
 async function runPending() {
-  const { run, userId } = pending.value;
-  busyIds.value.add(userId);
+  const { run, busyKey } = pending.value;
+  busyIds.value.add(busyKey);
   actionError.value = '';
+  actionMessage.value = '';
   try {
     await run();
     await loadUsers();
   } catch (err) {
     actionError.value = err.status ? err.message : 'Kunde inte nå servern';
   } finally {
-    busyIds.value.delete(userId);
+    busyIds.value.delete(busyKey);
   }
 }
 </script>
@@ -178,6 +199,14 @@ async function runPending() {
         <h1 class="admin-title">Spelare</h1>
         <p class="admin-subtitle">Klicka på ett namn för att se spelarens omgångar.</p>
       </div>
+      <button
+        type="button"
+        class="admin-button admin-button--danger"
+        :disabled="busyIds.has('guests')"
+        @click="askDeleteGuests"
+      >
+        Rensa gamla gäster
+      </button>
     </div>
 
     <div class="toolbar">
@@ -205,6 +234,7 @@ async function runPending() {
     </div>
 
     <p v-if="actionError" class="admin-alert action-error" role="alert">{{ actionError }}</p>
+    <p v-if="actionMessage" class="action-message" role="status">{{ actionMessage }}</p>
 
     <div v-if="loadError" class="admin-alert load-error" role="alert">
       <p>{{ loadError }}</p>
@@ -404,6 +434,15 @@ async function runPending() {
 
 .action-error {
   margin-bottom: 1rem;
+}
+
+/* Grön ruta med resultatet, t.ex. hur många gäster som raderades */
+.action-message {
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  color: var(--admin-success-text);
+  background: var(--admin-success-bg);
+  border-radius: var(--admin-radius);
 }
 
 .load-error {

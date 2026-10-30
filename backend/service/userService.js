@@ -4,6 +4,10 @@ const { escapeLike } = require('../utils/escapeLike');
 // Gäster blir många, så listan visar bara de nyaste. Paginering behövs först om det inte räcker
 const USER_LIST_LIMIT = 100;
 
+// Så gammal måste en gäst vara för att räknas som gammal och kunna rensas
+const GUEST_MAX_AGE_DAYS = 30;
+
+
 const TYPE_FILTERS = {
   registered: 'u.is_guest = FALSE',
   guest: 'u.is_guest = TRUE',
@@ -119,6 +123,19 @@ async function setBanStatus(userId, status) {
   return { user_id: Number(userId), status };
 }
 
+// Gäster äldre än 30 dagar utan omgångar raderas. game_session pekar på users,
+// så en gäst med omgångar går inte att radera, och NOT EXISTS hoppar över dem.
+// Kontrollen och raderingen är samma DELETE, så ingen gäst hinner starta en omgång mellan dem
+async function deleteOldGuests() {
+  const [result] = await database.query(
+    `DELETE FROM users
+     WHERE is_guest = TRUE
+       AND created_at < NOW() - INTERVAL ${GUEST_MAX_AGE_DAYS} DAY
+       AND NOT EXISTS (SELECT 1 FROM game_session gs WHERE gs.user_id = users.user_id)`,
+  );
+  return result.affectedRows;
+}
+
 module.exports = {
   USER_LIST_LIMIT,
   TYPE_FILTERS,
@@ -126,4 +143,5 @@ module.exports = {
   setUserRole,
   getUserSessions,
   setBanStatus,
+  deleteOldGuests,
 };
