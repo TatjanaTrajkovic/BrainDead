@@ -20,7 +20,6 @@ header {
 main {
   text-align: center;
   width: clamp(280px, 95vw, 768px);
-  max-width: 100%;
   margin: 0 auto;
 }
 
@@ -30,7 +29,7 @@ main {
   align-items: center;
   border-radius: 2rem;
   background-color: rgb(0 0 0 / 30%);
-  max-width: 768px;
+  max-width: 95dvw;
   margin: 0 auto;
   padding: 0.4rem;
 }
@@ -45,10 +44,11 @@ main {
     width: var(--content-w);
   }
   header {
-    width: calc(var(--content-w) * 4 / 7);
+    width: 768px;
   }
+
   .content-wrapper {
-    padding: 1rem;
+    max-width: clamp(768px, 1200px, 1200px);
   }
 }
 
@@ -70,20 +70,26 @@ main {
     height: 100dvh;
   }
 
+  /* Flytta tillbaka loggan om .content-wrapper finns */
+  #app:has(.content-wrapper) header {
+    position: static;
+    width: clamp(280px, 50dvw, 500px);
+    height: auto;
+    margin: 0.5rem auto 0;
+    justify-content: center;
+  }
+
   header {
     position: absolute;
     top: var(--topp);
-    /* Halva gridens bredd (3.07 / 2) till vänster om mitten */
     left: calc(50% - var(--bild-h) * 1.53);
-    /* Tre av fyra kolumner */
     width: calc(var(--bild-h) * 2.2);
-    /* Samma höjd som ID-kortet */
     height: calc(var(--bild-h) * 0.52);
     max-width: none;
     margin: 0;
     display: flex;
     justify-content: flex-start;
-    align-items: flex-end; /* loggan ligger nere mot bilderna */
+    align-items: flex-end;
   }
 
   .logo {
