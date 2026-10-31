@@ -4,6 +4,8 @@ const database = require('../connectionMySQL');
 // session_question saknar tidsstämpel, men raderna skapas i spelordning när omgången startar (#163),
 // så sista svaret är det högsta session_question_id bland de besvarade raderna.
 // Admins omgångar räknas inte, så att testspel inte påverkar statistiken.
+// Bara omgångar som startat efter att frågan senast ändrades räknas, så att gamla och nya
+// siffror inte blandas (#228).
 // Frågor utan dödsfall saknas i svaret och får 0 när statistiken sätts ihop
 async function getDeathsPerQuestion() {
   const [rows] = await database.query(
@@ -17,15 +19,18 @@ async function getDeathsPerQuestion() {
        GROUP BY session_id
      ) AS last ON last.session_id = gs.session_id
      JOIN session_question sq ON sq.session_question_id = last.last_sq_id
+     JOIN question q ON q.question_id = sq.question_id
      WHERE gs.status = 'COMPLETED' AND gs.current_health = 0
        AND u.role = 'PLAYER'
+       AND gs.started_at >= q.updated_at
      GROUP BY sq.question_id`,
   );
   return rows;
 }
 
 // Alla frågor och svar, även inaktiva och ospelade, med hur många gånger varje svar valts.
-// Admins val räknas inte. Filtret ligger i subqueryn och inte i WHERE, annars skulle
+// Admins val räknas inte, och inte heller val från omgångar som startade innan frågan senast
+// ändrades (#228). Filtren ligger i subqueryn och i ON och inte i WHERE, annars skulle
 // svar som aldrig valts försvinna i stället för att få 0
 async function getAnswerCounts() {
   const [rows] = await database.query(
@@ -42,12 +47,12 @@ async function getAnswerCounts() {
      FROM question q
      JOIN answer a ON a.question_id = q.question_id
      LEFT JOIN (
-       SELECT sq.answer_id
+       SELECT sq.answer_id, gs.started_at
        FROM session_question sq
        JOIN game_session gs ON gs.session_id = sq.session_id
        JOIN users u ON u.user_id = gs.user_id
        WHERE u.role = 'PLAYER'
-     ) AS pa ON pa.answer_id = a.answer_id
+     ) AS pa ON pa.answer_id = a.answer_id AND pa.started_at >= q.updated_at
      GROUP BY q.question_id, a.answer_id
      ORDER BY q.position, a.answer_id`,
   );
