@@ -193,7 +193,7 @@ Vid push och pull request mot `main` kör [CI-flödet](.github/workflows/ci.yaml
 | ------------------ | --------------------------------------------------------------------------------------------------------------------- |
 | `users`            | Spelare med roll och status. Gäster har bara `is_guest` och `auth_token`, registrerade även användarnamn och lösenord |
 | `game_session`     | En spelomgång med aktuell hälsa (0–100) och status                                                                    |
-| `question`         | Titel (bara för admin), scenario, frågetext, ordning (`position`), status och `created_at`                            |
+| `question`         | Titel (bara för admin), scenario, frågetext, ordning (`position`), status, `created_at` och `updated_at`              |
 | `answer`           | Svarsalternativ med feedback och `health_change`, hur mycket hälsa svaret drar av (positivt tal)                      |
 | `session_question` | Omgångens frågor och vilket svar spelaren valde. `answer_id` är `NULL` tills frågan är besvarad                       |
 
@@ -242,6 +242,7 @@ erDiagram
     int position
     enum status "ACTIVE | INACTIVE"
     timestamp created_at
+    timestamp updated_at
   }
   answer {
     int answer_id PK
@@ -278,9 +279,9 @@ erDiagram
 | GET    | `/api/highscores`                         | Hämtar topp 10: varje spelares bästa avslutade omgång med hälsa över 0, som `{ username, score }`. Bara aktiva spelare med rollen `PLAYER` är med, så bannade, inaktiva och admins syns inte. Gäster visas som `Gäst-<user_id>`. Vid lika poäng vinner den som blev klar först                                                                             |
 | GET    | `/api/admin/questions`                    | Hämtar alla frågor, även inaktiva, med `title` och svar sorterade på `position`. Spelet får aldrig `title`. Kräver admin                                                                                                                                                                                                                                   |
 | POST   | `/api/admin/questions`                    | Skapar en fråga med exakt 4 svar. Body `{ "title", "scenario", "text", "answers": [{ "text", "health_change", "feedback" }] }`. `title` krävs och får vara max 80 tecken. Frågan läggs sist (`position` = högsta + 1) och visas i nya omgångar, inte i pågående. Fråga och svar sparas i en transaktion. Svarar `201` i samma form som `GET`. Kräver admin |
-| PUT    | `/api/admin/questions/:questionId`        | Uppdaterar en fråga och dess 4 svar. Body: `{ title, scenario, text, answers: [{ answer_id, text, health_change, feedback }] }`. Kräver admin                                                                                                                                                                                                              |
+| PUT    | `/api/admin/questions/:questionId`        | Uppdaterar en fråga och dess 4 svar. Body: `{ title, scenario, text, answers: [{ answer_id, text, health_change, feedback }] }`. `updated_at` sätts bara om något faktiskt ändrats. Kräver admin                                                                                                                                                           |
 | PATCH  | `/api/admin/questions/:questionId/status` | Inaktiverar eller återaktiverar en fråga (soft delete). Body: `{ "status": "ACTIVE" \| "INACTIVE" }`. Inaktiva frågor kommer inte med i nya omgångar. Samma status två gånger ger `200`. Annat värde ger `400`, fråga som inte finns ger `404`. Kräver admin                                                                                               |
-| GET    | `/api/admin/stats`                        | Statistik per fråga: `title`, antal svar per alternativ och dödsfall. Admins omgångar räknas inte. Kräver admin                                                                                                                                                                                                                                            |
+| GET    | `/api/admin/stats`                        | Statistik per fråga: `title`, `updated_at`, antal svar per alternativ och dödsfall. Räknar bara omgångar som startat sedan frågan senast ändrades. Admins omgångar räknas inte. Kräver admin                                                                                                                                                               |
 | GET    | `/api/admin/users`                        | Hämtar spelare, nyast först, max 100. Valfritt `?type=registered\|guest\|banned` och `?search=<text>`. Se nedan. Kräver admin                                                                                                                                                                                                                              |
 | PATCH  | `/api/admin/users/:userId/role`           | Ändrar roll. Body `{ "role": "PLAYER" \| "ADMIN" }`. Svarar `{ user_id, role }` och gäller direkt. Egen roll, gäst eller bannad ger `400`, okänd spelare `404`. Kräver admin                                                                                                                                                                               |
 | PATCH  | `/api/admin/users/:userId/status`         | Bannar eller avbannar. Body `{ "status": "ACTIVE" \| "BANNED" }`. Svarar `{ user_id, status }`. En bannad spelare loggas ut direkt och kan inte logga in (`401`). Egen status, admin eller gäst ger `400`, okänd spelare `404`. Kräver admin                                                                                                               |
@@ -726,7 +727,11 @@ Med `variant="admin"` måste rutan ligga inuti adminsidan (i en flik), eftersom 
 | Dog här           | `deaths`                                               |
 | Andel som dog här | `deaths` / `times_answered`                            |
 
-Frågorna spelas i fast ordning, så senare frågor får fler dödsfall eftersom spelarna har mindre hälsa kvar. Snittskadan påverkas inte av ordningen och är därför huvudmåttet: frågan med högst snittskada markeras som kanske för svår och den med lägst som kanske för lätt. Dödsfallen visar spelets svårighetskurva, och frågan med flest dödsfall markeras inte. En ospelad fråga visar `–`, och färre än 20 svar ger en varning.
+Frågorna spelas i fast ordning, så senare frågor får fler dödsfall eftersom spelarna har mindre hälsa kvar. Snittskadan påverkas inte av ordningen och är därför huvudmåttet: frågan med högst snittskada markeras som kanske för svår och den med lägst som kanske för lätt. Dödsfallen visar spelets svårighetskurva, och frågan med flest dödsfall markeras inte. En fråga utan svar visar `–` och märket "Inga svar än", och färre än 20 svar ger en varning.
+
+Siffrorna gäller bara omgångar där `game_session.started_at >= question.updated_at`, både för svar och dödsfall (#228). Annars skulle gamla och nya svar blandas när admin ändrar en fråga, och snittskadan skulle räknas med det nya `health_change` även på gamla val. Varje kort visar därför "Sedan 12 okt", datumet då frågan skapades eller senast ändrades.
+
+`updated_at` sätts bara i `updateQuestion`, och bara om frågan eller något svar faktiskt ändrats. All ändring räknas, även en rättad stavning. Att spara utan ändringar eller att inaktivera en fråga nollställer inte statistiken. Omgångar som redan pågick när frågan ändrades räknas inte för den frågan. De gamla svaren raderas inte, de filtreras bara bort, men de går inte att visa igen från adminsidan.
 
 ## Arbetssätt
 
