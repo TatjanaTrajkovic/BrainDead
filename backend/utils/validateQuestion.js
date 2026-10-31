@@ -1,4 +1,6 @@
 // Gränserna följer kolumnerna i db/schema.sql. Ändras schemat ska de ändras här också
+const TITLE_MIN_LENGTH = 1;
+const TITLE_MAX_LENGTH = 80;
 const SCENARIO_MIN_LENGTH = 1;
 const SCENARIO_MAX_LENGTH = 500;
 const TEXT_MIN_LENGTH = 1;
@@ -32,6 +34,11 @@ function checkText(value, label, min, max) {
 function validateQuestion(question, { requireAnswerId = false } = {}) {
   if (typeof question !== 'object' || question === null) {
     return 'Fråga saknas';
+  }
+
+  const titleError = checkText(question.title, 'Titeln', TITLE_MIN_LENGTH, TITLE_MAX_LENGTH);
+  if (titleError) {
+    return titleError;
   }
 
   const scenarioError = checkText(
@@ -96,6 +103,7 @@ function validateQuestion(question, { requireAnswerId = false } = {}) {
 }
 
 module.exports = {
+  TITLE_MAX_LENGTH,
   SCENARIO_MAX_LENGTH,
   TEXT_MAX_LENGTH,
   ANSWER_TEXT_MAX_LENGTH,

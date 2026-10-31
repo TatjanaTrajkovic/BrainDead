@@ -26,6 +26,7 @@ CREATE TABLE game_session(
 
 CREATE TABLE question(
     question_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(80) NOT NULL,
     scenario VARCHAR(500) NOT NULL,
     text VARCHAR(255) NOT NULL,
     position INT NOT NULL,
