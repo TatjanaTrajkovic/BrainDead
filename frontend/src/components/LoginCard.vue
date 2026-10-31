@@ -153,7 +153,13 @@ emit('player-changed');
           </div>
         </div>
       </section>
-      <button v-if="expanded" type="button" class="close" aria-label="Stäng" @click="collapse">
+      <button
+        v-if="expanded"
+        type="button"
+        class="close-corner"
+        aria-label="Stäng"
+        @click="collapse"
+      >
         ✕
       </button>
     </div>
@@ -176,16 +182,6 @@ emit('player-changed');
 
 .expanded .id-card {
   width: min(92vw, calc((100dvh - 1rem) * 550 / 357));
-}
-
-.close {
-  position: fixed;
-  top: max(0.5rem, env(safe-area-inset-top));
-  right: max(0.5rem, env(safe-area-inset-right));
-  width: 2.75rem;
-  height: 2.75rem;
-  font-size: 1.5rem;
-  color: var(--color-text);
 }
 
 .clickable {
