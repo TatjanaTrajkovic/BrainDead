@@ -2,6 +2,7 @@ const database = require('../connectionMySQL');
 
 async function getAllQuestions() {
   const [rows] = await database.query(`SELECT q.question_id,
+                                              q.title,
                                               q.scenario,
                                               q.text AS question_text,
                                               q.position,
@@ -20,6 +21,7 @@ async function getAllQuestions() {
     if (!questions.has(row.question_id)) {
       questions.set(row.question_id, {
         question_id: row.question_id,
+        title: row.title,
         scenario: row.scenario,
         text: row.question_text,
         position: row.position,
@@ -43,6 +45,7 @@ async function getAllQuestions() {
 // lämnar en fråga utan svar. Svarar i samma form som getAllQuestions.
 // validateQuestion trimmar bara när den mäter, så texterna trimmas här innan de sparas
 async function createQuestion(question) {
+  const title = question.title.trim();
   const scenario = question.scenario.trim();
   const text = question.text.trim();
   const connection = await database.getConnection();
@@ -56,8 +59,8 @@ async function createQuestion(question) {
     const position = maxPosition + 1;
 
     const [questionResult] = await connection.execute(
-      'INSERT INTO question (scenario, text, position) VALUES (?, ?, ?)',
-      [scenario, text, position],
+      'INSERT INTO question (title, scenario, text, position) VALUES (?, ?, ?, ?)',
+      [title, scenario, text, position],
     );
     const questionId = questionResult.insertId;
 
@@ -79,6 +82,7 @@ async function createQuestion(question) {
 
     return {
       question_id: questionId,
+      title,
       scenario,
       text,
       position,
@@ -122,13 +126,13 @@ async function updateQuestion(questionId, question) {
       return { error: 'INVALID_ANSWER' };
     }
 
-    await connection.query(`UPDATE question SET scenario = ?, text = ? WHERE question_id = ?`, [
-      question.scenario.trim(),
-      question.text.trim(),
-      questionId,
-    ]);
+    const [questionResult] = await connection.query(
+      `UPDATE question SET title = ?, scenario = ?, text = ? WHERE question_id = ?`,
+      [question.title.trim(), question.scenario.trim(), question.text.trim(), questionId],
+    );
+    let changedRows = questionResult.changedRows;
     for (const answer of question.answers) {
-      await connection.query(
+      const [answerResult] = await connection.query(
         `UPDATE answer
          SET text = ?, health_change = ?, feedback = ?
          WHERE answer_id = ? AND question_id = ?`,
@@ -140,6 +144,15 @@ async function updateQuestion(questionId, question) {
           questionId,
         ],
       );
+      changedRows += answerResult.changedRows;
+    }
+
+    // Statistiken räknar bara omgångar som startat efter updated_at (#228). En sparning utan
+    // ändringar ska inte nollställa den, och därför sätts tiden bara om någon rad faktiskt ändrats
+    if (changedRows > 0) {
+      await connection.query(`UPDATE question SET updated_at = NOW() WHERE question_id = ?`, [
+        questionId,
+      ]);
     }
     await connection.commit();
     return { question_id: Number(questionId) };
