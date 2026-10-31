@@ -92,3 +92,13 @@ test('answer_id krävs bara vid redigering', () => {
   assert.equal(validateQuestion(question()), null);
   assert.equal(validateQuestion(question(), { requireAnswerId: true }), 'Svar 1: answer_id saknas');
 });
+
+test('titel krävs och får vara max 80 tecken', () => {
+  assert.equal(validateQuestion(question({ title: undefined })), 'Titeln saknas');
+  assert.equal(validateQuestion(question({ title: ' ' })), 'Titeln saknas');
+  assert.equal(validateQuestion(question({ title: 'a'.repeat(80) })), null);
+  assert.equal(
+    validateQuestion(question({ title: 'a'.repeat(81) })),
+    'Titeln får vara max 80 tecken',
+  );
+});
