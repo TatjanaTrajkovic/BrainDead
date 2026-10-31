@@ -126,12 +126,13 @@ async function updateQuestion(questionId, question) {
       return { error: 'INVALID_ANSWER' };
     }
 
-    await connection.query(
+    const [questionResult] = await connection.query(
       `UPDATE question SET title = ?, scenario = ?, text = ? WHERE question_id = ?`,
       [question.title.trim(), question.scenario.trim(), question.text.trim(), questionId],
     );
+    let changedRows = questionResult.changedRows;
     for (const answer of question.answers) {
-      await connection.query(
+      const [answerResult] = await connection.query(
         `UPDATE answer
          SET text = ?, health_change = ?, feedback = ?
          WHERE answer_id = ? AND question_id = ?`,
@@ -143,6 +144,15 @@ async function updateQuestion(questionId, question) {
           questionId,
         ],
       );
+      changedRows += answerResult.changedRows;
+    }
+
+    // Statistiken räknar bara omgångar som startat efter updated_at (#228). En sparning utan
+    // ändringar ska inte nollställa den, och därför sätts tiden bara om någon rad faktiskt ändrats
+    if (changedRows > 0) {
+      await connection.query(`UPDATE question SET updated_at = NOW() WHERE question_id = ?`, [
+        questionId,
+      ]);
     }
     await connection.commit();
     return { question_id: Number(questionId) };
