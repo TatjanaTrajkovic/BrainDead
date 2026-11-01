@@ -387,8 +387,10 @@ Routerna kan ha flaggor i `meta`, som läses av guards och komponenter. För nä
 Startsidan har tre layouter. Vilken som gäller styrs av media queries, och de måste vara **exakt likadana** i `main.css`, `HomeView.vue` och `isDesktop` i `HomeView.vue`. Annars blandas layouterna ihop vid vissa skärmstorlekar.
 
 - **Stående:** allt som inte är liggande. Två kolumner (`.col`), loggan ovanför.
-- **Desktop:** `min-width: 768px`, `min-height: 501px`, liggande och `pointer: fine`. Grid med tre lika breda kolumner. Topplistan ingår i handboksbilden.
-- **Liggande telefon/surfplatta:** liggande OCH `max-width: 767px` eller `pointer: coarse` eller `max-height: 500px`. Loggan och ID-kortet överst. topplista, handbok, prolog och startknapp på raden under.
+- **Desktop:** `min-width: 768px`, `min-height: 600.5px`, liggande och `pointer: fine`. Grid med tre lika breda kolumner. Topplistan ingår i handboksbilden.
+- **Liggande telefon/surfplatta:** liggande OCH `max-width: 767px` eller `pointer: coarse` eller `max-height: 600.5px`. Loggan och ID-kortet överst. topplista, handbok, prolog och startknapp på raden under.
+
+Brytpunkterna har x.5-värden och överlappar varandra, så fraktionerade fönsterhöjder (Windows-skalning, zoom) aldrig hamnar mellan två querys.
 
 Ytorna heter `area-handbook`, `area-highscore`, `area-prolog`, `area-id` och `area-start`. Komponenterna ska fylla sin yta, och det är griden som bestämmer storleken. `area-highscore` renderas bara när `isDesktop` är `false`, eftersom topplistan på desktop är en del av handboksbilden (`HandbookHighscore part="both"`).
 
@@ -404,7 +406,7 @@ På desktop styrs bredden av `--content-w` i `base.css`, och loggans höjd av `-
 
 #### Testa layouterna
 
-Kontrollera alltid stående mobil, liggande mobil, en surfplatta och PC. I Chrome/Edge DevTools får du `pointer: coarse` genom att välja en enhetsprofil (till exempel iPad). Vald "Responsive" utan enhet räknas som mus. Testa också ett lågt PC-fönster (höjd under 500 px), som ska ge kompaktläget.
+Kontrollera alltid stående mobil, liggande mobil, en surfplatta och PC. I Chrome/Edge DevTools får du `pointer: coarse` genom att välja en enhetsprofil (till exempel iPad). Vald "Responsive" utan enhet räknas som mus. Testa också ett lågt PC-fönster (höjd under 600 px), som ska ge kompaktläget. Testa spelskärmen extra: telefonhöjd (under 700 px) visar quizet utan logga, och surfplatta i porträtt visar progress och health som pelare på sidorna.
 
 ### Spelskärmen
 
@@ -425,6 +427,16 @@ Under `question` och `feedback` visas spelet i `QuizLayout`. Den är bara ett ru
 +--------------+-----------------------------+---------------+
 ```
 
+Griden byggs om per media query, med samma brytpunkter som startsidan:
+
+- **Porträtt:** enkolumnig — progress och health överst, sedan story, fråga, svar och submit
+- **Kompakt liggande:** progress och health som pelare på sidorna, story bredvid fråga/svar, submit underst
+- **Surfplatta i porträtt** (touch, minst 768 px bred): som porträtt, men progress och health är pelare på sidorna
+- **Telefonhöjd** (under 700 px, oavsett orientering): loggan göms och panelen får hela fönsterhöjden; liggande under 480 px dessutom svar i 2×2
+- **Stor skärm med mus:** vågrät layout, panelhöjd capad (`76dvh`) och ramen med målbredd tills skärmen blir för smal
+
+`.quiz-layout` är en container (`container-type: size`), och text och prickor skalar med containerns minsta dimension (`cqmin`) i stället för bredden. Prickstorleken har dessutom ett tak som räknas ut så att alla frågor alltid ryms i pelarens höjd.
+
 Samma komponenter används i båda faserna, `phase` styr vad de visar:
 
 | Slot        | Komponent          | `question`                    | `feedback`                                                            |
@@ -436,7 +448,7 @@ Samma komponenter används i båda faserna, `phase` styr vad de visar:
 | `#submit`   | `LockAnswerButton` | "Lås svar"                    | "Nästa fråga >" / "Se resultat"                                       |
 | `#health`   | `HealthMeter`      | Nuvarande hälsa               | Hälsan efter svaret, pluppar tonas ut                                 |
 
-`AnswerBox` läggs med `v-for` direkt i `#answers`, så att varje knapp blir en egen cell i 2×2-rutnätet. `QuitButton` ligger under panelen och tar spelaren tillbaka till startsidan.
+`AnswerBox` läggs med `v-for` direkt i `#answers`, så att varje knapp blir en egen cell i rutnätet (2×2 i liggande lägen, en kolumn i porträtt). `QuitButton` ligger bredvid lås-knappen i `#submit` och tar spelaren tillbaka till startsidan.
 
 När `phase` blir `finished` visas `EndCard` i stället för rutnätet. Den visar en levande eller död hjärna beroende på `isAlive`, hur mycket hjärnkapacitet som finns kvar och knappen "Spela igen". Knappen skickar `play-again`, och `GameView` startar då en ny omgång.
 
