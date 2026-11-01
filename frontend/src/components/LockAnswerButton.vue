@@ -69,13 +69,13 @@ function handleClick() {
 .lock-button {
   width: 100%;
   box-sizing: border-box;
-  padding: 12px;
+  padding: clamp(4px, 1.5cqmin, 12px);
   background: var(--color-bg-gray, #22201f);
   border: 3px solid var(--color-border-outer, #c7bc90);
   border-radius: 8px;
   color: var(--color-text, #e7dcaa);
   font-family: var(--font-main, 'Special Elite', monospace);
-  font-size: clamp(1rem, 2.8cqw, 1.45rem);
+  font-size: clamp(1rem, 2.8cqmin, 1.45rem);
   letter-spacing: 0.05em;
   text-transform: uppercase;
   cursor: pointer;

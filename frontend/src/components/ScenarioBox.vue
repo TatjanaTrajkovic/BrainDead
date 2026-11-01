@@ -68,7 +68,7 @@ watch(
 .scenario-box {
   height: 100%;
   text-align: left;
-  font-size: clamp(1.2rem, 3cqw, 5rem);
+  font-size: clamp(1rem, 3cqmin, 2.5rem);
   line-height: 1.5;
 }
 
@@ -112,7 +112,7 @@ watch(
 .feedback-title {
   font-family: var(--font-handwritten);
   -webkit-text-stroke: var(--font-handwritten-stroke);
-  font-size: clamp(1.5rem, 4cqw, 5rem);
+  font-size: clamp(1.5rem, 5cqw, 5rem);
   font-weight: normal;
   line-height: 1;
   margin-bottom: 8px;
@@ -152,5 +152,17 @@ svg {
   stroke-width: 2.5;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+@media (min-width: 768px) and (min-height: 600.5px) and (orientation: landscape) {
+  .scenario-box {
+    font-size: clamp(1rem, 3.5cqmin, 2.5rem);
+  }
+}
+
+@media (orientation: landscape) and (pointer: coarse) {
+  .scenario-box {
+    font-size: clamp(1rem, 4.5cqmin, 2.5rem);
+  }
 }
 </style>
