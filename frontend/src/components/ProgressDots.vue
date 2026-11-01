@@ -14,25 +14,37 @@ defineProps({
 </script>
 
 <template>
-  <div class="progress-dots" role="img" :aria-label="`Fråga ${answered + 1} av ${total}`">
+  <div
+    class="progress-dots"
+    :style="{ '--n': total }"
+    role="img"
+    :aria-label="`Fråga ${answered + 1} av ${total}`"
+  >
     <p>Liseberg</p>
-    <span
-      v-for="n in total"
-      :key="n"
-      class="dot"
-      :class="{ done: n <= answered, current: n === answered + 1 }"
-      aria-hidden="true"
-    ></span>
+    <template v-for="n in total" :key="n">
+      <span
+        class="dot"
+        :class="{ done: n <= answered, current: n === answered + 1 }"
+        aria-hidden="true"
+      ></span>
+      <!-- Streck till nästa prick, sista får inget streck -->
+      <span
+        v-if="n < total"
+        class="link"
+        :class="{ done: n <= answered }"
+        aria-hidden="true"
+      ></span>
+    </template>
     <p>IKEA</p>
   </div>
 </template>
 
 <style scoped>
 .progress-dots {
-  --dot-size: clamp(16px, 4cqw, 32px);
-  --dot-gap: clamp(8px, 2cqw, 18px);
+  --dot-size: clamp(16px, 4cqmin, 32px);
+  --dot-gap: clamp(4px, 2cqmin, 18px);
 
-  --dot-border: 0.2cqw;
+  --dot-border: 0.5cqmin;
   --dot-empty: rgba(162, 162, 162, 0.4);
   --dot-filled: var(--color-progress, #5c2b78);
   --dot-current: var(--color-text, #e7dcaa);
@@ -40,18 +52,16 @@ defineProps({
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: center;
 
-  gap: var(--dot-gap);
   width: 100%;
 }
 
 /* Start och mål lyser som neonskyltar, i krämgult med lila sken */
 .progress-dots p {
-  margin: 0;
+  margin-inline: var(--dot-gap);
   white-space: nowrap;
   color: var(--dot-current);
-  font-size: clamp(0.4rem, 3cqw, 1.5rem);
+  font-size: clamp(0.4rem, 3cqmin, 1.5rem);
   text-shadow:
     0 0 4px var(--dot-current),
     0 0 10px var(--dot-filled),
@@ -59,7 +69,6 @@ defineProps({
 }
 
 .dot {
-  position: relative;
   width: var(--dot-size);
   height: var(--dot-size);
   box-sizing: border-box;
@@ -70,8 +79,19 @@ defineProps({
   min-height: var(--dot-size);
 }
 
-.dot.done {
+.link {
+  flex: 1 1 0;
+  height: var(--dot-border);
+  min-width: 0;
+  background: var(--dot-empty);
+}
+
+.dot.done,
+.link.done {
   background: var(--dot-filled);
+}
+
+.dot.done {
   border-color: var(--dot-filled);
 }
 
@@ -82,40 +102,31 @@ defineProps({
   box-shadow: 0 0 8px var(--dot-current);
 }
 
-.dot + .dot::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  right: calc(100% + var(--dot-border));
-  transform: translateY(-50%);
-  width: var(--dot-gap);
-  height: var(--dot-border);
-  background: var(--dot-empty);
-}
-
-.dot.done::after,
-.dot.current::after {
-  background: var(--dot-filled);
-}
-
-/* Liggande skärm, lodrät pelare som tidigare */
-@media (orientation: landscape) {
-  /* Start och mål lyser som neonskyltar, i krämgult med lila sken */
+@media (orientation: landscape),
+  (orientation: portrait) and (pointer: coarse) and (min-width: 768px) {
   .progress-dots {
     flex-direction: column-reverse;
     height: 100%;
-    --dot-size: clamp(20px, 5cqh, 34px);
-    --dot-gap: clamp(12px, 3cqh, 18px);
+    --dot-size: min(clamp(8px, 8cqmin, 40px), calc((100cqh - 6.5rem) / max(var(--n), 1)));
   }
 
-  /* Streck ned till pricken under. Bara prickar med en prick före sig i DOM:en får ett,
-   så den nedersta (fråga 1) får inget streck ned till Liseberg */
-  .dot + .dot::after {
-    top: calc(100% + var(--dot-border));
-    left: 50%;
-    transform: translateX(-50%);
+  .progress-dots p {
+    margin: var(--dot-gap) 0;
+  }
+
+  .link {
     width: var(--dot-border);
-    height: var(--dot-gap);
+    height: auto;
+    min-height: 0;
+  }
+}
+
+/* Kompakt liggande: mindre prickar så strecken syns */
+@media (orientation: landscape) and (max-width: 767px),
+  (orientation: landscape) and (pointer: coarse),
+  (orientation: landscape) and (max-height: 600.5px) {
+  .progress-dots {
+    --dot-size: min(clamp(8px, 5cqmin, 32px), calc((100cqh - 6.5rem) / max(var(--n), 1)));
   }
 }
 </style>
