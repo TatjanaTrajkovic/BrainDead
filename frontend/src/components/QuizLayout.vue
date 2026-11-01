@@ -64,7 +64,7 @@
 
 /* Stor skärm med mus: vågrät layout som växer,
    samma som HomeView och main.css */
-@media (min-width: 768px) and (min-height: 501px) and (orientation: landscape) and (pointer: fine) {
+@media (min-width: 768px) and (min-height: 600.5px) and (orientation: landscape) and (pointer: fine) {
   .quiz-layout {
     display: grid;
     grid-template-columns: auto 1fr auto;
@@ -77,7 +77,8 @@
     gap: clamp(8px, 1.5dvh, 16px);
     --panel-h: min(76dvh, 54rem);
     height: var(--panel-h);
-    width: min(100%, var(--content-w));
+    /* fyller ramen, målbredden sätts av .content-wrapper i main.css */
+    width: 100%;
     padding: clamp(8px, 1.5dvh, 16px);
   }
   .answers {
@@ -94,23 +95,65 @@
    samma vågräta layout men mindre */
 @media (orientation: landscape) and (max-width: 767px),
   (orientation: landscape) and (pointer: coarse),
-  (orientation: landscape) and (max-height: 500px) {
+  (orientation: landscape) and (max-height: 600.5px) {
   .quiz-layout {
-    grid-template-columns: auto 1fr auto;
-    grid-template-rows: 1fr auto auto auto;
+    /* minmax(0, 1fr): fyller ut men får krympa — auto-spår kollapsar till min-content */
+    grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr) auto;
+    grid-template-rows: auto auto auto auto;
+    /* submit måste ha en yta i areas, annars auto-placeras den */
+    grid-template-areas:
+      'progress story question health'
+      'progress story answers health'
+      'progress story answers health'
+      'submit  submit  submit  submit';
+    gap: 6px;
+    /* spelets logga här är clamp(280px, 50dvw, 500px) bred (main.css), inte grundformelns */
+    --header-h: calc(clamp(280px, 50dvw, 500px) * 0.184 + 0.5rem);
+    --panel-h: min(calc(100dvh - var(--header-h) - 1.25rem), 34rem);
+    height: var(--panel-h);
+    width: 100%;
+    padding: 6px;
+  }
+  .answers {
+    grid-template-columns: 1fr; /* rader, lättare att träffa */
+    gap: 6px;
+  }
+}
+
+/* För lågt för fyra svarsrader: 2×2. Ligger efter kompaktblocket för att vinna */
+@media (orientation: landscape) and (max-height: 480px) {
+  .answers {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Telefonhöjd (loggan göms i main.css): panelen får hela höjden.
+   Inget 34rem-tak — det kapar t.ex. SE-porträtt */
+@media (max-height: 700px) {
+  .quiz-layout {
+    --header-h: 0rem;
+    --panel-h: calc(100dvh - 1rem);
+  }
+}
+
+/* Liggande telefonhöjd: fråga/svar bredare än story — mindre radbrytning
+   ger lägre minimihöjd. Bara liggande: porträttgriden är enkolumnig */
+@media (orientation: landscape) and (max-height: 480px) {
+  .quiz-layout {
+    grid-template-columns: auto minmax(0, 1fr) minmax(0, 1.5fr) auto;
+  }
+}
+
+/* Surfplatta i porträtt: staplad mitt, progress och health som pelare på sidorna */
+@media (orientation: portrait) and (pointer: coarse) and (min-width: 768px) {
+  .quiz-layout {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: minmax(0, 1fr) auto auto auto;
     grid-template-areas:
       'progress story    health'
       'progress question health'
       'progress answers  health'
       'progress submit   health';
-    gap: 6px;
-    --panel-h: min(calc(100dvh - var(--header-h) - 2rem), 34rem);
-    height: var(--panel-h);
-    width: min(100%, var(--content-w));
-    padding: 6px;
-  }
-  .answers {
-    grid-template-columns: 1fr 1fr; /* 2x2 */
   }
 }
 </style>
