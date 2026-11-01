@@ -191,4 +191,83 @@ async function getSession(sessionId, userId) {
   return null;
 }
 
-module.exports = { createSession, getNextQuestion, answerQuestion, getSession, getActiveSession };
+// Genomgången efter en avslutad omgång (#205): varje besvarad fråga med alla svar, spelarens val
+// och vilket svar som var bäst. Bara spelarens egen omgång, och bara om den är avslutad
+async function getSessionReview(sessionId, userId) {
+  const session = await getSession(sessionId, userId);
+  if (!session) {
+    return { error: 'SESSION_NOT_FOUND' };
+  }
+  if (session.status !== 'COMPLETED') {
+    return { error: 'SESSION_NOT_COMPLETED' };
+  }
+
+  // Frågor som aldrig nåddes (hälsan tog slut) har answer_id = NULL och kommer inte med.
+  // Raderna sorteras som omgången spelades, och svaren i samma ordning som i admin
+  const [rows] = await database.query(
+    `SELECT q.question_id, q.scenario, q.text AS question_text, sq.answer_id AS chosen_answer_id,
+            a.answer_id, a.text AS answer_text, a.health_change, a.feedback
+     FROM session_question sq
+     JOIN question q ON q.question_id = sq.question_id
+     JOIN answer a ON a.question_id = sq.question_id
+     WHERE sq.session_id = ? AND sq.answer_id IS NOT NULL
+     ORDER BY sq.session_question_id, a.answer_id`,
+    [sessionId],
+  );
+  const [counts] = await database.query(
+    'SELECT COUNT(*) AS total_questions FROM session_question WHERE session_id = ?',
+    [sessionId],
+  );
+
+  return {
+    session_id: session.session_id,
+    current_health: session.current_health,
+    total_questions: Number(counts[0].total_questions),
+    questions: groupReviewRows(rows),
+  };
+}
+
+// Gör en rad per svar till en fråga med fyra svar. Bästa svaret är det som drar minst hälsa.
+// Två svar kan dra lika lite (t.ex. 0), och då är båda bäst och båda räknas som rätt
+function groupReviewRows(rows) {
+  const questions = [];
+  for (const row of rows) {
+    let question = questions.at(-1);
+    if (!question || question.question_id !== row.question_id) {
+      question = {
+        question_id: row.question_id,
+        scenario: row.scenario,
+        text: row.question_text,
+        chosen_answer_id: row.chosen_answer_id,
+        answers: [],
+      };
+      questions.push(question);
+    }
+    question.answers.push({
+      answer_id: row.answer_id,
+      text: row.answer_text,
+      health_change: Number(row.health_change),
+      feedback: row.feedback,
+    });
+  }
+
+  for (const question of questions) {
+    const best = Math.min(...question.answers.map((a) => a.health_change));
+    for (const answer of question.answers) {
+      answer.is_best = answer.health_change === best;
+    }
+    question.is_correct = question.answers.some(
+      (a) => a.answer_id === question.chosen_answer_id && a.is_best,
+    );
+  }
+  return questions;
+}
+
+module.exports = {
+  createSession,
+  getNextQuestion,
+  answerQuestion,
+  getSession,
+  getActiveSession,
+  getSessionReview,
+};

@@ -114,7 +114,13 @@ watch(
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16 L12 7 L19 16" /></svg>
         </button>
       </section>
-      <button v-if="expanded" type="button" class="close" aria-label="Stäng" @click="collapse">
+      <button
+        v-if="expanded"
+        type="button"
+        class="close-corner"
+        aria-label="Stäng"
+        @click="collapse"
+      >
         ✕
       </button>
     </div>
@@ -137,16 +143,6 @@ watch(
 
 .expanded .notebook {
   width: min(92vw, calc((100dvh - 1rem) * 1640 / 2292));
-}
-
-.close {
-  position: fixed;
-  top: max(0.5rem, env(safe-area-inset-top));
-  right: max(0.5rem, env(safe-area-inset-right));
-  width: 2.75rem;
-  height: 2.75rem;
-  font-size: 1.5rem;
-  color: var(--color-text);
 }
 
 .clickable {

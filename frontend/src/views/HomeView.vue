@@ -133,7 +133,8 @@ function handleResume() {
         @start-new="handleStartNew"
         @resume="handleResume"
       />
-      <button type="button" class="btn btn-gray" @click="closeMenu">Stäng</button>
+      <!-- Kryss i hörnet, samma som i prologen och på id-kortet -->
+      <button type="button" class="close-corner" aria-label="Stäng" @click="closeMenu">✕</button>
     </div>
   </dialog>
   <ConfirmDialog

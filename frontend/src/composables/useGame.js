@@ -222,5 +222,6 @@ export function useGame() {
     quit,
     totalQuestions,
     answeredCount,
+    sessionId,
   };
 }

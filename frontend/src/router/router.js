@@ -17,6 +17,14 @@ const router = createRouter({
       component: GameView,
     },
     {
+      // Svaren efter en avslutad omgång (#205). Backend kollar att omgången är spelarens egen.
+      // fullPage: sidan är lång och scrollar själv, och har egen logga
+      path: '/review/:sessionId',
+      name: 'review',
+      component: () => import('@/views/ReviewView.vue'),
+      meta: { fullPage: true },
+    },
+    {
       path: '/admin',
       name: 'admin',
       // Laddas först när någon går till /admin, så spelare slipper hämta adminkoden
