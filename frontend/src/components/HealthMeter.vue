@@ -43,10 +43,10 @@ const level = computed(() => {
   flex-direction: row-reverse;
   align-items: center;
   width: 100%;
-  height: clamp(30px, 6cqh, 60px);
+  height: clamp(30px, 6cqh, 50px);
   padding: 0 4px;
   background: #221e1b;
-  border: 3px solid #cbb98a;
+  border: 4px solid #cbb98a;
   border-radius: 16px;
 }
 .blobs {
@@ -88,11 +88,13 @@ const level = computed(() => {
   object-fit: contain;
 }
 
-@media (orientation: landscape) {
+/* Pelare i liggande, och på porträtt-surfplatta (sidpelare i QuizLayout) */
+@media (orientation: landscape),
+  (orientation: portrait) and (pointer: coarse) and (min-width: 768px) {
   .meter {
     flex-direction: column;
-    /* bredden i cqh: pelarens bredd ska följa panelens höjd */
-    width: clamp(40px, 8cqh, 96px);
+    /* bredden i cqh */
+    width: clamp(40px, 10cqh, 96px);
     height: 100%;
     padding: 8px 0px;
   }
