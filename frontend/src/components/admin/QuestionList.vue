@@ -44,20 +44,19 @@ async function toggleStatus(question) {
 // listan visa en annan ordning än databasen
 const isMoving = ref(false);
 
-async function move(question, direction) {
+async function move(index, direction) {
+  const question = visibleQuestions.value[index];
+  const neighbour = visibleQuestions.value[direction === 'up' ? index - 1 : index + 1];
   isMoving.value = true;
   actionError.value = '';
   try {
-    const changed = await moveQuestion(question.question_id, direction);
-    // Backend svarar med de två frågorna som bytte plats. Listan sorteras om här i stället
-    // för att alla frågor hämtas igen, med samma sortering som backend
-    for (const { question_id, position } of changed) {
-      questions.value.find((q) => q.question_id === question_id).position = position;
-    }
-    questions.value.sort((a, b) => a.position - b.position || a.question_id - b.question_id);
+    await moveQuestion(question.question_id, direction, neighbour.question_id);
   } catch (err) {
+    // 409: någon annan har ändrat ordningen. Meddelandet säger att listan uppdateras
     actionError.value = err.status ? err.message : 'Kunde inte nå servern';
   } finally {
+    // Hämtas om även när flytten lyckas, så att ändringar från andra admins också syns
+    await loadQuestions();
     isMoving.value = false;
   }
 }
@@ -189,7 +188,7 @@ onMounted(loadQuestions);
                 :disabled="!canReorder || isMoving || index === 0"
                 aria-label="Flytta upp"
                 :title="canReorder ? 'Flytta upp' : 'Visa alla frågor för att ändra ordning'"
-                @click="move(question, 'up')"
+                @click="move(index, 'up')"
               >
                 <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
                   <path d="m4 10 4-4 4 4" stroke="currentColor" stroke-width="1.75" fill="none" />
@@ -201,7 +200,7 @@ onMounted(loadQuestions);
                 :disabled="!canReorder || isMoving || index === visibleQuestions.length - 1"
                 aria-label="Flytta ned"
                 :title="canReorder ? 'Flytta ned' : 'Visa alla frågor för att ändra ordning'"
-                @click="move(question, 'down')"
+                @click="move(index, 'down')"
               >
                 <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
                   <path d="m4 6 4 4 4-4" stroke="currentColor" stroke-width="1.75" fill="none" />

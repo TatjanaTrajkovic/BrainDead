@@ -168,7 +168,7 @@ async function setQuestionStatus(questionId, status) {
 // Frågan byter position med närmaste fråga ovanför eller nedanför. Byte i stället för
 // omnumrering, eftersom position kan ha luckor. Inaktiva frågor räknas med, eftersom
 // adminlistan visar alla frågor. Pågående omgångar påverkas inte, de har låst sin ordning
-async function changeQuestionPosition(questionId, direction) {
+async function changeQuestionPosition(questionId, direction, neighbourId) {
   const connection = await database.getConnection();
   try {
     await connection.beginTransaction();
@@ -187,9 +187,9 @@ async function changeQuestionPosition(questionId, direction) {
 
     const question = questions[index];
     const neighbour = questions[direction === 'up' ? index - 1 : index + 1];
-    if (!neighbour) {
+    if (!neighbour || neighbour.question_id !== Number(neighbourId)) {
       await connection.rollback();
-      return { error: 'CANNOT_MOVE' };
+      return { error: 'ORDER_CHANGED' };
     }
 
     await connection.query('UPDATE question SET position = ? WHERE question_id = ?', [

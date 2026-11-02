@@ -62,9 +62,9 @@ export function deleteOldGuests() {
 }
 
 // Byter plats med frågan ovanför eller nedanför. Svarar med båda frågornas nya position
-export function moveQuestion(questionId, direction) {
+export function moveQuestion(questionId, direction, neighbourId) {
   return request(`/admin/questions/${questionId}/position`, {
     method: 'PATCH',
-    body: JSON.stringify({ direction }),
+    body: JSON.stringify({ direction, neighbourId }),
   });
 }

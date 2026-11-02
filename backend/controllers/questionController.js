@@ -64,18 +64,26 @@ exports.setQuestionStatus = async (req, res) => {
 };
 
 exports.changeQuestionPosition = async (req, res) => {
-  const { direction } = req.body;
+  const { direction, neighbourId } = req.body;
   if (direction !== 'up' && direction !== 'down') {
     return res.status(400).json({ error: 'Ogiltig riktning' });
   }
+  if (!Number.isInteger(neighbourId)) {
+    return res.status(400).json({ error: 'neighbourId saknas' });
+  }
   try {
-    const result = await questionService.changeQuestionPosition(req.params.questionId, direction);
+    const result = await questionService.changeQuestionPosition(
+      req.params.questionId,
+      direction,
+      neighbourId,
+    );
     if (result.error === 'QUESTION_NOT_FOUND') {
       return res.status(404).json({ error: 'Frågan finns inte' });
     }
-    if (result.error === 'CANNOT_MOVE') {
-      const message = direction === 'up' ? 'Frågan ligger redan först' : 'Frågan ligger redan sist';
-      return res.status(400).json({ error: message });
+    if (result.error === 'ORDER_CHANGED') {
+      return res
+        .status(409)
+        .json({ error: 'Ordningen har ändrats av någon annan. Listan är uppdaterad, försök igen' });
     }
     return res.status(200).json(result);
   } catch (error) {
