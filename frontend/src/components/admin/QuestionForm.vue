@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { createQuestion, getQuestions, updateQuestion } from '@/api/adminApi';
+import QuestionPreview from './QuestionPreview.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -315,10 +316,10 @@ onMounted(() => {
         </div>
       </form>
 
-      <!-- Platshållare så att layouten är klar. QuestionPreview byggs i #179 och får form som prop -->
       <aside class="admin-card preview">
         <h2 class="card-title">Förhandsvisning</h2>
-        <p class="hint">Så här ser spelaren frågan. Byggs i #179.</p>
+        <p class="hint">Så här ser spelaren frågan.</p>
+        <QuestionPreview :question="form" />
       </aside>
     </div>
   </section>
