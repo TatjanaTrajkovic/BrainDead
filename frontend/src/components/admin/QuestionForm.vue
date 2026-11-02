@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { createQuestion, getQuestions, updateQuestion } from '@/api/adminApi';
 import QuestionPreview from './QuestionPreview.vue';
@@ -142,19 +142,17 @@ async function save() {
   }
 }
 
-// Under 1024 px ligger förhandsvisningen inte bredvid formuläret, utan öppnas som en panel
-// med en knapp. Fokus flyttas till stängknappen så att tangentbord och skärmläsare följer med
-const isPreviewOpen = ref(false);
-const closePreviewButton = ref(null);
+// Under 1024 px ligger förhandsvisningen inte bredvid formuläret, utan öppnas i en <dialog>.
+// showModal() ger samma beteende som ConfirmDialog: Esc stänger, Tab stannar i rutan och
+// fokus går tillbaka till Förhandsvisa när den stängs
+const previewDialog = ref(null);
 
-async function openPreview() {
-  isPreviewOpen.value = true;
-  await nextTick();
-  closePreviewButton.value?.focus();
+function openPreview() {
+  previewDialog.value.showModal();
 }
 
 function closePreview() {
-  isPreviewOpen.value = false;
+  previewDialog.value.close();
 }
 
 onMounted(() => {
@@ -188,8 +186,7 @@ onMounted(() => {
         v-if="!isLoading && !loadError"
         type="button"
         class="admin-button preview-toggle"
-        aria-controls="question-preview"
-        :aria-expanded="isPreviewOpen"
+        aria-haspopup="dialog"
         @click="openPreview"
       >
         Förhandsvisa
@@ -343,30 +340,32 @@ onMounted(() => {
         </div>
       </form>
 
-      <!-- Bakgrunden och stängknappen syns bara under 1024 px -->
-      <div v-if="isPreviewOpen" class="preview-backdrop" @click="closePreview"></div>
-
-      <aside
-        id="question-preview"
-        class="admin-card preview"
-        :class="{ 'is-open': isPreviewOpen }"
-        @keydown.esc="closePreview"
-      >
-        <div class="preview-head">
-          <h2 class="card-title">Förhandsvisning</h2>
-          <button
-            ref="closePreviewButton"
-            type="button"
-            class="admin-button preview-close"
-            @click="closePreview"
-          >
-            Stäng
-          </button>
-        </div>
+      <!-- Från 1024 px: en kolumn bredvid formuläret -->
+      <aside class="admin-card preview">
+        <h2 class="card-title">Förhandsvisning</h2>
         <p class="hint">Så här ser spelaren frågan.</p>
         <QuestionPreview :question="form" />
       </aside>
     </div>
+
+    <!-- Under 1024 px: öppnas med Förhandsvisa. Klick på bakgrunden träffar själva dialogen
+         och stänger den, som i ConfirmDialog -->
+    <dialog
+      ref="previewDialog"
+      class="preview-dialog"
+      aria-labelledby="preview-dialog-title"
+      @click.self="closePreview"
+    >
+      <div class="preview-dialog-content">
+        <div class="preview-dialog-head">
+          <h2 id="preview-dialog-title" class="preview-dialog-title">Förhandsvisning</h2>
+          <!-- autofocus: fokus hamnar på Stäng när rutan öppnas -->
+          <button type="button" class="admin-button" autofocus @click="closePreview">Stäng</button>
+        </div>
+        <p class="hint">Så här ser spelaren frågan.</p>
+        <QuestionPreview :question="form" />
+      </div>
+    </dialog>
   </section>
 </template>
 
@@ -509,35 +508,53 @@ textarea {
   gap: 0.5rem;
 }
 
-/* Mobil och surfplatta: förhandsvisningen är dold tills knappen öppnar den som en panel
-   nerifrån, så att admin slipper scrolla förbi hela formuläret */
+/* Mobil och surfplatta: kolumnen är dold, förhandsvisningen öppnas i dialogen i stället,
+   så att admin slipper scrolla förbi hela formuläret */
 .preview {
   display: none;
 }
 
-.preview.is-open {
-  display: block;
-  position: fixed;
-  inset: auto 0 0;
-  z-index: 30;
+/* Dialogen läggs som en panel längst ner. Den ligger kvar under .admin i DOM:en även när
+   showModal() lyfter den överst, så --admin-variablerna gäller */
+.preview-dialog {
+  width: 100%;
+  max-width: 100%;
   max-height: 85dvh;
-  overflow-y: auto;
+  margin: auto 0 0;
+  padding: 0;
+  color: var(--admin-text);
+  font-family: inherit;
+  background: var(--admin-surface);
+  border: none;
   border-radius: var(--admin-radius) var(--admin-radius) 0 0;
   box-shadow: 0 -4px 24px rgb(0 0 0 / 20%);
 }
 
-.preview-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 0.5rem;
+.preview-dialog::backdrop {
+  background: rgb(0 0 0 / 40%);
 }
 
-.preview-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 29;
-  background: rgb(0 0 0 / 40%);
+/* Innehållet har padding i stället för dialogen, så att click.self bara träffar bakgrunden */
+.preview-dialog-content {
+  padding: 1rem;
+}
+
+.preview-dialog-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.preview-dialog-title {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* Sidan bakom scrollar inte medan dialogen är öppen. .admin är det som scrollar (AdminView) */
+:global(.admin:has(.preview-dialog[open])) {
+  overflow: hidden;
 }
 
 /* Rubriken och Förhandsvisa-knappen på samma rad även på mobil, där admin-page-head annars
@@ -580,22 +597,13 @@ textarea {
     align-items: start;
   }
 
-  /* is-open med, så att en panel som var öppen när fönstret breddades blir en vanlig kolumn */
-  .preview,
-  .preview.is-open {
+  .preview {
     display: block;
     position: sticky;
     top: calc(var(--admin-topbar-h) + 1rem);
-    z-index: auto;
-    max-height: none;
-    overflow-y: visible;
-    border-radius: var(--admin-radius);
-    box-shadow: none;
   }
 
-  .preview-toggle,
-  .preview-close,
-  .preview-backdrop {
+  .preview-toggle {
     display: none;
   }
 }
