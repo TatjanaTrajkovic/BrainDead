@@ -1,6 +1,10 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { getStats } from '@/api/adminApi';
+
+const route = useRoute();
+const router = useRouter();
 
 const questions = ref([]);
 const isLoading = ref(true);
@@ -21,7 +25,17 @@ const sortOptions = [
   { key: 'deathRate', label: 'Andel som dog här' },
 ];
 
-const sortKey = ref('position');
+// Sorteringen ligger i URL:en, så att den finns kvar efter omladdning och bakåtknappen (#229).
+// Ett okänt värde i URL:en ger standardsorteringen
+const sortKey = computed(() =>
+  sortOptions.some((option) => option.key === route.query.sort) ? route.query.sort : 'position',
+);
+
+// replace, så att varje byte av sortering inte blir ett eget steg för bakåtknappen.
+// Standardsorteringen behöver inget i URL:en
+function setSort(key) {
+  router.replace({ query: key === 'position' ? {} : { sort: key } });
+}
 
 function totalDamage(question) {
   return question.answers.reduce(
@@ -254,7 +268,7 @@ onMounted(load);
             type="button"
             class="admin-button stats-sort-button"
             :aria-pressed="sortKey === option.key"
-            @click="sortKey = option.key"
+            @click="setSort(option.key)"
           >
             {{ option.label }}
           </button>
