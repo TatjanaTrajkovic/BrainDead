@@ -546,6 +546,14 @@ textarea {
   flex-direction: row;
   justify-content: space-between;
   align-items: flex-end;
+  /* Fastnar under toppfältet, så att Förhandsvisa går att nå var admin än är i formuläret.
+     Bakgrunden döljer formuläret som scrollar under */
+  position: sticky;
+  top: var(--admin-topbar-h);
+  z-index: 5;
+  padding: 0.75rem 0;
+  margin-bottom: 0.5rem;
+  background: var(--admin-bg);
 }
 
 @media (min-width: 600px) {
@@ -559,8 +567,14 @@ textarea {
 /* Desktop: formuläret till vänster och förhandsvisningen till höger. Två kolumner först
    från 1024 px, eftersom formuläret behöver bredd för svarstext och hälsoavdrag på samma rad.
    Förhandsvisningen stannar kvar när formuläret scrollas, så att den syns medan admin skriver.
-   56 px är topprarens höjd i AdminView */
+   Sidhuvudet behöver inte fastna här, eftersom Förhandsvisa-knappen är dold */
 @media (min-width: 1024px) {
+  .admin-page-head.form-head {
+    position: static;
+    padding: 0;
+    margin-bottom: 1.25rem;
+  }
+
   .editor {
     grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
     align-items: start;
@@ -571,7 +585,7 @@ textarea {
   .preview.is-open {
     display: block;
     position: sticky;
-    top: calc(56px + 1rem);
+    top: calc(var(--admin-topbar-h) + 1rem);
     z-index: auto;
     max-height: none;
     overflow-y: visible;
