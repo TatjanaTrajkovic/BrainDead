@@ -638,10 +638,19 @@ Bilder och knappar går inte att markera, och bilder går inte att dra iväg. De
 `QuestionForm` används både för ny fråga och för redigering. Redigering känns igen på `questionId` i URL:en.
 
 - **Hämtning:** backend saknar en endpoint för en enskild fråga, så formuläret hämtar alla frågor med `getQuestions()` och letar upp rätt id. Formuläret arbetar på en kopia, så inget ändras förrän admin sparar. `answer_id` följer med, eftersom `PUT` kräver samma svar som finns i databasen
-- **Fält:** titel, scenario, frågetext och alltid fyra svar med text, hälsoavdrag (heltal 0–100) och feedback. Titeln syns bara för admin och ska inte visas i förhandsvisningen (#179). Teckenräknarna följer gränserna i `validateQuestion.js` (80 / 500 / 255 / 150 / 500), och `maxlength` stoppar längre texter
+- **Fält:** titel, scenario, frågetext och alltid fyra svar med text, hälsoavdrag (heltal 0–100) och feedback. Titeln syns bara för admin och visas därför inte i förhandsvisningen. Teckenräknarna följer gränserna i `validateQuestion.js` (80 / 500 / 255 / 150 / 500), och `maxlength` stoppar längre texter
 - **Fel:** ett fält som är tomt eller har ogiltigt hälsoavdrag visar felet under sig när admin lämnar fältet, med `aria-invalid` och `aria-describedby` för skärmläsare. Spara är avstängd tills alla fält är rätt. Backend validerar ändå, och ett fel därifrån visas ovanför knapparna
 - **Spara:** `createQuestion()` eller `updateQuestion()`, sedan tillbaka till listan, som hämtar om frågorna
-- **Layout:** en kolumn på mobil, svarstext och hälsoavdrag bredvid varandra från 600 px, och formulär och förhandsvisning (#179) bredvid varandra från 1024 px. Förhandsvisningen stannar kvar när formuläret scrollas
+- **Layout:** en kolumn på mobil och svarstext och hälsoavdrag bredvid varandra från 600 px. **Under 1024 px** är förhandsvisningen dold. Knappen Förhandsvisa i sidhuvudet öppnar den i en `<dialog>` (`showModal()`) som en panel nerifrån. Den stängs med Stäng, Esc eller klick utanför, och sidan bakom går inte att scrolla eller tabba till medan den är öppen. Sidhuvudet fastnar under toppfältet, så knappen går att nå var admin än är i formuläret. **Från 1024 px** ligger formulär och förhandsvisning bredvid varandra, och förhandsvisningen stannar kvar när formuläret scrollas
+
+### Förhandsvisning
+
+`QuestionPreview` (#179) visar frågan som spelaren kommer att se den, medan admin skriver. Den får formulärets objekt som prop (`:question="form"`) och läser bara, så inget anrop görs till backend och formuläret ändras aldrig. Objektet är reaktivt, så förhandsvisningen uppdateras direkt.
+
+- **Spelets komponenter:** `ScenarioBox`, `QuestionBox` och `AnswerBox` återanvänds, så förhandsvisningen ser ut som spelet utan egen kopia av stilarna. De fyra svaren ligger 2×2, som i spelet på desktop
+- **Feedback:** klick på ett svar markerar det och visar dess feedback under "Vad hände?" i `ScenarioBox`, som när spelaren har låst sitt svar. Under rutan står hur mycket hälsa svaret drar av. Klick på samma svar igen visar scenariot
+- **Tomma fält:** visar "Scenariot visas här", "Frågan visas här", "Feedbacken visas här" och "Svar A–D" tills admin skriver något
+- **Ram:** spelets bakgrund och centrerade text sätts på ramen runt komponenterna, eftersom spelet ärver dem från `body` och `main` och adminsidan har egna. Scenariot har fast höjd och scrollar inuti `ScenarioBox`, som i spelet. Långa ord utan mellanslag bryts (`overflow-wrap: anywhere`) så att förhandsvisningen inte blir bredare än kolumnen
 
 ### Spelare
 
@@ -680,7 +689,9 @@ All CSS för adminsidan ligger i `AdminView.vue`, inte i `main.css` eller `base.
 | `.admin-badge`, `--success`              | Märken, t.ex. status Aktiv/Inaktiv                                                         |
 | `.admin-alert`                           | Röd felruta, t.ex. när en hämtning eller ändring misslyckas                                |
 
-Färgerna heter `--admin-bg`, `--admin-surface`, `--admin-text`, `--admin-muted`, `--admin-border`, `--admin-accent`, `--admin-success-bg`, `--admin-success-text`, `--admin-neutral-bg` och `--admin-danger`. Använd variablerna i komponenternas egna scoped-stilar i stället för egna färgkoder. Spelets klasser (`.btn`, `.content-card`) används inte på adminsidan.
+Färgerna heter `--admin-bg`, `--admin-surface`, `--admin-text`, `--admin-muted`, `--admin-border`, `--admin-accent`, `--admin-success-bg`, `--admin-success-text`, `--admin-neutral-bg` och `--admin-danger`. Använd variablerna i komponenternas egna scoped-stilar i stället för egna färgkoder. Spelets klasser (`.btn`, `.content-card`) används inte på adminsidan, utom i `QuestionPreview`, som visar spelets egna komponenter.
+
+`--admin-topbar-h` är toppfältets höjd (93 px på mobil, 57 px från 768 px) och används av det som ska fastna under toppfältet, som sidhuvudet och förhandsvisningen i `QuestionForm`. Ändras toppfältets höjd måste båda värdena i `AdminView` ändras.
 
 ### Bekräftelserutor
 

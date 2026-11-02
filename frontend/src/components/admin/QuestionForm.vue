@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { createQuestion, getQuestions, updateQuestion } from '@/api/adminApi';
+import QuestionPreview from './QuestionPreview.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -141,6 +142,19 @@ async function save() {
   }
 }
 
+// Under 1024 px ligger förhandsvisningen inte bredvid formuläret, utan öppnas i en <dialog>.
+// showModal() ger samma beteende som ConfirmDialog: Esc stänger, Tab stannar i rutan och
+// fokus går tillbaka till Förhandsvisa när den stängs
+const previewDialog = ref(null);
+
+function openPreview() {
+  previewDialog.value.showModal();
+}
+
+function closePreview() {
+  previewDialog.value.close();
+}
+
 onMounted(() => {
   if (isEdit.value) loadQuestion();
 });
@@ -148,7 +162,7 @@ onMounted(() => {
 
 <template>
   <section>
-    <div class="admin-page-head">
+    <div class="admin-page-head form-head">
       <div>
         <nav class="breadcrumb" aria-label="Brödsmulor">
           <RouterLink :to="{ name: 'admin-questions' }">Frågor</RouterLink>
@@ -166,6 +180,17 @@ onMounted(() => {
           </span>
         </h1>
       </div>
+
+      <!-- Syns bara under 1024 px, där förhandsvisningen inte ligger bredvid formuläret -->
+      <button
+        v-if="!isLoading && !loadError"
+        type="button"
+        class="admin-button preview-toggle"
+        aria-haspopup="dialog"
+        @click="openPreview"
+      >
+        Förhandsvisa
+      </button>
     </div>
 
     <p v-if="isLoading" class="admin-subtitle">Hämtar frågan…</p>
@@ -315,12 +340,32 @@ onMounted(() => {
         </div>
       </form>
 
-      <!-- Platshållare så att layouten är klar. QuestionPreview byggs i #179 och får form som prop -->
+      <!-- Från 1024 px: en kolumn bredvid formuläret -->
       <aside class="admin-card preview">
         <h2 class="card-title">Förhandsvisning</h2>
-        <p class="hint">Så här ser spelaren frågan. Byggs i #179.</p>
+        <p class="hint">Så här ser spelaren frågan.</p>
+        <QuestionPreview :question="form" />
       </aside>
     </div>
+
+    <!-- Under 1024 px: öppnas med Förhandsvisa. Klick på bakgrunden träffar själva dialogen
+         och stänger den, som i ConfirmDialog -->
+    <dialog
+      ref="previewDialog"
+      class="preview-dialog"
+      aria-labelledby="preview-dialog-title"
+      @click.self="closePreview"
+    >
+      <div class="preview-dialog-content">
+        <div class="preview-dialog-head">
+          <h2 id="preview-dialog-title" class="preview-dialog-title">Förhandsvisning</h2>
+          <!-- autofocus: fokus hamnar på Stäng när rutan öppnas -->
+          <button type="button" class="admin-button" autofocus @click="closePreview">Stäng</button>
+        </div>
+        <p class="hint">Så här ser spelaren frågan.</p>
+        <QuestionPreview :question="form" />
+      </div>
+    </dialog>
   </section>
 </template>
 
@@ -463,6 +508,71 @@ textarea {
   gap: 0.5rem;
 }
 
+/* Mobil och surfplatta: kolumnen är dold, förhandsvisningen öppnas i dialogen i stället,
+   så att admin slipper scrolla förbi hela formuläret */
+.preview {
+  display: none;
+}
+
+/* Dialogen läggs som en panel längst ner. Den ligger kvar under .admin i DOM:en även när
+   showModal() lyfter den överst, så --admin-variablerna gäller */
+.preview-dialog {
+  width: 100%;
+  max-width: 100%;
+  max-height: 85dvh;
+  margin: auto 0 0;
+  padding: 0;
+  color: var(--admin-text);
+  font-family: inherit;
+  background: var(--admin-surface);
+  border: none;
+  border-radius: var(--admin-radius) var(--admin-radius) 0 0;
+  box-shadow: 0 -4px 24px rgb(0 0 0 / 20%);
+}
+
+.preview-dialog::backdrop {
+  background: rgb(0 0 0 / 40%);
+}
+
+/* Innehållet har padding i stället för dialogen, så att click.self bara träffar bakgrunden */
+.preview-dialog-content {
+  padding: 1rem;
+}
+
+.preview-dialog-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.preview-dialog-title {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* Sidan bakom scrollar inte medan dialogen är öppen. .admin är det som scrollar (AdminView) */
+:global(.admin:has(.preview-dialog[open])) {
+  overflow: hidden;
+}
+
+/* Rubriken och Förhandsvisa-knappen på samma rad även på mobil, där admin-page-head annars
+   staplar. Dubbel klass för att väga tyngre än .admin .admin-page-head i AdminView */
+.admin-page-head.form-head {
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-end;
+  /* Fastnar under toppfältet, så att Förhandsvisa går att nå var admin än är i formuläret.
+     Bakgrunden döljer formuläret som scrollar under */
+  position: sticky;
+  top: var(--admin-topbar-h);
+  z-index: 5;
+  padding: 0.75rem 0;
+  margin-bottom: 0.5rem;
+  background: var(--admin-bg);
+}
+
 @media (min-width: 600px) {
   /* Hälsoavdraget behöver bara plats för tre siffror */
   .answer-row {
@@ -474,16 +584,27 @@ textarea {
 /* Desktop: formuläret till vänster och förhandsvisningen till höger. Två kolumner först
    från 1024 px, eftersom formuläret behöver bredd för svarstext och hälsoavdrag på samma rad.
    Förhandsvisningen stannar kvar när formuläret scrollas, så att den syns medan admin skriver.
-   56 px är topprarens höjd i AdminView */
+   Sidhuvudet behöver inte fastna här, eftersom Förhandsvisa-knappen är dold */
 @media (min-width: 1024px) {
+  .admin-page-head.form-head {
+    position: static;
+    padding: 0;
+    margin-bottom: 1.25rem;
+  }
+
   .editor {
     grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
     align-items: start;
   }
 
   .preview {
+    display: block;
     position: sticky;
-    top: calc(56px + 1rem);
+    top: calc(var(--admin-topbar-h) + 1rem);
+  }
+
+  .preview-toggle {
+    display: none;
   }
 }
 </style>
