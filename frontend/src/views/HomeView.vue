@@ -20,7 +20,7 @@ const { error, start, resume, hasActiveSession, checkActiveSession } = useGame()
 const { player, isAdmin, loadPlayer } = useAuth();
 
 const isDesktop = useMediaQuery(
-  '(min-width: 768px) and (min-height: 501px) and (orientation: landscape) and (pointer: fine)',
+  '(min-width: 768px) and (min-height: 600.5px) and (orientation: landscape) and (pointer: fine)',
 );
 
 const isCompact = computed(() => !isDesktop.value);
@@ -209,7 +209,7 @@ function handleResume() {
 }
 
 /* Om stor bildskärm och muspekare */
-@media (min-width: 768px) and (min-height: 501px) and (orientation: landscape) and (pointer: fine) {
+@media (min-width: 768px) and (min-height: 600.5px) and (orientation: landscape) and (pointer: fine) {
   .home {
     display: grid;
     max-width: none;
@@ -261,7 +261,7 @@ function handleResume() {
 /* Liggande kompakt skärm: --bild-h och --topp definieras i main.css */
 @media (orientation: landscape) and (max-width: 767px),
   (orientation: landscape) and (pointer: coarse),
-  (orientation: landscape) and (max-height: 500px) {
+  (orientation: landscape) and (max-height: 600.5px) {
   .home {
     display: grid;
     align-items: stretch;

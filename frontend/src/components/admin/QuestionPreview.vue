@@ -85,11 +85,14 @@ const healthText = computed(() => {
   overflow-wrap: anywhere;
   /* Spelet ärver centrerad text från main i main.css, adminsidan ärver vänster */
   text-align: center;
+  container-type: size;
+  grid-template-rows: minmax(0, 1fr) auto auto;
+  min-height: clamp(480px, 55dvh, 800px); /* tak för desktop */
+  overflow-y: auto;
 }
 
-/* Som i spelet: scenariot har fast höjd och scrollar inuti ScenarioBox */
 .story {
-  height: 10rem;
+  min-height: 0;
 }
 
 /* 2×2, som spelet på desktop. minmax(0, 1fr) av samma skäl som ovan */

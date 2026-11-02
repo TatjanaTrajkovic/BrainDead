@@ -20,7 +20,6 @@ header {
 main {
   text-align: center;
   width: clamp(280px, 95vw, 768px);
-  max-width: 100%;
   margin: 0 auto;
 }
 
@@ -30,7 +29,7 @@ main {
   align-items: center;
   border-radius: 2rem;
   background-color: rgb(0 0 0 / 30%);
-  max-width: 768px;
+  max-width: 95dvw;
   margin: 0 auto;
   padding: 0.4rem;
 }
@@ -51,29 +50,41 @@ main {
   color: var(--color-text);
 }
 
-/* Om stor bildskärm och muspekare */
-@media (min-width: 768px) and (min-height: 501px) and (orientation: landscape) and (pointer: fine) {
+/* Om stor bildskärm och muspekare. 600.5, inte heltal:
+   annars hamnar fraktionerade fönsterhöjder mellan queryna */
+@media (min-width: 768px) and (min-height: 600.5px) and (orientation: landscape) and (pointer: fine) {
   main {
     width: var(--content-w);
   }
   header {
-    width: calc(var(--content-w) * 4 / 7);
+    width: clamp(650px, 40vw, 1400px);
   }
+
+  /* Spelvyn: full bredd så ramen kan hålla sin målbredd */
+  main:has(> .content-wrapper) {
+    width: 100%;
+  }
+
   .content-wrapper {
-    padding: 1rem;
+    /* Målbredd tills skärmen blir för smal (grundregelns max-width: 95dvw) */
+    width: clamp(900px, 60dvw, 1400px);
+    max-width: 95dvw;
   }
 }
 
 /* Liten liggande skärm (mobil, och surfplatta med touch) */
 @media (orientation: landscape) and (max-width: 767px),
   (orientation: landscape) and (pointer: coarse),
-  (orientation: landscape) and (max-height: 500px) {
+  (orientation: landscape) and (max-height: 600.5px) {
   :root {
     /* Höjden på de fyra bilderna. Den minsta av bredd och höjd väljs */
     --bild-h: min(calc((100vw - 1.5rem) / 3.1), calc((100dvh - 1rem) / 1.55));
 
     /* Avstånd överst så att allt hamnar mitt på skärmen */
     --topp: calc((100dvh - var(--bild-h) * 1.55) / 2);
+
+    /* Loggans bredd i spelet: lägre golv och höjdtak (höjd ≈ 0.184 × bredd) */
+    --game-logo-w: min(clamp(220px, 50dvw, 500px), 80dvh);
   }
 
   #app {
@@ -82,20 +93,46 @@ main {
     height: 100dvh;
   }
 
+  /* Spelet: flex-kedja ger panelen exakt platsen under headern,
+     ingen uträknad höjd */
+  #app:has(> main > .content-wrapper) {
+    display: flex;
+    flex-direction: column;
+  }
+
+  main:has(> .content-wrapper) {
+    flex: 1 1 auto;
+    /* scroll sker inne i panelen */
+    min-height: 0;
+  }
+
+  .content-wrapper {
+    height: 100%;
+    /* centrera när panelen inte fyller höjden */
+    justify-content: center;
+  }
+
+  /* Flytta tillbaka loggan om .content-wrapper finns */
+  #app:has(.content-wrapper) header {
+    position: static;
+    flex-shrink: 0;
+    width: var(--game-logo-w);
+    height: auto;
+    margin: 0.5rem auto 0;
+    justify-content: center;
+  }
+
   header {
     position: absolute;
     top: var(--topp);
-    /* Halva gridens bredd (3.07 / 2) till vänster om mitten */
     left: calc(50% - var(--bild-h) * 1.53);
-    /* Tre av fyra kolumner */
     width: calc(var(--bild-h) * 2.2);
-    /* Samma höjd som ID-kortet */
     height: calc(var(--bild-h) * 0.52);
     max-width: none;
     margin: 0;
     display: flex;
     justify-content: flex-start;
-    align-items: flex-end; /* loggan ligger nere mot bilderna */
+    align-items: flex-end;
   }
 
   .logo {
@@ -110,5 +147,13 @@ main {
   main {
     width: 100%;
     margin: 0;
+  }
+}
+
+/* Telefonhöjd oavsett orientering: göm loggan så quizet får höjden.
+   Startsidlänken försvinner med den — Avsluta-knappen tar spelaren hem */
+@media (max-height: 700px) {
+  #app:has(.content-wrapper) header {
+    display: none;
   }
 }
