@@ -57,7 +57,7 @@ main {
     width: var(--content-w);
   }
   header {
-    width: min(768px, calc(95dvw * 0.64), 95dvh);
+    width: clamp(650px, 40vw, 1400px);
   }
 
   /* Spelvyn: full bredd så ramen kan hålla sin målbredd */
@@ -67,7 +67,8 @@ main {
 
   .content-wrapper {
     /* Målbredd tills skärmen blir för smal (grundregelns max-width: 95dvw) */
-    width: min(1400px, 100%);
+    width: clamp(900px, 60dvw, 1400px);
+    max-width: 95dvw;
   }
 }
 
