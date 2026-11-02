@@ -102,3 +102,14 @@ exports.setBanStatus = async (req, res) => {
     return res.status(500).json({ error: 'Kunde inte banna spelaren' });
   }
 };
+
+// Rensar gamla gäster och svarar med hur många som raderades. 0 är inget fel
+exports.deleteOldGuests = async (req, res) => {
+  try {
+    const deleted = await userService.deleteOldGuests();
+    res.status(200).json({ deleted });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Kunde inte rensa gästerna' });
+  }
+};

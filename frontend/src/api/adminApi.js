@@ -55,3 +55,8 @@ export function setUserStatus(userId, status) {
     body: JSON.stringify({ status }),
   });
 }
+
+// Raderar gäster äldre än 30 dagar utan omgångar. Svarar { deleted: <antal> }
+export function deleteOldGuests() {
+  return request('/admin/guests', { method: 'DELETE' });
+}

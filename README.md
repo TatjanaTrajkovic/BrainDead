@@ -59,9 +59,9 @@ Så här hänger lagren ihop när frontend anropar backend:
 flowchart LR
   subgraph FE["Frontend · Vue 3 + Vite"]
     direction TB
-    Router["router/router.js"] --> Views["views/<br/>HomeView · GameView · AdminView"]
+    Router["router/router.js"] --> Views["views/<br/>HomeView · GameView · ReviewView · AdminView"]
     Views --> Comp["components/"]
-    Views --> Composables["composables/<br/>useGame · useAuth · useHighscores"]
+    Views --> Composables["composables/<br/>useGame · useAuth · useHighscores · useReview"]
     Comp --> Composables
     Composables --> Api["api/gameApi.js"]
   end
@@ -253,28 +253,30 @@ erDiagram
 
 <!-- TODO: fylls på i takt med att routes byggs -->
 
-| Metod | Endpoint                                  | Beskrivning                                                                                                                                                                                                                                                                                             |
-| ----- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| POST  | `/api/auth/guest`                         | Skapar en gästspelare och sätter cookien `braindead_token`, eller returnerar spelaren som redan finns. Svarar `{ user_id, username, role, is_guest, display_name }`                                                                                                                                     |
-| GET   | `/api/auth/me`                            | Hämtar spelaren som cookien hör till, i samma form som ovan. `display_name` är användarnamnet, eller `Gäst-<user_id>` för gäster. `401` utan cookie                                                                                                                                                     |
-| POST  | `/api/auth/signup`                        | Registrerar ett konto. Body `{ "username", "password" }`. En gäst uppgraderas och behåller sina poäng, utan cookie skapas ett nytt konto. Svarar `201` i samma form som ovan                                                                                                                            |
-| POST  | `/api/auth/login`                         | Loggar in ett registrerat konto. Body `{ "username", "password" }`. Sätter en ny cookie och svarar `200` i samma form som ovan. Fel namn och fel lösenord ger samma `401`. En gäst som loggar in får sina omgångar flyttade till kontot. Har båda en pågående omgång pausas kontots                     |
-| POST  | `/api/auth/logout`                        | Loggar ut spelaren: nyckeln slutar gälla och cookien tas bort. Svarar `200`. Gäster får `400`, eftersom de inte kan logga in igen                                                                                                                                                                       |
-| POST  | `/api/sessions`                           | Startar en ny omgång, eller returnerar den pågående om en redan finns. Body `{ "forceNew": true }` pausar den pågående omgången och startar en ny. Admin får `403`.                                                                                                                                     |
-| GET   | `/api/sessions/active`                    | Hämtar användarens pågående omgång, 404 om ingen finns. Skapar aldrig något.                                                                                                                                                                                                                            |
-| GET   | `/api/sessions/:sessionId`                | Hämtar en pågående eller avslutad omgång                                                                                                                                                                                                                                                                |
-| GET   | `/api/sessions/:sessionId/question`       | Hämtar nästa fråga med svarsalternativ, `total_questions` och `answered_count`, eller `{ "finished": true }` när inga återstår                                                                                                                                                                          |
-| POST  | `/api/sessions/:sessionId/answer`         | Sparar ett svar. Body: `{ "answerId": 1 }`                                                                                                                                                                                                                                                              |
-| GET   | `/api/highscores`                         | Hämtar topp 10: varje spelares bästa avslutade omgång med hälsa över 0, som `{ username, score }`. Bara aktiva spelare med rollen `PLAYER` är med, så bannade, inaktiva och admins syns inte. Gäster visas som `Gäst-<user_id>`. Vid lika poäng vinner den som blev klar först                          |
-| GET   | `/api/admin/questions`                    | Hämtar alla frågor, även inaktiva, med svar sorterade på `position`. Kräver admin                                                                                                                                                                                                                       |
-| POST  | `/api/admin/questions`                    | Skapar en fråga med exakt 4 svar. Body `{ "scenario", "text", "answers": [{ "text", "health_change", "feedback" }] }`. Frågan läggs sist (`position` = högsta + 1) och visas i nya omgångar, inte i pågående. Fråga och svar sparas i en transaktion. Svarar `201` i samma form som `GET`. Kräver admin |
-| PUT   | `/api/admin/questions/:questionId`        | Uppdaterar en fråga och dess 4 svar. Body: `{ scenario, text, answers: [{ answer_id, text, health_change, feedback }] }`. Kräver admin                                                                                                                                                                  |
-| PATCH | `/api/admin/questions/:questionId/status` | Inaktiverar eller återaktiverar en fråga (soft delete). Body: `{ "status": "ACTIVE" \| "INACTIVE" }`. Inaktiva frågor kommer inte med i nya omgångar. Samma status två gånger ger `200`. Annat värde ger `400`, fråga som inte finns ger `404`. Kräver admin                                            |
-| GET   | `/api/admin/stats`                        | Statistik per fråga: antal svar per alternativ och dödsfall. Admins omgångar räknas inte. Kräver admin                                                                                                                                                                                                  |
-| GET   | `/api/admin/users`                        | Hämtar spelare, nyast först, max 100. Valfritt `?type=registered\|guest\|banned` och `?search=<text>`. Se nedan. Kräver admin                                                                                                                                                                           |
-| PATCH | `/api/admin/users/:userId/role`           | Ändrar roll. Body `{ "role": "PLAYER" \| "ADMIN" }`. Svarar `{ user_id, role }` och gäller direkt. Egen roll, gäst eller bannad ger `400`, okänd spelare `404`. Kräver admin                                                                                                                            |
-| PATCH | `/api/admin/users/:userId/status`         | Bannar eller avbannar. Body `{ "status": "ACTIVE" \| "BANNED" }`. Svarar `{ user_id, status }`. En bannad spelare loggas ut direkt och kan inte logga in (`401`). Egen status, admin eller gäst ger `400`, okänd spelare `404`. Kräver admin                                                            |
-| GET   | `/api/admin/users/:userId/sessions`       | Hämtar en spelares omgångar, nyast först. Se nedan. Kräver admin                                                                                                                                                                                                                                        |
+| Metod  | Endpoint                                  | Beskrivning                                                                                                                                                                                                                                                                                             |
+| ------ | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| POST   | `/api/auth/guest`                         | Skapar en gästspelare och sätter cookien `braindead_token`, eller returnerar spelaren som redan finns. Svarar `{ user_id, username, role, is_guest, display_name }`                                                                                                                                     |
+| GET    | `/api/auth/me`                            | Hämtar spelaren som cookien hör till, i samma form som ovan. `display_name` är användarnamnet, eller `Gäst-<user_id>` för gäster. `401` utan cookie                                                                                                                                                     |
+| POST   | `/api/auth/signup`                        | Registrerar ett konto. Body `{ "username", "password" }`. En gäst uppgraderas och behåller sina poäng, utan cookie skapas ett nytt konto. Svarar `201` i samma form som ovan                                                                                                                            |
+| POST   | `/api/auth/login`                         | Loggar in ett registrerat konto. Body `{ "username", "password" }`. Sätter en ny cookie och svarar `200` i samma form som ovan. Fel namn och fel lösenord ger samma `401`. En gäst som loggar in får sina omgångar flyttade till kontot. Har båda en pågående omgång pausas kontots                     |
+| POST   | `/api/auth/logout`                        | Loggar ut spelaren: nyckeln slutar gälla och cookien tas bort. Svarar `200`. Gäster får `400`, eftersom de inte kan logga in igen                                                                                                                                                                       |
+| POST   | `/api/sessions`                           | Startar en ny omgång, eller returnerar den pågående om en redan finns. Body `{ "forceNew": true }` pausar den pågående omgången och startar en ny. Admin får `403`.                                                                                                                                     |
+| GET    | `/api/sessions/active`                    | Hämtar användarens pågående omgång, 404 om ingen finns. Skapar aldrig något.                                                                                                                                                                                                                            |
+| GET    | `/api/sessions/:sessionId`                | Hämtar en pågående eller avslutad omgång                                                                                                                                                                                                                                                                |
+| GET    | `/api/sessions/:sessionId/question`       | Hämtar nästa fråga med svarsalternativ, `total_questions` och `answered_count`, eller `{ "finished": true }` när inga återstår                                                                                                                                                                          |
+| POST   | `/api/sessions/:sessionId/answer`         | Sparar ett svar. Body: `{ "answerId": 1 }`                                                                                                                                                                                                                                                              |
+| GET    | `/api/sessions/:sessionId/review`         | Svaren efter en avslutad omgång: varje besvarad fråga med alla svar, hälsopåverkan, feedback, spelarens val och bästa svaret. Se nedan. `403` om omgången inte är avslutad, `404` om den inte finns eller är någon annans                                                                               |
+| GET    | `/api/highscores`                         | Hämtar topp 10: varje spelares bästa avslutade omgång med hälsa över 0, som `{ username, score }`. Bara aktiva spelare med rollen `PLAYER` är med, så bannade, inaktiva och admins syns inte. Gäster visas som `Gäst-<user_id>`. Vid lika poäng vinner den som blev klar först                          |
+| GET    | `/api/admin/questions`                    | Hämtar alla frågor, även inaktiva, med svar sorterade på `position`. Kräver admin                                                                                                                                                                                                                       |
+| POST   | `/api/admin/questions`                    | Skapar en fråga med exakt 4 svar. Body `{ "scenario", "text", "answers": [{ "text", "health_change", "feedback" }] }`. Frågan läggs sist (`position` = högsta + 1) och visas i nya omgångar, inte i pågående. Fråga och svar sparas i en transaktion. Svarar `201` i samma form som `GET`. Kräver admin |
+| PUT    | `/api/admin/questions/:questionId`        | Uppdaterar en fråga och dess 4 svar. Body: `{ scenario, text, answers: [{ answer_id, text, health_change, feedback }] }`. Kräver admin                                                                                                                                                                  |
+| PATCH  | `/api/admin/questions/:questionId/status` | Inaktiverar eller återaktiverar en fråga (soft delete). Body: `{ "status": "ACTIVE" \| "INACTIVE" }`. Inaktiva frågor kommer inte med i nya omgångar. Samma status två gånger ger `200`. Annat värde ger `400`, fråga som inte finns ger `404`. Kräver admin                                            |
+| GET    | `/api/admin/stats`                        | Statistik per fråga: antal svar per alternativ och dödsfall. Admins omgångar räknas inte. Kräver admin                                                                                                                                                                                                  |
+| GET    | `/api/admin/users`                        | Hämtar spelare, nyast först, max 100. Valfritt `?type=registered\|guest\|banned` och `?search=<text>`. Se nedan. Kräver admin                                                                                                                                                                           |
+| PATCH  | `/api/admin/users/:userId/role`           | Ändrar roll. Body `{ "role": "PLAYER" \| "ADMIN" }`. Svarar `{ user_id, role }` och gäller direkt. Egen roll, gäst eller bannad ger `400`, okänd spelare `404`. Kräver admin                                                                                                                            |
+| PATCH  | `/api/admin/users/:userId/status`         | Bannar eller avbannar. Body `{ "status": "ACTIVE" \| "BANNED" }`. Svarar `{ user_id, status }`. En bannad spelare loggas ut direkt och kan inte logga in (`401`). Egen status, admin eller gäst ger `400`, okänd spelare `404`. Kräver admin                                                            |
+| GET    | `/api/admin/users/:userId/sessions`       | Hämtar en spelares omgångar, nyast först. Se nedan. Kräver admin                                                                                                                                                                                                                                        |
+| DELETE | `/api/admin/guests`                       | Raderar gäster som är äldre än 30 dagar och saknar omgångar. Svarar `{ deleted: <antal> }`, med `0` om det inte fanns några. Registrerade spelare och gäster med omgångar raderas aldrig. Kräver admin                                                                                                  |
 
 `GET /api/admin/users` svarar `[{ user_id, display_name, role, status, is_guest, created_at, session_count, best_score }]`. Utan filter kommer alla. `type=banned` visar både registrerade och gäster, så flikarna kan överlappa. `search` söker på del av `display_name`, så gäster hittas som `Gäst-<id>`. `%` och `_` i söktexten matchar bara sig själva. `best_score` följer topplistans regel (bästa avslutade omgång med hälsa över 0) och är `null` om spelaren saknar en sådan. Ett okänt `type` ger `400`. `password_hash` och `auth_token` skickas aldrig.
 
@@ -320,6 +322,8 @@ Funktioner i `adminApi.js`:
 | `getStats()`                            | `GET /api/admin/stats`                                             |
 | `getUserSessions(userId)`               | `GET /api/admin/users/:userId/sessions`                            |
 | `setUserRole(userId, role)`             | `PATCH /api/admin/users/:userId/role`                              |
+| `setUserStatus(userId, status)`         | `PATCH /api/admin/users/:userId/status`                            |
+| `deleteOldGuests()`                     | `DELETE /api/admin/guests`                                         |
 
 Nya admin-endpoints får en funktion i `adminApi.js`, så att ingen komponent anropar `fetch` direkt.
 
@@ -364,13 +368,14 @@ State i `useGame` ligger utanför själva funktionen, så alla vyer som anropar 
 ### Sidor och navigering
 
 Routern ligger i `frontend/src/router/router.js` och vyerna i `frontend/src/views/`.
-`App.vue` visar loggan, som länkar till `/`, och `<RouterView />`. Sidor med `meta.fullPage` (adminsidan) renderas utan loggan och har sin egen layout.
+`App.vue` visar loggan, som länkar till `/`, och `<RouterView />`. Sidor med `meta.fullPage` (adminsidan och svaren) renderas utan loggan och har sin egen layout.
 
-| Route    | Vy          | Innehåll                                                                                                    |
-| -------- | ----------- | ----------------------------------------------------------------------------------------------------------- |
-| `/`      | `HomeView`  | Startsidan. "Starta spelet" öppnar `SessionMenu` i en overlay (`<dialog>`) där man startar eller återupptar |
-| `/game`  | `GameView`  | Spelskärmen, se nedan                                                                                       |
-| `/admin` | `AdminView` | Adminsidan. Skickar vidare till `/admin/questions`, se [Adminsidan](#adminsidan)                            |
+| Route                | Vy           | Innehåll                                                                                                    |
+| -------------------- | ------------ | ----------------------------------------------------------------------------------------------------------- |
+| `/`                  | `HomeView`   | Startsidan. "Starta spelet" öppnar `SessionMenu` i en overlay (`<dialog>`) där man startar eller återupptar |
+| `/game`              | `GameView`   | Spelskärmen, se nedan                                                                                       |
+| `/review/:sessionId` | `ReviewView` | Svaren efter en avslutad omgång, se [Svaren efter omgången](#svaren-efter-omgången)                         |
+| `/admin`             | `AdminView`  | Adminsidan. Skickar vidare till `/admin/questions`, se [Adminsidan](#adminsidan)                            |
 
 Routerna kan ha flaggor i `meta`, som läses av guards och komponenter. För nästlade routes slås föräldrarnas och barnets `meta` ihop, så barnen ärver föräldrarnas flaggor:
 
@@ -435,7 +440,48 @@ Samma komponenter används i båda faserna, `phase` styr vad de visar:
 
 `AnswerBox` läggs med `v-for` direkt i `#answers`, så att varje knapp blir en egen cell i 2×2-rutnätet. `QuitButton` ligger under panelen och tar spelaren tillbaka till startsidan.
 
-När `phase` blir `finished` visas `EndCard` i stället för rutnätet. Den visar en levande eller död hjärna beroende på `isAlive`, hur mycket hjärnkapacitet som finns kvar och knappen "Spela igen". Knappen skickar `play-again`, och `GameView` startar då en ny omgång.
+När `phase` blir `finished` visas `EndCard` i stället för rutnätet. Den visar en levande eller död hjärna beroende på `isAlive`, hur mycket hjärnkapacitet som finns kvar och knapparna "Se svaren", "Spela igen" och "Till startsidan". "Spela igen" skickar `play-again`, och `GameView` startar då en ny omgång. "Se svaren" skickar `show-review`, och `GameView` går till `/review/<sessionId>`.
+
+### Svaren efter omgången
+
+`ReviewView` visar varje fråga spelaren svarade på, med scenario, fråga och alla fyra svar. Hämtningen ligger i composablen `useReview`, som anropar `GET /api/sessions/:sessionId/review`.
+
+- Varje fråga får märket "✓ Rätt" eller "✗ Fel". Rätt betyder att spelaren valde ett av de bästa svaren
+- Bästa svaret är det som drar minst hälsa (lägst `health_change`). Drar två svar lika lite är båda bäst
+- Spelarens svar är lila med märket "Ditt svar", bästa svaret har grön ram och märket "Bästa svaret". Båda visar sin feedback, de andra svaren bara text och hälsopåverkan
+- Överst visas antal rätt och hjärnkapaciteten som var kvar. Tog hälsan slut står det hur många frågor spelaren hann svara på, eftersom frågor som aldrig nåddes inte visas
+- Omgångens id ligger i adressen, så sidan går att ladda om. Backend kollar att omgången är spelarens egen och avslutad, annars visas felet och en länk till startsidan
+- Sidan har `meta.fullPage` och scrollar själv, eftersom `#app` har `overflow: hidden` och sidan är längre än skärmen
+
+Svaret från backend ser ut så här (ett svar av fyra visas):
+
+```json
+{
+  "session_id": 8,
+  "current_health": 30,
+  "total_questions": 10,
+  "questions": [
+    {
+      "question_id": 1,
+      "scenario": "Du sprang ut genom Lisebergs grindar …",
+      "text": "Vad gör du?",
+      "chosen_answer_id": 1,
+      "is_correct": true,
+      "answers": [
+        {
+          "answer_id": 1,
+          "text": "Kollar att vagnen är tom innan du kliver in.",
+          "health_change": 0,
+          "feedback": "Smart. Tom vagn, ingen fara. …",
+          "is_best": true
+        }
+      ]
+    }
+  ]
+}
+```
+
+Svaren visar frågornas text och hälsopåverkan som de ser ut nu. Ändrar admin en fråga efter att omgången spelats, syns den nya versionen.
 
 ### Handboken
 
@@ -537,6 +583,8 @@ Färger och typsnitt ligger som CSS-variabler i `frontend/src/assets/base.css`, 
 | `.btn-gray`     | Grå knapp                                         |
 | `.btn-large`    | Stor knapp som skalar med sin bredd, se nedan     |
 
+En `.btn` med attributet `disabled` tonas ned och blir gråaktig, och den lyser inte upp vid hover. Den används till exempel på "Återuppta omgång" när spelaren inte har någon pågående omgång.
+
 #### Användning av `.btn-large`
 
 ```html
@@ -593,6 +641,7 @@ Bilder och knappar går inte att markera, och bilder går inte att dra iväg. De
 - **Omgångar:** klick på ett namn fäller ut spelarens omgångar med datum, hälsa, besvarade frågor och resultat. De hämtas med `getUserSessions()` första gången raden öppnas
 - **Knappar:** Banna/Avbanna och Gör till admin/Gör till spelare, enligt samma regler som backend. Gäster får inga knappar, admins kan inte bannas och bannade kan inte byta roll. Den egna raden är markerad "(du)" och har inga knappar
 - **Bekräftelse:** varje ändring bekräftas med `ConfirmDialog variant="admin"`. Banna och Gör till admin har röd knapp (`danger`). Efter ändringen hämtas listan om, så att filtret stämmer. Misslyckas den visas ett fel ovanför listan
+- **Rensa gamla gäster:** knappen överst anropar `deleteOldGuests()` efter en röd bekräftelse. Backend avgör vilka gäster som raderas (se `DELETE /api/admin/guests`), och en grön ruta visar hur många det blev. Sedan hämtas listan om
 - **Mobil:** varje spelare är ett kort. **Från 768 px:** en tabell med rubrikrad, som i `QuestionList`
 
 ### Layout
@@ -655,6 +704,19 @@ banDialog.value.open();
 ```
 
 Med `variant="admin"` måste rutan ligga inuti adminsidan (i en flik), eftersom klasserna och `--admin-`-variablerna bara gäller under `.admin`.
+
+### Statistik
+
+`StatsTable` visar `GET /api/admin/stats` som ett kort per fråga, med summering och sortering överst. Värdena räknas ut i komponenten:
+
+| Mått              | Beräkning                                              |
+| ----------------- | ------------------------------------------------------ |
+| Snittskada        | Σ(`times_chosen` × `health_change`) / `times_answered` |
+| Svarade           | `times_answered`                                       |
+| Dog här           | `deaths`                                               |
+| Andel som dog här | `deaths` / `times_answered`                            |
+
+Frågorna spelas i fast ordning, så senare frågor får fler dödsfall eftersom spelarna har mindre hälsa kvar. Snittskadan påverkas inte av ordningen och är därför huvudmåttet: frågan med högst snittskada markeras som kanske för svår och den med lägst som kanske för lätt. Dödsfallen visar spelets svårighetskurva, och frågan med flest dödsfall markeras inte. En ospelad fråga visar `–`, och färre än 20 svar ger en varning.
 
 ## Arbetssätt
 

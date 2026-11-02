@@ -16,6 +16,7 @@ const router = useRouter();
 
 const {
   phase,
+  sessionId,
   question,
   feedback,
   health,
@@ -54,6 +55,11 @@ watch(phase, (newPhase) => {
 // Omgången är redan avslutad i backend, så det räcker att byta vy
 function goHome() {
   router.push({ name: 'home' });
+}
+
+// Id:t ligger i adressen, så att genomgången finns kvar vid omladdning (#205)
+function showReview() {
+  router.push({ name: 'review', params: { sessionId: sessionId.value } });
 }
 </script>
 
@@ -112,6 +118,7 @@ function goHome() {
       :is-alive="isAlive"
       @play-again="start"
       @go-home="goHome"
+      @show-review="showReview"
     />
   </div>
 </template>

@@ -8,5 +8,6 @@ router.get('/sessions/active', loadUser(), sessionController.getActiveSession);
 router.get('/sessions/:sessionId/question', loadUser(), sessionController.getNextQuestion);
 router.post('/sessions/:sessionId/answer', loadUser(), sessionController.answerQuestion);
 router.get('/sessions/:sessionId', loadUser(), sessionController.getSession);
+router.get('/sessions/:sessionId/review', loadUser(), sessionController.getSessionReview);
 
 module.exports = router;
