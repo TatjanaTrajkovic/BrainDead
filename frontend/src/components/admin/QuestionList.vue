@@ -61,7 +61,11 @@ const visibleQuestions = computed(() => {
   return questions.value.filter((q) => {
     if (filter.value && q.status !== filter.value) return false;
     if (!text) return true;
-    return q.scenario.toLowerCase().includes(text) || q.text.toLowerCase().includes(text);
+    return (
+      q.title.toLowerCase().includes(text) ||
+      q.scenario.toLowerCase().includes(text) ||
+      q.text.toLowerCase().includes(text)
+    );
   });
 });
 
@@ -126,8 +130,8 @@ onMounted(loadQuestions);
           <input
             v-model="search"
             type="search"
-            placeholder="Sök i scenario eller fråga"
-            aria-label="Sök i scenario eller fråga"
+            placeholder="Sök i titel, scenario eller fråga"
+            aria-label="Sök i titel, scenario eller fråga"
           />
         </label>
       </div>
@@ -179,6 +183,7 @@ onMounted(loadQuestions);
             </div>
 
             <div class="cell-question">
+              <p class="question-title">{{ question.title }}</p>
               <p class="scenario">{{ question.scenario }}</p>
               <p class="question-text">Fråga: {{ question.text }}</p>
             </div>
@@ -378,6 +383,11 @@ onMounted(loadQuestions);
   flex: 1;
 }
 
+.question-title {
+  overflow-wrap: anywhere;
+  font-weight: 600;
+}
+
 /* Scenariot kortas till två rader på mobil */
 .scenario {
   display: -webkit-box;
@@ -385,7 +395,6 @@ onMounted(loadQuestions);
   -webkit-line-clamp: 2;
   line-clamp: 2;
   overflow: hidden;
-  font-weight: 500;
 }
 
 .question-text {
@@ -394,6 +403,7 @@ onMounted(loadQuestions);
   color: var(--admin-muted);
 }
 
+.row.is-inactive .question-title,
 .row.is-inactive .scenario,
 .row.is-inactive .position {
   color: var(--admin-muted);
@@ -419,7 +429,7 @@ onMounted(loadQuestions);
   }
 
   .search {
-    width: 250px;
+    width: 275px;
   }
 }
 
