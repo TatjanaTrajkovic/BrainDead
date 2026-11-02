@@ -648,7 +648,8 @@ Bilder och knappar går inte att markera, och bilder går inte att dra iväg. De
 `QuestionPreview` (#179) visar frågan som spelaren kommer att se den, medan admin skriver. Den får formulärets objekt som prop (`:question="form"`) och läser bara, så inget anrop görs till backend och formuläret ändras aldrig. Objektet är reaktivt, så förhandsvisningen uppdateras direkt.
 
 - **Spelets komponenter:** `ScenarioBox`, `QuestionBox` och `AnswerBox` återanvänds, så förhandsvisningen ser ut som spelet utan egen kopia av stilarna. De fyra svaren ligger 2×2, som i spelet på desktop
-- **Tomma fält:** visar "Scenariot visas här", "Frågan visas här" och "Svar A–D" tills admin skriver något
+- **Feedback:** klick på ett svar markerar det och visar dess feedback under "Vad hände?" i `ScenarioBox`, som när spelaren har låst sitt svar. Under rutan står hur mycket hälsa svaret drar av. Klick på samma svar igen visar scenariot
+- **Tomma fält:** visar "Scenariot visas här", "Frågan visas här", "Feedbacken visas här" och "Svar A–D" tills admin skriver något
 - **Ram:** spelets bakgrund och centrerade text sätts på ramen runt komponenterna, eftersom spelet ärver dem från `body` och `main` och adminsidan har egna. Scenariot har fast höjd och scrollar inuti `ScenarioBox`, som i spelet. Långa ord utan mellanslag bryts (`overflow-wrap: anywhere`) så att förhandsvisningen inte blir bredare än kolumnen
 
 ### Spelare
