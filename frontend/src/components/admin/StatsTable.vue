@@ -59,7 +59,7 @@ const rows = computed(() =>
       ...question,
       averageDamage: damage,
       deathRate: played ? question.deaths / question.times_answered : null,
-      isUnplayed: !played,
+      hasNoAnswers: !played,
       isInactive: question.status === 'INACTIVE',
       isFewAnswers: played && question.times_answered < FEW_ANSWERS,
       isHighestDamage: played && hasSpread && damage === maxAverageDamage.value,
@@ -94,7 +94,7 @@ const summary = computed(() => {
   const lowest = rows.value.filter((q) => q.isLowestDamage);
   const totalAnswered = questions.value.reduce((sum, q) => sum + q.times_answered, 0);
   const allDamage = questions.value.reduce((sum, q) => sum + totalDamage(q), 0);
-  const unplayed = rows.value.filter((q) => q.isUnplayed).length;
+  const withoutAnswers = rows.value.filter((q) => q.hasNoAnswers).length;
 
   return [
     {
@@ -113,8 +113,8 @@ const summary = computed(() => {
       detail: `${totalAnswered} svar totalt`,
     },
     {
-      label: 'Ej spelade',
-      value: String(unplayed),
+      label: 'Utan svar',
+      value: String(withoutAnswers),
       detail: `av ${questions.value.length} frågor`,
     },
   ];
@@ -159,6 +159,12 @@ const percentFormat = new Intl.NumberFormat('sv-SE', {
   style: 'percent',
   maximumFractionDigits: 1,
 });
+const dateFormat = new Intl.DateTimeFormat('sv-SE', { day: 'numeric', month: 'short' });
+
+// Intl skriver "12 okt." och punkten tas bort
+function formatDate(value) {
+  return dateFormat.format(new Date(value)).replace('.', '');
+}
 
 function formatDecimal(value) {
   return value === null ? '–' : decimalFormat.format(value);
@@ -226,6 +232,12 @@ onMounted(load);
             Visar hur svaren fördelar sig mellan alternativen. Färgen anger hur mycket hälsa
             alternativet kostar.
           </dd>
+          <dt>Sedan</dt>
+          <dd>
+            Datumet då frågan skapades eller senast ändrades. Siffrorna gäller bara omgångar som har
+            startat sedan dess, så att gamla och nya svar inte blandas. Omgångar som redan pågick
+            när frågan ändrades räknas inte.
+          </dd>
         </dl>
         <p>
           Administratörers egna omgångar ingår inte i statistiken. Frågor med färre än
@@ -280,9 +292,10 @@ onMounted(load);
               Lägst snittskada
             </span>
             <span v-if="question.isInactive" class="admin-badge">Inaktiv</span>
-            <span v-if="question.isUnplayed" class="admin-badge stats-badge--warning">
-              Ej spelad
+            <span v-if="question.hasNoAnswers" class="admin-badge stats-badge--warning">
+              Inga svar än
             </span>
+            <span class="stats-since">Sedan {{ formatDate(question.updated_at) }}</span>
           </div>
           <p class="stats-card-text">{{ question.text }}</p>
 
@@ -504,6 +517,12 @@ onMounted(load);
   flex-wrap: wrap;
   align-items: center;
   gap: 0.375rem 0.5rem;
+}
+
+.stats-since {
+  font-size: 0.8125rem;
+  color: var(--admin-muted);
+  white-space: nowrap;
 }
 
 .stats-badge--danger {
