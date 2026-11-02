@@ -60,3 +60,12 @@ export function setUserStatus(userId, status) {
 export function deleteOldGuests() {
   return request('/admin/guests', { method: 'DELETE' });
 }
+
+// Byter plats med neighbourId, grannen admin ser i listan. Svarar med båda frågornas nya
+// position. Har någon annan ändrat ordningen svarar backend 409 och inget flyttas
+export function moveQuestion(questionId, direction, neighbourId) {
+  return request(`/admin/questions/${questionId}/position`, {
+    method: 'PATCH',
+    body: JSON.stringify({ direction, neighbourId }),
+  });
+}

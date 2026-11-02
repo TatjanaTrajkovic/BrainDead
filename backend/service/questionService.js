@@ -175,4 +175,61 @@ async function setQuestionStatus(questionId, status) {
   return { question_id: Number(questionId), status };
 }
 
-module.exports = { getAllQuestions, createQuestion, updateQuestion, setQuestionStatus };
+// Frågan byter position med närmaste fråga ovanför eller nedanför. Byte i stället för
+// omnumrering, eftersom position kan ha luckor. Inaktiva frågor räknas med, eftersom
+// adminlistan visar alla frågor. Pågående omgångar påverkas inte, de har låst sin ordning
+async function changeQuestionPosition(questionId, direction, neighbourId) {
+  const connection = await database.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    // FOR UPDATE låser frågorna, så att två samtidiga flyttar inte blandar ihop ordningen.
+    // Samma sortering som getAllQuestions, så att grannen är den admin ser i listan
+    const [questions] = await connection.query(
+      'SELECT question_id, position FROM question ORDER BY position, question_id FOR UPDATE',
+    );
+
+    const index = questions.findIndex((q) => q.question_id === Number(questionId));
+    if (index === -1) {
+      await connection.rollback();
+      return { error: 'QUESTION_NOT_FOUND' };
+    }
+
+    const question = questions[index];
+    const neighbour = questions[direction === 'up' ? index - 1 : index + 1];
+    if (!neighbour || neighbour.question_id !== Number(neighbourId)) {
+      await connection.rollback();
+      return { error: 'ORDER_CHANGED' };
+    }
+
+    await connection.query('UPDATE question SET position = ? WHERE question_id = ?', [
+      neighbour.position,
+      question.question_id,
+    ]);
+    await connection.query('UPDATE question SET position = ? WHERE question_id = ?', [
+      question.position,
+      neighbour.question_id,
+    ]);
+
+    await connection.commit();
+
+    // Båda frågorna som ändrades, så att listan kan sortera om utan att hämta allt igen
+    return [
+      { question_id: question.question_id, position: neighbour.position },
+      { question_id: neighbour.question_id, position: question.position },
+    ];
+  } catch (err) {
+    await connection.rollback();
+    throw err;
+  } finally {
+    connection.release();
+  }
+}
+
+module.exports = {
+  getAllQuestions,
+  createQuestion,
+  updateQuestion,
+  setQuestionStatus,
+  changeQuestionPosition,
+};

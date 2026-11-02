@@ -247,6 +247,9 @@ async function handleLogout() {
   --admin-danger: #cf222e;
   --admin-radius: 6px;
   --admin-max-width: 1200px;
+  /* Toppfältets höjd, för det som ska fastna under den. Mobil: luft 8 + "BrainDead" 36 +
+     marginal 4 + flikar 44 + ram 1. Ändras toppfältet ska värdena här ändras också */
+  --admin-topbar-h: 93px;
 
   color: var(--admin-text);
   font-family:
@@ -358,6 +361,11 @@ async function handleLogout() {
 }
 
 @media (min-width: 768px) {
+  /* Desktop: en rad, flikarna 56 + ram 1 */
+  .admin {
+    --admin-topbar-h: 57px;
+  }
+
   .admin .admin-page-head {
     flex-direction: row;
     justify-content: space-between;

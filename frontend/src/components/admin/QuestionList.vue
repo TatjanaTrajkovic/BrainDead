@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue';
-import { getQuestions, setQuestionStatus } from '@/api/adminApi';
+import { getQuestions, moveQuestion, setQuestionStatus } from '@/api/adminApi';
 
 const questions = ref([]);
 const isLoading = ref(true);
@@ -40,6 +40,27 @@ async function toggleStatus(question) {
   }
 }
 
+// Bara en flytt åt gången. Två flyttar samtidigt kan röra samma frågor, och då kan
+// listan visa en annan ordning än databasen
+const isMoving = ref(false);
+
+async function move(index, direction) {
+  const question = visibleQuestions.value[index];
+  const neighbour = visibleQuestions.value[direction === 'up' ? index - 1 : index + 1];
+  isMoving.value = true;
+  actionError.value = '';
+  try {
+    await moveQuestion(question.question_id, direction, neighbour.question_id);
+  } catch (err) {
+    // 409: någon annan har ändrat ordningen. Meddelandet säger att listan uppdateras
+    actionError.value = err.status ? err.message : 'Kunde inte nå servern';
+  } finally {
+    // Hämtas om även när flytten lyckas, så att ändringar från andra admins också syns
+    await loadQuestions();
+    isMoving.value = false;
+  }
+}
+
 // Filtrets värde är statusen som ska visas, null visar alla
 const filter = ref(null);
 const search = ref('');
@@ -68,6 +89,10 @@ const visibleQuestions = computed(() => {
     );
   });
 });
+
+// Med filter eller sökning är grannen i listan inte alltid grannen i den riktiga ordningen,
+// så pilarna fungerar bara när alla frågor visas
+const canReorder = computed(() => !filter.value && !search.value.trim());
 
 onMounted(loadQuestions);
 </script>
@@ -150,20 +175,20 @@ onMounted(loadQuestions);
 
         <ul>
           <li
-            v-for="question in visibleQuestions"
+            v-for="(question, index) in visibleQuestions"
             :key="question.question_id"
             class="row"
             :class="{ 'is-inactive': question.status === 'INACTIVE' }"
           >
             <div class="cell-order">
               <span class="position">{{ question.position }}</span>
-              <!-- Ordningen kan inte ändras än, det saknas en endpoint för position -->
               <button
                 type="button"
                 class="icon-button"
-                disabled
+                :disabled="!canReorder || isMoving || index === 0"
                 aria-label="Flytta upp"
-                title="Ordningen kan inte ändras än"
+                :title="canReorder ? 'Flytta upp' : 'Visa alla frågor för att ändra ordning'"
+                @click="move(index, 'up')"
               >
                 <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
                   <path d="m4 10 4-4 4 4" stroke="currentColor" stroke-width="1.75" fill="none" />
@@ -172,9 +197,10 @@ onMounted(loadQuestions);
               <button
                 type="button"
                 class="icon-button"
-                disabled
+                :disabled="!canReorder || isMoving || index === visibleQuestions.length - 1"
                 aria-label="Flytta ned"
-                title="Ordningen kan inte ändras än"
+                :title="canReorder ? 'Flytta ned' : 'Visa alla frågor för att ändra ordning'"
+                @click="move(index, 'down')"
               >
                 <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
                   <path d="m4 6 4 4 4-4" stroke="currentColor" stroke-width="1.75" fill="none" />
