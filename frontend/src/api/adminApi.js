@@ -60,3 +60,11 @@ export function setUserStatus(userId, status) {
 export function deleteOldGuests() {
   return request('/admin/guests', { method: 'DELETE' });
 }
+
+// Byter plats med frågan ovanför eller nedanför. Svarar med båda frågornas nya position
+export function moveQuestion(questionId, direction, neighbourId) {
+  return request(`/admin/questions/${questionId}/position`, {
+    method: 'PATCH',
+    body: JSON.stringify({ direction, neighbourId }),
+  });
+}
