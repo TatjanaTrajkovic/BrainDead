@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { createQuestion, getQuestions, updateQuestion } from '@/api/adminApi';
 import QuestionPreview from './QuestionPreview.vue';
@@ -142,6 +142,21 @@ async function save() {
   }
 }
 
+// Under 1024 px ligger förhandsvisningen inte bredvid formuläret, utan öppnas som en panel
+// med en knapp. Fokus flyttas till stängknappen så att tangentbord och skärmläsare följer med
+const isPreviewOpen = ref(false);
+const closePreviewButton = ref(null);
+
+async function openPreview() {
+  isPreviewOpen.value = true;
+  await nextTick();
+  closePreviewButton.value?.focus();
+}
+
+function closePreview() {
+  isPreviewOpen.value = false;
+}
+
 onMounted(() => {
   if (isEdit.value) loadQuestion();
 });
@@ -149,7 +164,7 @@ onMounted(() => {
 
 <template>
   <section>
-    <div class="admin-page-head">
+    <div class="admin-page-head form-head">
       <div>
         <nav class="breadcrumb" aria-label="Brödsmulor">
           <RouterLink :to="{ name: 'admin-questions' }">Frågor</RouterLink>
@@ -167,6 +182,18 @@ onMounted(() => {
           </span>
         </h1>
       </div>
+
+      <!-- Syns bara under 1024 px, där förhandsvisningen inte ligger bredvid formuläret -->
+      <button
+        v-if="!isLoading && !loadError"
+        type="button"
+        class="admin-button preview-toggle"
+        aria-controls="question-preview"
+        :aria-expanded="isPreviewOpen"
+        @click="openPreview"
+      >
+        Förhandsvisa
+      </button>
     </div>
 
     <p v-if="isLoading" class="admin-subtitle">Hämtar frågan…</p>
@@ -316,8 +343,26 @@ onMounted(() => {
         </div>
       </form>
 
-      <aside class="admin-card preview">
-        <h2 class="card-title">Förhandsvisning</h2>
+      <!-- Bakgrunden och stängknappen syns bara under 1024 px -->
+      <div v-if="isPreviewOpen" class="preview-backdrop" @click="closePreview"></div>
+
+      <aside
+        id="question-preview"
+        class="admin-card preview"
+        :class="{ 'is-open': isPreviewOpen }"
+        @keydown.esc="closePreview"
+      >
+        <div class="preview-head">
+          <h2 class="card-title">Förhandsvisning</h2>
+          <button
+            ref="closePreviewButton"
+            type="button"
+            class="admin-button preview-close"
+            @click="closePreview"
+          >
+            Stäng
+          </button>
+        </div>
         <p class="hint">Så här ser spelaren frågan.</p>
         <QuestionPreview :question="form" />
       </aside>
@@ -464,6 +509,45 @@ textarea {
   gap: 0.5rem;
 }
 
+/* Mobil och surfplatta: förhandsvisningen är dold tills knappen öppnar den som en panel
+   nerifrån, så att admin slipper scrolla förbi hela formuläret */
+.preview {
+  display: none;
+}
+
+.preview.is-open {
+  display: block;
+  position: fixed;
+  inset: auto 0 0;
+  z-index: 30;
+  max-height: 85dvh;
+  overflow-y: auto;
+  border-radius: var(--admin-radius) var(--admin-radius) 0 0;
+  box-shadow: 0 -4px 24px rgb(0 0 0 / 20%);
+}
+
+.preview-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.preview-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 29;
+  background: rgb(0 0 0 / 40%);
+}
+
+/* Rubriken och Förhandsvisa-knappen på samma rad även på mobil, där admin-page-head annars
+   staplar. Dubbel klass för att väga tyngre än .admin .admin-page-head i AdminView */
+.admin-page-head.form-head {
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
 @media (min-width: 600px) {
   /* Hälsoavdraget behöver bara plats för tre siffror */
   .answer-row {
@@ -482,9 +566,23 @@ textarea {
     align-items: start;
   }
 
-  .preview {
+  /* is-open med, så att en panel som var öppen när fönstret breddades blir en vanlig kolumn */
+  .preview,
+  .preview.is-open {
+    display: block;
     position: sticky;
     top: calc(56px + 1rem);
+    z-index: auto;
+    max-height: none;
+    overflow-y: visible;
+    border-radius: var(--admin-radius);
+    box-shadow: none;
+  }
+
+  .preview-toggle,
+  .preview-close,
+  .preview-backdrop {
+    display: none;
   }
 }
 </style>
