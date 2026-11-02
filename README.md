@@ -643,7 +643,7 @@ Bilder och knappar går inte att markera, och bilder går inte att dra iväg. De
 - **Hämtning:** backend saknar en endpoint för en enskild fråga, så formuläret hämtar alla frågor med `getQuestions()` och letar upp rätt id. Formuläret arbetar på en kopia, så inget ändras förrän admin sparar. `answer_id` följer med, eftersom `PUT` kräver samma svar som finns i databasen
 - **Fält:** titel, scenario, frågetext och alltid fyra svar med text, hälsoavdrag (heltal 0–100) och feedback. Titeln syns bara för admin och visas därför inte i förhandsvisningen. Teckenräknarna följer gränserna i `validateQuestion.js` (80 / 500 / 255 / 150 / 500), och `maxlength` stoppar längre texter
 - **Fel:** ett fält som är tomt eller har ogiltigt hälsoavdrag visar felet under sig när admin lämnar fältet, med `aria-invalid` och `aria-describedby` för skärmläsare. Spara är avstängd tills alla fält är rätt. Backend validerar ändå, och ett fel därifrån visas ovanför knapparna
-- **Spara:** `createQuestion()` eller `updateQuestion()`, sedan tillbaka till listan, som hämtar om frågorna
+- **Spara och Avbryt:** Spara anropar `createQuestion()` eller `updateQuestion()`. Båda går sedan tillbaka till listan, som hämtar om frågorna. Med `?from=stats` i URL:en går de i stället tillbaka till statistiken, med samma sortering (se [Statistik](#statistik))
 - **Layout:** en kolumn på mobil och svarstext och hälsoavdrag bredvid varandra från 600 px. **Under 1024 px** är förhandsvisningen dold. Knappen Förhandsvisa i sidhuvudet öppnar den i en `<dialog>` (`showModal()`) som en panel nerifrån. Den stängs med Stäng, Esc eller klick utanför, och sidan bakom går inte att scrolla eller tabba till medan den är öppen. Sidhuvudet fastnar under toppfältet, så knappen går att nå var admin än är i formuläret. **Från 1024 px** ligger formulär och förhandsvisning bredvid varandra, och förhandsvisningen stannar kvar när formuläret scrollas
 
 ### Förhandsvisning
@@ -745,6 +745,11 @@ Frågorna spelas i fast ordning, så senare frågor får fler dödsfall eftersom
 Siffrorna gäller bara omgångar där `game_session.started_at >= question.updated_at`, både för svar och dödsfall (#228). Annars skulle gamla och nya svar blandas när admin ändrar en fråga, och snittskadan skulle räknas med det nya `health_change` även på gamla val. Varje kort visar därför "Sedan 12 okt", datumet då frågan skapades eller senast ändrades.
 
 `updated_at` sätts bara i `updateQuestion`, och bara om frågan eller något svar faktiskt ändrats. All ändring räknas, även en rättad stavning. Att spara utan ändringar eller att inaktivera en fråga nollställer inte statistiken. Omgångar som redan pågick när frågan ändrades räknas inte för den frågan. De gamla svaren raderas inte, de filtreras bara bort, men de går inte att visa igen från adminsidan.
+
+Varje kort, även för inaktiva frågor och frågor utan svar, har länken "Justera hälsoavdrag" till `/admin/questions/:questionId/edit` (#229). Länken är minst 44 px hög på mobil.
+
+- **Sortering:** valet ligger i URL:en (`/admin/stats?sort=averageDamage`), så det finns kvar efter omladdning och med bakåtknappen. Tillåtna värden är `averageDamage` och `deathRate`. Standardsorteringen och okända värden ger ordningen i spelet. Bytet görs med `router.replace`, så att varje byte av sortering inte blir ett eget steg för bakåtknappen
+- **Tillbaka från formuläret:** länken skickar med `?from=stats` och eventuell `sort`, så att Spara och Avbryt går tillbaka till statistiken med samma sortering, även om formuläret laddas om. Brödsmulan och den markerade fliken visar fortfarande Frågor
 
 ## Arbetssätt
 
