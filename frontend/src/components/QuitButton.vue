@@ -27,14 +27,16 @@ const emit = defineEmits(['quit']);
       <path d="M19 9h-3a1 1 0 00-1 1v3" />
       <path d="M22 21H2" />
     </svg>
+    <p>HEM</p>
   </button>
 </template>
 
 <style scoped>
 .btn {
-  display: flex;
+  display: column;
   flex-direction: row;
   padding: 0.2rem;
+  aspect-ratio: 1;
 }
 
 .btn svg {
