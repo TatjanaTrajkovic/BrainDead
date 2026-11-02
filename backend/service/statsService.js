@@ -30,6 +30,7 @@ async function getDeathsPerQuestion() {
 async function getAnswerCounts() {
   const [rows] = await database.query(
     `SELECT q.question_id,
+            q.title,
             q.text AS question_text,
             q.position,
             q.status,
@@ -66,6 +67,7 @@ function buildQuestionStats(answerRows, deathRows) {
     if (!questions.has(row.question_id)) {
       questions.set(row.question_id, {
         question_id: row.question_id,
+        title: row.title,
         text: row.question_text,
         position: row.position,
         status: row.status,

@@ -81,10 +81,12 @@ const sortedRows = computed(() => {
   });
 });
 
-function positionsText(list) {
-  return list.length > 0
-    ? `Fråga ${list.map((q) => q.position).join(', ')}`
-    : 'Ingen fråga sticker ut';
+function questionLabel(question) {
+  return `Fråga ${question.position} · ${question.title}`;
+}
+
+function questionsText(list) {
+  return list.length > 0 ? list.map(questionLabel).join(', ') : 'Ingen fråga sticker ut';
 }
 
 const summary = computed(() => {
@@ -98,12 +100,12 @@ const summary = computed(() => {
     {
       label: 'Högst snittskada',
       value: formatDecimal(highest[0]?.averageDamage ?? null),
-      detail: positionsText(highest),
+      detail: questionsText(highest),
     },
     {
       label: 'Lägst snittskada',
       value: formatDecimal(lowest[0]?.averageDamage ?? null),
-      detail: positionsText(lowest),
+      detail: questionsText(lowest),
     },
     {
       label: 'Snittskada, alla svar',
@@ -270,7 +272,7 @@ onMounted(load);
           }"
         >
           <div class="stats-card-head">
-            <h2 class="stats-card-title">Fråga {{ question.position }}</h2>
+            <h2 class="stats-card-title">{{ questionLabel(question) }}</h2>
             <span v-if="question.isHighestDamage" class="admin-badge stats-badge--danger">
               Högst snittskada
             </span>
