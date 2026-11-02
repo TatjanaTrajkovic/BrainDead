@@ -88,13 +88,13 @@ function playAgain() {
                 class="answer"
                 :class="{ chosen: isChosen(question, answer), best: answer.is_best }"
               >
-                <div class="answer-row">
-                  <span class="answer-text">{{ answer.text }}</span>
-                  <span class="health">{{ healthText(answer.health_change) }}</span>
-                </div>
                 <div v-if="isHighlighted(question, answer)" class="tags">
                   <span v-if="isChosen(question, answer)" class="tag tag-chosen">Ditt svar</span>
                   <span v-if="answer.is_best" class="tag tag-best">Bästa svaret</span>
+                </div>
+                <div class="answer-row">
+                  <span class="answer-text">{{ answer.text }}</span>
+                  <span class="health">{{ healthText(answer.health_change) }}</span>
                 </div>
                 <p v-if="isHighlighted(question, answer)" class="feedback">
                   {{ answer.feedback }}
@@ -293,11 +293,13 @@ function playAgain() {
 .tag-chosen {
   background-color: var(--color-text);
   color: var(--color-bg-purple);
+  margin-bottom: 10px;
 }
 
 .tag-best {
   background-color: #2f5d34;
   color: #e3f2d9;
+  margin-bottom: 10px;
 }
 
 .feedback {
