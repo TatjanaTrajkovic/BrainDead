@@ -1,6 +1,10 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { getStats } from '@/api/adminApi';
+
+const route = useRoute();
+const router = useRouter();
 
 const questions = ref([]);
 const isLoading = ref(true);
@@ -21,7 +25,26 @@ const sortOptions = [
   { key: 'deathRate', label: 'Andel som dog här' },
 ];
 
-const sortKey = ref('position');
+// Sorteringen ligger i URL:en, så att den finns kvar efter omladdning och bakåtknappen (#229).
+// Ett okänt värde i URL:en ger standardsorteringen
+const sortKey = computed(() =>
+  sortOptions.some((option) => option.key === route.query.sort) ? route.query.sort : 'position',
+);
+
+// replace, så att varje byte av sortering inte blir ett eget steg för bakåtknappen.
+// Standardsorteringen behöver inget i URL:en
+function setSort(key) {
+  router.replace({ query: key === 'position' ? {} : { sort: key } });
+}
+
+// from och sort följer med i URL:en, så att formuläret kan gå tillbaka hit med samma sortering
+function editLink(question) {
+  return {
+    name: 'admin-question-edit',
+    params: { questionId: question.question_id },
+    query: { from: 'stats', ...(sortKey.value !== 'position' && { sort: sortKey.value }) },
+  };
+}
 
 function totalDamage(question) {
   return question.answers.reduce(
@@ -254,7 +277,7 @@ onMounted(load);
             type="button"
             class="admin-button stats-sort-button"
             :aria-pressed="sortKey === option.key"
-            @click="sortKey = option.key"
+            @click="setSort(option.key)"
           >
             {{ option.label }}
           </button>
@@ -343,6 +366,14 @@ onMounted(load);
               <span class="stats-answer-percent">{{ percent(answer, question) }} %</span>
             </li>
           </ul>
+
+          <RouterLink
+            :to="editLink(question)"
+            class="admin-button stats-edit-link"
+            :aria-label="`Justera hälsoavdrag för ${questionLabel(question)}`"
+          >
+            Justera hälsoavdrag
+          </RouterLink>
         </li>
       </ol>
     </template>
@@ -629,6 +660,12 @@ onMounted(load);
   font-variant-numeric: tabular-nums;
 }
 
+.stats-edit-link {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 0.75rem;
+}
+
 .stats-damage--none {
   background: var(--stats-damage-none);
 }
@@ -682,12 +719,13 @@ onMounted(load);
   .stats-card {
     display: grid;
     grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
-    grid-template-rows: auto auto auto 1fr;
+    grid-template-rows: auto auto auto auto 1fr;
     grid-template-areas:
       'head answers'
       'text answers'
       'numbers answers'
-      'note answers';
+      'note answers'
+      'edit answers';
     column-gap: 2rem;
     padding: 1.25rem;
   }
@@ -712,6 +750,14 @@ onMounted(load);
 
   .stats-answers {
     grid-area: answers;
+  }
+
+  .stats-edit-link {
+    grid-area: edit;
+    align-self: end;
+    justify-self: start;
+    width: auto;
+    min-height: 36px;
   }
 
   .stats-answer {

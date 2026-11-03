@@ -16,6 +16,15 @@ const pageTitle = computed(() =>
   isEdit.value ? `Redigera fråga ${questionId.value}` : 'Ny fråga',
 );
 
+// Vart Spara och Avbryt leder. Kom admin från statistiken går det tillbaka dit med samma
+// sortering (#229). Det ligger i URL:en, så att det gäller även efter en omladdning
+const backTo = computed(() => {
+  if (route.query.from !== 'stats') {
+    return { name: 'admin-questions' };
+  }
+  return { name: 'admin-stats', query: route.query.sort ? { sort: route.query.sort } : {} };
+});
+
 // Spelet förutsätter exakt fyra svar, samma som ANSWER_COUNT i backend
 const ANSWER_COUNT = 4;
 // Gränserna följer validateQuestion.js och databasens kolumner. Ändras de ska de ändras här också
@@ -133,8 +142,8 @@ async function save() {
     } else {
       await createQuestion(form.value);
     }
-    // Listan hämtar om frågorna när den visas, så den nya eller ändrade frågan syns direkt
-    router.push({ name: 'admin-questions' });
+    // Listan och statistiken hämtar om frågorna när de visas, så ändringen syns direkt
+    router.push(backTo.value);
   } catch (err) {
     saveError.value = err.status ? err.message : 'Kunde inte nå servern';
   } finally {
@@ -328,7 +337,7 @@ onMounted(() => {
         <div class="admin-card form-footer">
           <p v-if="saveError" class="admin-alert" role="alert">{{ saveError }}</p>
           <div class="form-buttons">
-            <RouterLink :to="{ name: 'admin-questions' }" class="admin-button">Avbryt</RouterLink>
+            <RouterLink :to="backTo" class="admin-button">Avbryt</RouterLink>
             <button
               type="submit"
               class="admin-button admin-button--primary"
