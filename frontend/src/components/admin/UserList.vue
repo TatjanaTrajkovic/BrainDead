@@ -215,13 +215,13 @@ async function runPending() {
       </button>
     </div>
 
-    <div class="toolbar">
-      <div class="segmented" role="group" aria-label="Visa spelare">
+    <div class="admin-toolbar">
+      <div class="admin-segmented" role="group" aria-label="Visa spelare">
         <button
           v-for="f in filters"
           :key="f.label"
           type="button"
-          class="segment"
+          class="admin-segment"
           :class="{ 'is-active': filter === f.value }"
           :aria-pressed="filter === f.value"
           @click="filter = f.value"
@@ -230,7 +230,7 @@ async function runPending() {
         </button>
       </div>
 
-      <label class="search">
+      <label class="admin-search">
         <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
           <circle cx="7" cy="7" r="4.5" stroke="currentColor" stroke-width="1.5" fill="none" />
           <path d="M10.5 10.5 14 14" stroke="currentColor" stroke-width="1.5" />
@@ -242,7 +242,7 @@ async function runPending() {
     <p v-if="actionError" class="admin-alert action-error" role="alert">{{ actionError }}</p>
     <p v-if="actionMessage" class="action-message" role="status">{{ actionMessage }}</p>
 
-    <div v-if="loadError" class="admin-alert load-error" role="alert">
+    <div v-if="loadError" class="admin-alert admin-load-error" role="alert">
       <p>{{ loadError }}</p>
       <button type="button" class="admin-button" @click="loadUsers">Försök igen</button>
     </div>
@@ -252,21 +252,21 @@ async function runPending() {
 
     <p v-else-if="users.length === 0" class="admin-card">Inga spelare matchar.</p>
 
-    <div v-else class="list" :class="{ 'is-loading': isLoading }">
-      <div class="list-head" aria-hidden="true">
+    <div v-else class="admin-list" :class="{ 'is-loading': isLoading }">
+      <div class="admin-list-head" aria-hidden="true">
         <span>Namn</span>
         <span>Roll</span>
         <span>Status</span>
         <span>Omgångar</span>
         <span>Bästa</span>
-        <span class="align-end">Åtgärder</span>
+        <span class="admin-align-end">Åtgärder</span>
       </div>
 
       <ul>
         <li
           v-for="user in users"
           :key="user.user_id"
-          class="row"
+          class="admin-row"
           :class="{ 'is-banned': user.status === 'BANNED' }"
         >
           <div class="cell-name">
@@ -303,11 +303,11 @@ async function runPending() {
           </div>
 
           <div class="cell-sessions">
-            {{ user.session_count }}<span class="mobile-label"> omgångar</span>
+            {{ user.session_count }}<span class="admin-mobile-label"> omgångar</span>
           </div>
 
           <div class="cell-best">
-            <span class="mobile-label">Bästa </span>{{ user.best_score ?? '–' }}
+            <span class="admin-mobile-label">Bästa </span>{{ user.best_score ?? '–' }}
           </div>
 
           <!-- Cellen finns alltid, så att kolumnerna stämmer på desktop. På mobil döljs den tom -->
@@ -379,64 +379,8 @@ async function runPending() {
 </template>
 
 <style scoped>
-/* Samma uppbyggnad som QuestionList: kort på mobil, tabell från 768 px */
-
-.toolbar {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-}
-
-.segmented {
-  display: flex;
-  padding: 0.1875rem;
-  background: var(--admin-neutral-bg);
-  border-radius: var(--admin-radius);
-}
-
-.segment {
-  flex: 1;
-  min-height: 36px;
-  padding: 0 0.5rem;
-  font-size: 0.875rem;
-  color: var(--admin-muted);
-  white-space: nowrap;
-  border-radius: calc(var(--admin-radius) - 2px);
-}
-
-.segment.is-active {
-  color: var(--admin-text);
-  background: var(--admin-surface);
-  box-shadow: 0 1px 2px rgb(0 0 0 / 8%);
-}
-
-.search {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-height: 40px;
-  padding: 0 0.75rem;
-  color: var(--admin-muted);
-  background: var(--admin-surface);
-  border: 1px solid var(--admin-border);
-  border-radius: var(--admin-radius);
-}
-
-.search:focus-within {
-  border-color: var(--admin-accent);
-  outline: 2px solid color-mix(in srgb, var(--admin-accent) 25%, transparent);
-}
-
-.search input {
-  flex: 1;
-  min-width: 0;
-  font: inherit;
-  color: var(--admin-text);
-  background: none;
-  border: none;
-  outline: none;
-}
+/* Samma uppbyggnad som QuestionList: kort på mobil, tabell från 768 px. Verktygsraden,
+   listan och raderna kommer från admin-klasserna i AdminView */
 
 .action-error {
   margin-bottom: 1rem;
@@ -451,33 +395,12 @@ async function runPending() {
   border-radius: var(--admin-radius);
 }
 
-.load-error {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-
-.list.is-loading {
+.admin-list.is-loading {
   opacity: 0.6;
 }
 
-.list ul {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  padding: 0;
-  list-style: none;
-}
-
-.list-head {
-  display: none;
-}
-
 /* Kort på mobil: namn och status överst, sedan roll, siffror och knappar */
-.row {
-  display: grid;
+.admin-row {
   grid-template-columns: 1fr auto;
   grid-template-areas:
     'name status'
@@ -485,11 +408,6 @@ async function runPending() {
     'sessions best'
     'actions actions'
     'expanded expanded';
-  gap: 0.5rem;
-  padding: 1rem;
-  background: var(--admin-surface);
-  border: 1px solid var(--admin-border);
-  border-radius: var(--admin-radius);
 }
 
 .cell-name {
@@ -583,7 +501,7 @@ async function runPending() {
   background: color-mix(in srgb, var(--admin-danger) 10%, var(--admin-surface));
 }
 
-.row.is-banned .name-button {
+.admin-row.is-banned .name-button {
   color: var(--admin-muted);
 }
 
@@ -621,21 +539,6 @@ async function runPending() {
 }
 
 @media (min-width: 600px) {
-  .toolbar {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .segment {
-    flex: none;
-    padding: 0 0.75rem;
-  }
-
-  .search {
-    width: 250px;
-  }
-
   .cell-actions {
     justify-content: flex-end;
   }
@@ -647,51 +550,19 @@ async function runPending() {
 
 /* Desktop: rubrikrad och raderna i samma fasta kolumner, som i QuestionList */
 @media (min-width: 768px) {
-  .list {
-    overflow: hidden;
-    background: var(--admin-surface);
-    border: 1px solid var(--admin-border);
-    border-radius: var(--admin-radius);
-  }
-
-  .list-head,
-  .row {
-    display: grid;
+  .admin-list-head,
+  .admin-row {
     grid-template-columns: minmax(0, 1fr) 5.5rem 5.5rem 5.5rem 4rem 16rem;
     grid-template-areas:
       'name role status sessions best actions'
       'expanded expanded expanded expanded expanded expanded';
-    align-items: center;
-    column-gap: 1rem;
-    padding: 0.75rem 1rem;
   }
 
-  .list-head {
+  .admin-list-head {
     grid-template-areas: none;
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--admin-muted);
-    border-bottom: 1px solid var(--admin-border);
   }
 
-  .list ul {
-    gap: 0;
-  }
-
-  .row {
-    row-gap: 0;
-    border: none;
-    border-bottom: 1px solid var(--admin-border);
-    border-radius: 0;
-  }
-
-  .row:last-child {
-    border-bottom: none;
-  }
-
-  .row.is-banned {
+  .admin-row.is-banned {
     background: var(--admin-bg);
   }
 
@@ -706,20 +577,12 @@ async function runPending() {
     color: var(--admin-text);
   }
 
-  .mobile-label {
-    display: none;
-  }
-
   .cell-actions.no-actions {
     display: flex;
   }
 
   .sessions {
     margin-top: 0.75rem;
-  }
-
-  .align-end {
-    text-align: right;
   }
 }
 </style>
