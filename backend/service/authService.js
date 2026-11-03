@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const { promisify } = require('util');
 const database = require('../connectionMySQL');
+const { getUserBestScore } = require('./highScoreService');
 
 const scrypt = promisify(crypto.scrypt);
 
@@ -69,11 +70,22 @@ async function registerUser(username, password) {
       role: 'PLAYER',
       is_guest: false,
       display_name: username,
+      has_survived: false,
+      survived_health: null,
     };
     return { user, token };
   } catch (err) {
     handleDbError(err);
   }
+}
+
+// Överlevnadsstatus och högsta hälsan från highScoreService i user-objekt
+async function enrichWithCompleted(user) {
+  if (!user) return null;
+  const best = await getUserBestScore(user.user_id);
+  user.has_survived = best !== null;
+  user.survived_health = best;
+  return user;
 }
 
 // Gästen blir ett konto, så att poängen följer med. auth_token ligger kvar, så cookien fortsätter gälla
@@ -85,7 +97,14 @@ async function guestToUser(userId, username, password) {
        WHERE user_id = ? AND is_guest = TRUE AND status = ?`,
       [username, hashedPassword, userId, 'ACTIVE'],
     );
-    return { user_id: userId, username, role: 'PLAYER', is_guest: false, display_name: username };
+    const user = {
+      user_id: userId,
+      username,
+      role: 'PLAYER',
+      is_guest: false,
+      display_name: username,
+    };
+    return await enrichWithCompleted(user);
   } catch (err) {
     handleDbError(err);
   }
@@ -100,7 +119,8 @@ async function findByToken(token) {
      WHERE auth_token = ? AND status = ?`,
     [hashToken(token), 'ACTIVE'],
   );
-  return rows[0] ?? null;
+  const user = rows[0] ?? null;
+  return await enrichWithCompleted(user);
 }
 
 // Gästens omgångar flyttas till kontot, så att poängen och en pågående omgång följer med.
@@ -175,6 +195,7 @@ async function loginUser(username, password, guestId = null) {
     is_guest: false,
     display_name: row.username,
   };
+  await enrichWithCompleted(user);
   return { user, token };
 }
 
