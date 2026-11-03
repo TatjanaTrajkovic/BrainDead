@@ -285,7 +285,7 @@ async function runPending() {
           </div>
 
           <div class="cell-role">
-            <span class="admin-badge" :class="{ 'badge-admin': user.role === 'ADMIN' }">
+            <span class="admin-badge" :class="{ 'admin-badge--info': user.role === 'ADMIN' }">
               {{ roleLabel(user) }}
             </span>
           </div>
@@ -295,7 +295,7 @@ async function runPending() {
               class="admin-badge"
               :class="{
                 'admin-badge--success': user.status === 'ACTIVE',
-                'badge-banned': user.status === 'BANNED',
+                'admin-badge--danger': user.status === 'BANNED',
               }"
             >
               {{ statusLabels[user.status] }}
@@ -489,16 +489,6 @@ async function runPending() {
 
 .cell-actions .admin-button {
   flex: 1;
-}
-
-.badge-admin {
-  color: var(--admin-accent);
-  background: color-mix(in srgb, var(--admin-accent) 12%, var(--admin-surface));
-}
-
-.badge-banned {
-  color: var(--admin-danger);
-  background: color-mix(in srgb, var(--admin-danger) 10%, var(--admin-surface));
 }
 
 .admin-row.is-banned .name-button {

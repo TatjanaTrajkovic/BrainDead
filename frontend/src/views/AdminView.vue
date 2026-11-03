@@ -360,6 +360,16 @@ async function handleLogout() {
   background: var(--admin-success-bg);
 }
 
+.admin .admin-badge--danger {
+  color: var(--admin-danger);
+  background: color-mix(in srgb, var(--admin-danger) 10%, var(--admin-surface));
+}
+
+.admin .admin-badge--info {
+  color: var(--admin-accent);
+  background: color-mix(in srgb, var(--admin-accent) 10%, var(--admin-surface));
+}
+
 /* Felruta med Försök igen-knapp bredvid texten */
 .admin .admin-load-error {
   display: flex;

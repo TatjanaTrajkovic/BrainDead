@@ -706,6 +706,7 @@ All CSS för adminsidan ligger i `AdminView.vue`, inte i `main.css` eller `base.
 | `.admin-card`                            | Vit yta med kant                                                                           |
 | `.admin-button`, `--primary`, `--danger` | Knappar, t.ex. `class="admin-button admin-button--primary"`. Fungerar även på `RouterLink` |
 | `.admin-badge`, `--success`              | Märken, t.ex. status Aktiv/Inaktiv                                                         |
+| `.admin-badge--danger`, `--info`         | Rött märke (t.ex. Bannad) och blått märke (t.ex. Admin)                                    |
 | `.admin-alert`                           | Röd felruta, t.ex. när en hämtning eller ändring misslyckas                                |
 | `.admin-load-error`                      | Tillägg till `.admin-alert`: texten och Försök igen-knappen på samma rad                   |
 | `.admin-toolbar`                         | Raden ovanför en lista med filterknappar och sökfält, staplade på mobil                    |
