@@ -13,7 +13,7 @@ require.cache[require.resolve('../connectionMySQL')] = {
   },
 };
 
-const { getHighScores } = require('./highScoreService');
+const { getHighScores, getUserBestScore } = require('./highScoreService');
 
 test('topplistan visar bara aktiva spelare med rollen PLAYER', async () => {
   const rows = await getHighScores();
@@ -22,4 +22,11 @@ test('topplistan visar bara aktiva spelare med rollen PLAYER', async () => {
   assert.deepEqual(rows, [{ username: 'Erik', score: 80 }]);
   assert.match(sql, /u\.status = 'ACTIVE'/);
   assert.match(sql, /u\.role = 'PLAYER'/);
+});
+
+test('getUserBestScore frågar efter COMPLETED och hälsa > 0', async () => {
+  await getUserBestScore(42);
+  const sql = sentQueries.at(-1);
+  assert.match(sql, /status = 'COMPLETED'/);
+  assert.match(sql, /current_health > 0/);
 });
