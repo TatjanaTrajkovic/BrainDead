@@ -135,6 +135,12 @@ function playAgain() {
 .review {
   gap: 16px;
   width: 100%;
+  max-width: 768px;
+}
+
+/* override cqmin */
+.review :deep(.question-box p) {
+  font-size: 1.2rem;
 }
 
 .status {
