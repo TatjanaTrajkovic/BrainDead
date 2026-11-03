@@ -82,10 +82,21 @@ test('health_change måste vara ett heltal', () => {
   for (const value of [1.5, '10', null, undefined, NaN]) {
     assert.equal(
       validateQuestion(withAnswer(2, { health_change: value })),
-      'Svar 3: health_change måste vara ett heltal',
+      'Svar 3: health_change måste vara ett heltal mellan 0 och 100',
     );
   }
-  assert.equal(validateQuestion(withAnswer(0, { health_change: 0 })), null);
+});
+
+test('health_change måste ligga mellan 0 och 100', () => {
+  for (const value of [-1, -50, 101]) {
+    assert.equal(
+      validateQuestion(withAnswer(1, { health_change: value })),
+      'Svar 2: health_change måste vara ett heltal mellan 0 och 100',
+    );
+  }
+  for (const value of [0, 100]) {
+    assert.equal(validateQuestion(withAnswer(0, { health_change: value })), null);
+  }
 });
 
 test('answer_id krävs bara vid redigering', () => {

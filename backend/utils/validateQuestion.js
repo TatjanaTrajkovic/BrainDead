@@ -10,6 +10,11 @@ const ANSWER_TEXT_MAX_LENGTH = 150;
 const FEEDBACK_MIN_LENGTH = 1;
 const FEEDBACK_MAX_LENGTH = 500;
 
+// health_change är hur mycket hälsa svaret drar av. Ett negativt värde skulle ge
+// spelaren hälsa i stället (#220), och hälsan går aldrig över 100
+const HEALTH_CHANGE_MIN = 0;
+const HEALTH_CHANGE_MAX = 100;
+
 // Spelet förutsätter att varje fråga har exakt fyra svarsalternativ
 const ANSWER_COUNT = 4;
 
@@ -94,8 +99,12 @@ function validateQuestion(question, { requireAnswerId = false } = {}) {
       return feedbackError;
     }
 
-    if (!Number.isInteger(answer.health_change)) {
-      return `${prefix}: health_change måste vara ett heltal`;
+    if (
+      !Number.isInteger(answer.health_change) ||
+      answer.health_change < HEALTH_CHANGE_MIN ||
+      answer.health_change > HEALTH_CHANGE_MAX
+    ) {
+      return `${prefix}: health_change måste vara ett heltal mellan ${HEALTH_CHANGE_MIN} och ${HEALTH_CHANGE_MAX}`;
     }
   }
 
@@ -108,6 +117,8 @@ module.exports = {
   TEXT_MAX_LENGTH,
   ANSWER_TEXT_MAX_LENGTH,
   FEEDBACK_MAX_LENGTH,
+  HEALTH_CHANGE_MIN,
+  HEALTH_CHANGE_MAX,
   ANSWER_COUNT,
   validateQuestion,
 };
