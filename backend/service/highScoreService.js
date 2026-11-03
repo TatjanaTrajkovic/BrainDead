@@ -29,4 +29,17 @@ async function getHighScores() {
   return rows;
 }
 
-module.exports = { getHighScores };
+// En spelares bästa omgång. Högsta hälsa från en avslutad omgång (COMPLETED och health > 0).
+// Returnerar poängen som ett Number, eller null om spelaren inte har klarat någon omgång än.
+async function getUserBestScore(userId) {
+  const [rows] = await database.query(
+    `SELECT MAX(current_health) AS best_health
+     FROM game_session
+     WHERE user_id = ? AND status = 'COMPLETED' AND current_health > 0`,
+    [userId],
+  );
+  const best = rows[0]?.best_health;
+  return best != null ? Number(best) : null;
+}
+
+module.exports = { getHighScores, getUserBestScore };
