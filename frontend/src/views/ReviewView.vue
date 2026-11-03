@@ -140,7 +140,7 @@ function playAgain() {
 
 /* override cqmin */
 .review :deep(.question-box p) {
-  font-size: 1.2rem;
+  font-size: 1rem;
 }
 
 .status {
