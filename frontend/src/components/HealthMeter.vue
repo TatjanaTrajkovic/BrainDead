@@ -40,21 +40,21 @@ const level = computed(() => {
 <style scoped>
 .meter {
   display: flex;
-  flex-direction: column;
+  flex-direction: row-reverse;
   align-items: center;
-  width: 64px;
-  height: 100%;
-  padding: 8px 0;
+  width: 100%;
+  height: clamp(30px, 6cqh, 50px);
+  padding: 0 4px;
   background: #221e1b;
-  border: 3px solid #cbb98a;
+  border: 4px solid #cbb98a;
   border-radius: 16px;
 }
 .blobs {
   display: flex;
-  flex-direction: column-reverse;
-  gap: 8px;
-  padding: 8px;
-  width: 100%;
+  flex-direction: row;
+  gap: 4px;
+  padding: 5px 4px;
+  height: 100%;
   flex: 1;
 }
 .blob {
@@ -79,10 +79,34 @@ const level = computed(() => {
 .blob--empty {
   opacity: 0;
 } /* eller en mörk "tom" färg om du vill se platsen */
+
 .icon {
-  width: 100%;
-  aspect-ratio: 720 / 530; /* samma proportioner som bilderna, så höjden är känd innan bilden laddats */
+  width: auto;
+  height: 100%;
+  aspect-ratio: 720 / 530; /* samma proportioner som bilderna */
   flex-shrink: 0;
   object-fit: contain;
+}
+
+/* Pelare i liggande, och på porträtt-surfplatta (sidpelare i QuizLayout) */
+@media (orientation: landscape),
+  (orientation: portrait) and (pointer: coarse) and (min-width: 768px) {
+  .meter {
+    flex-direction: column;
+    /* bredden i cqh */
+    width: clamp(40px, 10cqh, 96px);
+    height: 100%;
+    padding: 8px 0px;
+  }
+  .blobs {
+    flex-direction: column-reverse;
+    gap: 8px;
+    width: 90%;
+    height: auto;
+  }
+  .icon {
+    width: 100%;
+    height: auto;
+  }
 }
 </style>

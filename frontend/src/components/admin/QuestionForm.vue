@@ -528,7 +528,7 @@ textarea {
 .preview-dialog {
   width: 100%;
   max-width: 100%;
-  max-height: 85dvh;
+  max-height: 100dvh;
   margin: auto 0 0;
   padding: 0;
   color: var(--admin-text);
@@ -546,6 +546,10 @@ textarea {
 /* Innehållet har padding i stället för dialogen, så att click.self bara träffar bakgrunden */
 .preview-dialog-content {
   padding: 1rem;
+}
+
+.preview-dialog-content :deep(.game-frame) {
+  height: min(34rem, calc(100dvh - 9rem));
 }
 
 .preview-dialog-head {

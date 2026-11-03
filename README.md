@@ -401,8 +401,10 @@ Routerna kan ha flaggor i `meta`, som läses av guards och komponenter. För nä
 Startsidan har tre layouter. Vilken som gäller styrs av media queries, och de måste vara **exakt likadana** i `main.css`, `HomeView.vue` och `isDesktop` i `HomeView.vue`. Annars blandas layouterna ihop vid vissa skärmstorlekar.
 
 - **Stående:** allt som inte är liggande. Två kolumner (`.col`), loggan ovanför.
-- **Desktop:** `min-width: 768px`, `min-height: 501px`, liggande och `pointer: fine`. Grid med tre lika breda kolumner. Topplistan ingår i handboksbilden.
-- **Liggande telefon/surfplatta:** liggande OCH `max-width: 767px` eller `pointer: coarse` eller `max-height: 500px`. Loggan och ID-kortet överst. topplista, handbok, prolog och startknapp på raden under.
+- **Desktop:** `min-width: 768px`, `min-height: 600.5px`, liggande och `pointer: fine`. Grid med tre lika breda kolumner. Topplistan ingår i handboksbilden.
+- **Liggande telefon/surfplatta:** liggande OCH `max-width: 767px` eller `pointer: coarse` eller `max-height: 600.5px`. Loggan och ID-kortet överst. topplista, handbok, prolog och startknapp på raden under.
+
+Brytpunkterna har x.5-värden och överlappar varandra, så fraktionerade fönsterhöjder (Windows-skalning, zoom) aldrig hamnar mellan två querys.
 
 Ytorna heter `area-handbook`, `area-highscore`, `area-prolog`, `area-id` och `area-start`. Komponenterna ska fylla sin yta, och det är griden som bestämmer storleken. `area-highscore` renderas bara när `isDesktop` är `false`, eftersom topplistan på desktop är en del av handboksbilden (`HandbookHighscore part="both"`).
 
@@ -418,7 +420,7 @@ På desktop styrs bredden av `--content-w` i `base.css`, och loggans höjd av `-
 
 #### Testa layouterna
 
-Kontrollera alltid stående mobil, liggande mobil, en surfplatta och PC. I Chrome/Edge DevTools får du `pointer: coarse` genom att välja en enhetsprofil (till exempel iPad). Vald "Responsive" utan enhet räknas som mus. Testa också ett lågt PC-fönster (höjd under 500 px), som ska ge kompaktläget.
+Kontrollera alltid stående mobil, liggande mobil, en surfplatta och PC. I Chrome/Edge DevTools får du `pointer: coarse` genom att välja en enhetsprofil (till exempel iPad). Vald "Responsive" utan enhet räknas som mus. Testa också ett lågt PC-fönster (höjd under 600 px), som ska ge kompaktläget. Testa spelskärmen extra: telefonhöjd (under 700 px) visar quizet utan logga, och surfplatta i porträtt visar progress och health som pelare på sidorna.
 
 ### Spelskärmen
 
@@ -439,6 +441,16 @@ Under `question` och `feedback` visas spelet i `QuizLayout`. Den är bara ett ru
 +--------------+-----------------------------+---------------+
 ```
 
+Griden byggs om per media query, med samma brytpunkter som startsidan:
+
+- **Porträtt:** enkolumnig — progress och health överst, sedan story, fråga, svar och submit
+- **Kompakt liggande:** progress och health som pelare på sidorna, story bredvid fråga/svar, submit underst
+- **Surfplatta i porträtt** (touch, minst 768 px bred): som porträtt, men progress och health är pelare på sidorna
+- **Telefonhöjd** (under 700 px, oavsett orientering): loggan göms och panelen får hela fönsterhöjden; liggande under 480 px dessutom svar i 2×2
+- **Stor skärm med mus:** vågrät layout, panelhöjd capad (`76dvh`) och ramen med målbredd tills skärmen blir för smal
+
+`.quiz-layout` är en container (`container-type: size`), och text och prickor skalar med containerns minsta dimension (`cqmin`) i stället för bredden. Prickstorleken har dessutom ett tak som räknas ut så att alla frågor alltid ryms i pelarens höjd.
+
 Samma komponenter används i båda faserna, `phase` styr vad de visar:
 
 | Slot        | Komponent          | `question`                    | `feedback`                                                            |
@@ -450,7 +462,7 @@ Samma komponenter används i båda faserna, `phase` styr vad de visar:
 | `#submit`   | `LockAnswerButton` | "Lås svar"                    | "Nästa fråga >" / "Se resultat"                                       |
 | `#health`   | `HealthMeter`      | Nuvarande hälsa               | Hälsan efter svaret, pluppar tonas ut                                 |
 
-`AnswerBox` läggs med `v-for` direkt i `#answers`, så att varje knapp blir en egen cell i 2×2-rutnätet. `QuitButton` ligger under panelen och tar spelaren tillbaka till startsidan.
+`AnswerBox` läggs med `v-for` direkt i `#answers`, så att varje knapp blir en egen cell i rutnätet (en kolumn i porträtt och kompakt liggande, 2×2 på stor skärm och liggande under 480 px). `QuitButton` ligger bredvid lås-knappen i `#submit` och tar spelaren tillbaka till startsidan.
 
 När `phase` blir `finished` visas `EndCard` i stället för rutnätet. Den visar en levande eller död hjärna beroende på `isAlive`, hur mycket hjärnkapacitet som finns kvar och knapparna "Se svaren", "Spela igen" och "Till startsidan". "Spela igen" skickar `play-again`, och `GameView` startar då en ny omgång. "Se svaren" skickar `show-review`, och `GameView` går till `/review/<sessionId>`.
 
@@ -644,16 +656,20 @@ Bilder och knappar går inte att markera, och bilder går inte att dra iväg. De
 - **Fält:** titel, scenario, frågetext och alltid fyra svar med text, hälsoavdrag (heltal 0–100) och feedback. Titeln syns bara för admin och visas därför inte i förhandsvisningen. Teckenräknarna följer gränserna i `validateQuestion.js` (80 / 500 / 255 / 150 / 500), och `maxlength` stoppar längre texter
 - **Fel:** ett fält som är tomt eller har ogiltigt hälsoavdrag visar felet under sig när admin lämnar fältet, med `aria-invalid` och `aria-describedby` för skärmläsare. Spara är avstängd tills alla fält är rätt. Backend validerar ändå, och ett fel därifrån visas ovanför knapparna
 - **Spara och Avbryt:** Spara anropar `createQuestion()` eller `updateQuestion()`. Båda går sedan tillbaka till listan, som hämtar om frågorna. Med `?from=stats` i URL:en går de i stället tillbaka till statistiken, med samma sortering (se [Statistik](#statistik))
-- **Layout:** en kolumn på mobil och svarstext och hälsoavdrag bredvid varandra från 600 px. **Under 1024 px** är förhandsvisningen dold. Knappen Förhandsvisa i sidhuvudet öppnar den i en `<dialog>` (`showModal()`) som en panel nerifrån. Den stängs med Stäng, Esc eller klick utanför, och sidan bakom går inte att scrolla eller tabba till medan den är öppen. Sidhuvudet fastnar under toppfältet, så knappen går att nå var admin än är i formuläret. **Från 1024 px** ligger formulär och förhandsvisning bredvid varandra, och förhandsvisningen stannar kvar när formuläret scrollas
+- **Layout:**
+  - **Under 600 px:** en kolumn.
+  - **Från 600 px:** svarstext och hälsoavdrag ligger bredvid varandra.
+  - **Under 1024 px:** förhandsvisningen är dold. Sidhuvudet fastnar under toppfältet, så knappen Förhandsvisa går att nå var admin än är i formuläret. Knappen öppnar förhandsvisningen i en `<dialog>` (`showModal()`) som en panel nerifrån. Dialogen får hela skärmen som tak (`max-height: 100dvh`), så quizet ryms i synfältet. Den stängs med Stäng, Esc eller klick utanför, och sidan bakom går inte att scrolla eller tabba till medan dialogen är öppen.
+  - **Från 1024 px:** formulär och förhandsvisning ligger bredvid varandra, och förhandsvisningen stannar kvar när formuläret scrollas.
 
 ### Förhandsvisning
 
 `QuestionPreview` (#179) visar frågan som spelaren kommer att se den, medan admin skriver. Den får formulärets objekt som prop (`:question="form"`) och läser bara, så inget anrop görs till backend och formuläret ändras aldrig. Objektet är reaktivt, så förhandsvisningen uppdateras direkt.
 
-- **Spelets komponenter:** `ScenarioBox`, `QuestionBox` och `AnswerBox` återanvänds, så förhandsvisningen ser ut som spelet utan egen kopia av stilarna. De fyra svaren ligger 2×2, som i spelet på desktop
+- **Spelets komponenter:** `ScenarioBox`, `QuestionBox` och `AnswerBox` återanvänds, så förhandsvisningen ser ut som spelet utan egen kopia av stilarna. Ramen är en storlekscontainer (`container-type: size`), så komponenternas `cqmin`-textstorlekar mäter ramen i stället för fönstret. De fyra svaren ligger 2×2, som i spelet på desktop; i spelets porträttlägen ligger de i en kolumn, men förhandsvisningen behåller 2×2
 - **Feedback:** klick på ett svar markerar det och visar dess feedback under "Vad hände?" i `ScenarioBox`, som när spelaren har låst sitt svar. Under rutan står hur mycket hälsa svaret drar av. Klick på samma svar igen visar scenariot
 - **Tomma fält:** visar "Scenariot visas här", "Frågan visas här", "Feedbacken visas här" och "Svar A–D" tills admin skriver något
-- **Ram:** spelets bakgrund och centrerade text sätts på ramen runt komponenterna, eftersom spelet ärver dem från `body` och `main` och adminsidan har egna. Scenariot har fast höjd och scrollar inuti `ScenarioBox`, som i spelet. Långa ord utan mellanslag bryts (`overflow-wrap: anywhere`) så att förhandsvisningen inte blir bredare än kolumnen
+- **Ram:** spelets bakgrund och centrerade text sätts på ramen runt komponenterna, eftersom spelet ärver dem från `body` och `main` och adminsidan har egna. Ramen har en bestämd höjd — `clamp(480px, 55dvh, 800px)` bredvid formuläret, `min(34rem, calc(100dvh - 9rem))` i dialogen — och scenariot tar resten av höjden och scrollar inuti `ScenarioBox`, som i spelet. Långa ord utan mellanslag bryts (`overflow-wrap: anywhere`) så att förhandsvisningen inte blir bredare än kolumnen
 
 ### Spelare
 

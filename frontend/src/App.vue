@@ -7,12 +7,14 @@ const route = useRoute();
 <template>
   <!-- Sidor med meta.fullPage (adminsidan) har egen layout, utan spelets logga och ram -->
   <RouterView v-if="route.meta.fullPage" />
-  <main v-else>
+  <template v-else>
     <header>
       <RouterLink to="/" aria-label="Till startsidan">
         <img src="./assets/images/logo.webp" alt="BrainDead" class="logo" />
       </RouterLink>
     </header>
-    <RouterView />
-  </main>
+    <main>
+      <RouterView />
+    </main>
+  </template>
 </template>
