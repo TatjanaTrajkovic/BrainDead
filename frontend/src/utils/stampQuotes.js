@@ -1,9 +1,10 @@
 // Citat baserade på hjärnkapacitet/hälsa
-export function getGöteborgQuote(health) {
+export function stampQuotes(health) {
   const currentHealth = Number(health) || 0;
-  if (currentHealth >= 90) return 'GÔTT I BÔTT!';
-  if (currentHealth >= 70) return 'GÔRBRA VA!';
-  if (currentHealth >= 50) return 'GÔTT MOS!';
-  if (currentHealth >= 30) return 'de e la bra';
-  return 'de funkar la';
+  if (currentHealth >= 95) return 'GÔTT I BÔTT!';
+  if (currentHealth >= 85) return 'GÔTT MOS!';
+  if (currentHealth >= 70) return 'GÔRBRA!';
+  if (currentHealth >= 50) return 'DE VA\nLA BRA!';
+  if (currentHealth >= 30) return 'FUNKAR\nLA?';
+  return 'LEVER\nELLER?';
 }
