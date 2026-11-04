@@ -6,6 +6,7 @@
   --color-border-outer: #c7bc90;
   --color-border-inner: #22201f;
   --color-ink: #2b1d0e;
+  --color-backdrop: rgb(0 0 0 / 80%);
   --font-main: 'Special Elite', monospace;
   --font-handwritten: 'Reenie Beanie', cursive;
   --header-h: calc(clamp(280px, 80dvw, 500px) * 0.184 + 1dvw);

@@ -52,7 +52,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  background-color: rgb(0 0 0 / 70%);
+  background-color: var(--color-backdrop);
 }
 
 .sheet {

@@ -86,7 +86,7 @@ defineExpose({ open });
 }
 
 .confirm-dialog::backdrop {
-  background: rgb(0 0 0 / 70%);
+  background-color: var(--color-backdrop);
 }
 
 .confirm-content {
