@@ -1,16 +1,16 @@
 <script setup>
 import { onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import QuizLayout from '@/components/QuizLayout.vue';
-import EndCard from '../components/EndCard.vue';
-import LockAnswerButton from '../components/LockAnswerButton.vue';
-import ProgressDots from '../components/ProgressDots.vue';
+import QuizLayout from '@/components/game/QuizLayout.vue';
+import EndCard from '../components/game/EndCard.vue';
+import LockAnswerButton from '../components/game/LockAnswerButton.vue';
+import ProgressDots from '../components/game/ProgressDots.vue';
 import { useGame } from '../composables/useGame';
-import QuitButton from '../components/QuitButton.vue';
-import ScenarioBox from '../components/ScenarioBox.vue';
-import QuestionBox from '../components/QuestionBox.vue';
-import AnswerBox from '../components/AnswerBox.vue';
-import HealthMeter from '../components/HealthMeter.vue';
+import QuitButton from '../components/game/QuitButton.vue';
+import ScenarioBox from '../components/game/ScenarioBox.vue';
+import QuestionBox from '../components/game/QuestionBox.vue';
+import AnswerBox from '../components/game/AnswerBox.vue';
+import HealthMeter from '../components/game/HealthMeter.vue';
 
 const router = useRouter();
 

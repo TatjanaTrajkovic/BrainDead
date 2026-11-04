@@ -1,8 +1,8 @@
 <script setup>
 import { computed, ref } from 'vue';
-import ScenarioBox from '@/components/ScenarioBox.vue';
-import QuestionBox from '@/components/QuestionBox.vue';
-import AnswerBox from '@/components/AnswerBox.vue';
+import ScenarioBox from '@/components/game/ScenarioBox.vue';
+import QuestionBox from '@/components/game/QuestionBox.vue';
+import AnswerBox from '@/components/game/AnswerBox.vue';
 
 // Får formulärets objekt direkt. Det är reaktivt, så förhandsvisningen uppdateras när admin
 // skriver. Komponenten läser bara och ändrar aldrig formuläret

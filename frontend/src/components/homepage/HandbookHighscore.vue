@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue';
-import HighScoreBoard from '@/components/HighScoreBoard.vue';
+import HighScoreBoard from '@/components/homepage/HighScoreBoard.vue';
 
 const props = defineProps({
   // 'both' (desktop), 'handbook' eller 'highscore' (mobil)
@@ -48,7 +48,7 @@ const triggerHandbook = () => {
     <div class="buttons" :class="{ single: isSingle }">
       <div v-if="showHighscore" class="highscore" :class="{ 'is-animating': animatingHighscore }">
         <HighScoreBoard v-if="part === 'highscore'" />
-        <img v-else src="../assets/images/highscore.webp" alt="" />
+        <img v-else src="@/assets/images/highscore.webp" alt="" />
         <!-- Osynlig knapp över hela ytan, brädet ligger alltså inte inuti en button -->
         <button
           type="button"
@@ -65,7 +65,7 @@ const triggerHandbook = () => {
         aria-label="Handbok"
         @click="triggerHandbook"
       >
-        <img src="../assets/images/handbook_closed.webp" alt="" />
+        <img src="@/assets/images/handbook_closed.webp" alt="" />
       </button>
     </div>
   </div>
