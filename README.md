@@ -19,6 +19,7 @@ Det enda som står mellan dig och dem är det som finns kvar i ditt huvud. Varje
 - [Tech stack](#tech-stack)
 - [Projektstruktur](#projektstruktur)
 - [Kom igång](#kom-igång)
+- [Deploy](#deploy)
 - [Kodstil och linting](#kodstil-och-linting)
 - [Databasmodell](#databasmodell)
 - [API](#api)
@@ -43,6 +44,7 @@ Det enda som står mellan dig och dem är det som finns kvar i ditt huvud. Varje
 | Frontend | Vue 3, Vue Router, Vite  |
 | Backend  | Node.js, Express 5, CORS |
 | Databas  | MySQL (mysql2)           |
+| Drift    | Render, Aiven (MySQL)    |
 
 ## Projektstruktur
 
@@ -136,9 +138,13 @@ cp .env.example .env
 | `DB_USER`      | Ditt MySQL-användarnamn                                       |
 | `DB_PASSWORD`  | Ditt MySQL-lösenord                                           |
 | `DB_NAME`      | Databasens namn, `BrainDead`                                  |
+| `DB_PORT`      | Databasens port, `3306` om den inte anges                     |
+| `DB_CA_CERT`   | Bara i drift: Aivens certifikat, se [Deploy](#deploy)         |
 | `PORT`         | Backendens port, `3000` om den inte anges                     |
 | `CORS_ORIGIN`  | Frontendens adress, `http://localhost:5173` om den inte anges |
-| `Vite_API_URL` | Adress till backend-API:t, oftast `http://localhost:3000/api` |
+| `VITE_API_URL` | I `frontend/.env`: backend-API:t, `http://localhost:3000/api` |
+
+`frontend/.env` skapas på samma sätt från `frontend/.env.example`.
 
 ### 4. Backend
 
@@ -159,6 +165,52 @@ npm run dev
 ```
 
 Appen körs på http://localhost:5173.
+
+## Deploy
+
+Appen körs som en enda webbtjänst på [Render](https://render.com) och databasen ligger hos [Aiven](https://aiven.io). Båda på gratisnivån.
+
+- **En adress för allt:** Express serverar API:t under `/api` och den byggda frontenden (`frontend/dist`) på alla andra sökvägar. Sidor som `/admin` och `/game` får `index.html`, så att Vue Router tar över. Frontend och backend har samma adress, så CORS behövs inte och cookien fungerar med `sameSite: 'lax'`, precis som lokalt
+- **Cookien** får `secure` när `NODE_ENV=production` och skickas då bara över https
+- **`trust proxy`:** Render ligger framför appen som proxy. Utan inställningen ser `loginLimiter` alla besökare som samma ip, och en spelares misslyckade inloggningar låser då ute alla
+- **TLS mot databasen:** Aiven kräver krypterad anslutning. När `DB_CA_CERT` är satt använder `connectionMySQL.js` certifikatet. Lokalt saknas variabeln och anslutningen fungerar som förut
+
+### Databasen på Aiven
+
+1. Skapa en MySQL-tjänst med gratisplanen. Under **Connection information** finns host, port, användaren `avnadmin`, lösenordet och **CA certificate** (ladda ner som `ca.pem`, som är ignorerad av git)
+2. Aiven har ingen frågekonsol, så schema och data körs med en egen klient, till exempel `mysql` från Homebrew (`brew install mysql-client`, ligger i `/opt/homebrew/opt/mysql-client/bin/`):
+
+```sh
+mysql -h <host> -P <port> -u avnadmin -p --ssl-mode=VERIFY_IDENTITY --ssl-ca=<sökväg>/ca.pem < backend/db/schema.sql
+mysql -h <host> -P <port> -u avnadmin -p --ssl-mode=VERIFY_IDENTITY --ssl-ca=<sökväg>/ca.pem < backend/db/data.sql
+```
+
+Samma kommando utan `< fil` ger en `mysql>`-prompt, till exempel för att skapa admin (se [Databas](#2-databas)). Gratisplanen kan stängas av efter en tids inaktivitet och startas då igen i Aivens panel.
+
+### Webbtjänsten på Render
+
+Skapa en **Web Service** från repot med instanstypen Free:
+
+| Inställning    | Värde                                                                                        |
+| -------------- | -------------------------------------------------------------------------------------------- |
+| Root Directory | tomt (repots rot)                                                                            |
+| Build Command  | `cd frontend && npm ci --include=dev && npm run build && cd ../backend && npm ci --omit=dev` |
+| Start Command  | `node backend/app.js`                                                                        |
+
+`--include=dev` behövs eftersom Vite är ett dev-beroende, och npm hoppar över dem när `NODE_ENV=production`.
+
+| Miljövariabel                                  | Värde                                                                     |
+| ---------------------------------------------- | ------------------------------------------------------------------------- |
+| `NODE_ENV`                                     | `production`                                                              |
+| `NODE_VERSION`                                 | `22`, frontend kräver Node 22.18 eller senare                             |
+| `VITE_API_URL`                                 | `/api`. Läses när frontenden byggs, så en ändring kräver en ny deploy     |
+| `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD` | Från Aiven                                                                |
+| `DB_NAME`                                      | `BrainDead`                                                               |
+| `DB_CA_CERT`                                   | Hela innehållet i `ca.pem`, med raderna `BEGIN CERTIFICATE` och `END ...` |
+
+`PORT` sätts av Render och `CORS_ORIGIN` behövs inte. Render deployar om vid varje push till branchen tjänsten följer.
+
+Gratistjänsten somnar efter ungefär 15 minuter utan besök. Första sidladdningen efter det kan ta upp till en minut.
 
 ## Kodstil och linting
 
