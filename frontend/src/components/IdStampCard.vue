@@ -3,6 +3,7 @@ import { computed, ref } from 'vue';
 import waxUnstamped from '@/assets/images/wax_unstamped.webp';
 import waxStamped from '@/assets/images/wax_stamped.webp';
 import { stampQuotes } from '@/utils/stampQuotes';
+import stampImg from '@/assets/images/stamp.webp';
 
 const props = defineProps({
   name: { type: String, default: 'OIDENTIFIERAD' },
@@ -12,13 +13,49 @@ const props = defineProps({
 const isRegistered = computed(() => props.name && props.name !== 'OIDENTIFIERAD');
 
 const isStamped = ref(false);
+const isMoving = ref(false);
+const isPressing = ref(false);
+
+const emit = defineEmits(['stamped']);
 
 const quote = computed(() => stampQuotes(props.health));
+
+function performStamp() {
+  // Tillåt stämpling endast en gång
+  if (isStamped.value || isMoving.value || isPressing.value) return;
+
+  isMoving.value = true;
+
+  setTimeout(() => {
+    isPressing.value = true;
+  }, 400);
+
+  setTimeout(() => {
+    isStamped.value = true;
+  }, 650);
+
+  setTimeout(() => {
+    isPressing.value = false;
+    isMoving.value = false;
+  }, 1200);
+
+  setTimeout(() => {
+    emit('stamped');
+  }, 1700);
+}
 </script>
 
 <template>
   <div class="stamp-area">
-    <div class="id-card">
+    <div
+      class="id-card"
+      :class="{ 'can-stamp': !isStamped }"
+      tabindex="0"
+      role="button"
+      aria-label="Klicka för att stämpla ID-kortet"
+      @click="performStamp"
+      @keydown.enter.space.prevent="performStamp"
+    >
       <div class="text">
         <h2>ID-KORT</h2>
         <p class="company">Skumma Aktier AB</p>
@@ -35,6 +72,17 @@ const quote = computed(() => stampQuotes(props.health));
           <span class="stamp-quote">{{ quote }}</span>
         </div>
       </div>
+      <img
+        :src="stampImg"
+        alt="Stämpel"
+        class="stamp-tool"
+        :class="{
+          idle: !isMoving && !isPressing && !isStamped,
+          moving: isMoving && !isPressing,
+          moved: isStamped && !isPressing,
+          pressing: isPressing,
+        }"
+      />
     </div>
   </div>
 </template>
@@ -148,5 +196,39 @@ h2 {
   font-size: 10cqw;
   font-weight: bold;
   line-height: 1;
+}
+
+.stamp-tool {
+  position: absolute;
+  top: 4%;
+  width: 50%;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  pointer-events: none;
+  z-index: 10;
+  transition:
+    transform 0.35s ease-out,
+    filter 0.25s ease;
+}
+
+/* 1. Startposition, står vid sidan och väntar på klick */
+.stamp-tool.idle {
+  transform: translate(110%, 20%) scale(0.9) rotate(15deg);
+  filter: drop-shadow(8px 12px 8px rgba(0, 0, 0, 0.4));
+}
+/* 2. Flyttar in över vaxet och svävar i luften */
+.stamp-tool.moving {
+  transform: translate(-10%, -30%) scale(1) rotate(-20deg);
+  filter: drop-shadow(15px 25px 12px rgba(0, 0, 0, 0.5));
+}
+/* 3. Trycks ned i vaxet */
+.stamp-tool.pressing {
+  transform: translate(0, 0) scale(0.9) rotate(0deg);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.7));
+}
+/* 4. Glider tillbaka till sidan */
+.stamp-tool.moved {
+  transform: translate(110%, 20%) scale(0.9) rotate(15deg);
+  filter: drop-shadow(8px 12px 8px rgba(0, 0, 0, 0.4));
 }
 </style>
