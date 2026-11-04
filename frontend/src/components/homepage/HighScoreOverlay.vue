@@ -1,6 +1,6 @@
 <script setup>
 import { onMounted, onUnmounted, ref } from 'vue';
-import HighScoreBoard from '@/components/HighScoreBoard.vue';
+import HighScoreBoard from '@/components/homepage/HighScoreBoard.vue';
 
 const emit = defineEmits(['close']);
 

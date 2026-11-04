@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue';
-import { useScrollArrows } from '../composables/useScrollArrows';
+import { useScrollArrows } from '@/composables/useScrollArrows';
 
 defineProps({
   // En sida i boken: { sections: [{ title:, subtitle:, text:, warning:, image: }] }. Alla fält är valfria

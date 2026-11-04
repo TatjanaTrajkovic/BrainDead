@@ -1,7 +1,7 @@
 <script setup>
 import { computed, nextTick, ref, watch, onUnmounted } from 'vue';
 import { useAuth } from '@/composables/useAuth';
-import IdForm from '@/components/IdForm.vue';
+import IdForm from '@/components/homepage/IdForm.vue';
 
 const props = defineProps({
   // Spelaren från useAuth, null för en ny besökare. Gäster har is_guest = true
