@@ -122,7 +122,7 @@ onMounted(loadQuestions);
 
     <p v-if="isLoading" class="admin-subtitle">Hämtar frågor…</p>
 
-    <div v-else-if="loadError" class="admin-alert load-error" role="alert">
+    <div v-else-if="loadError" class="admin-alert admin-load-error" role="alert">
       <p>{{ loadError }}</p>
       <button type="button" class="admin-button" @click="loadQuestions">Försök igen</button>
     </div>
@@ -132,13 +132,13 @@ onMounted(loadQuestions);
     </p>
 
     <template v-else>
-      <div class="toolbar">
-        <div class="segmented" role="group" aria-label="Visa frågor">
+      <div class="admin-toolbar">
+        <div class="admin-segmented" role="group" aria-label="Visa frågor">
           <button
             v-for="f in filters"
             :key="f.label"
             type="button"
-            class="segment"
+            class="admin-segment"
             :class="{ 'is-active': filter === f.value }"
             :aria-pressed="filter === f.value"
             @click="filter = f.value"
@@ -147,7 +147,7 @@ onMounted(loadQuestions);
           </button>
         </div>
 
-        <label class="search">
+        <label class="admin-search">
           <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
             <circle cx="7" cy="7" r="4.5" stroke="currentColor" stroke-width="1.5" fill="none" />
             <path d="M10.5 10.5 14 14" stroke="currentColor" stroke-width="1.5" />
@@ -163,21 +163,21 @@ onMounted(loadQuestions);
 
       <p v-if="visibleQuestions.length === 0" class="admin-card">Inga frågor matchar.</p>
 
-      <div v-else class="list">
+      <div v-else class="admin-list">
         <!-- Rubrikraden syns bara på desktop. På mobil förklarar korten sig själva -->
-        <div class="list-head" aria-hidden="true">
+        <div class="admin-list-head" aria-hidden="true">
           <span>Ordning</span>
           <span>Fråga</span>
           <span>Svar</span>
           <span>Status</span>
-          <span class="align-end">Åtgärder</span>
+          <span class="admin-align-end">Åtgärder</span>
         </div>
 
         <ul>
           <li
             v-for="(question, index) in visibleQuestions"
             :key="question.question_id"
-            class="row"
+            class="admin-row"
             :class="{ 'is-inactive': question.status === 'INACTIVE' }"
           >
             <div class="cell-order">
@@ -215,7 +215,7 @@ onMounted(loadQuestions);
             </div>
 
             <div class="cell-answers">
-              {{ question.answers.length }}<span class="mobile-label"> svar</span>
+              {{ question.answers.length }}<span class="admin-mobile-label"> svar</span>
             </div>
 
             <div class="cell-status">
@@ -251,105 +251,22 @@ onMounted(loadQuestions);
 </template>
 
 <style scoped>
-/* Mobile first: varje fråga är ett kort. Från 768 px blir samma rader en tabell med rubrikrad */
+/* Mobile first: varje fråga är ett kort. Från 768 px blir samma rader en tabell med rubrikrad.
+   Verktygsraden, listan och raderna kommer från admin-klasserna i AdminView, här finns bara
+   kolumnerna och det som är unikt för frågorna */
 
 .action-error {
   margin-bottom: 1rem;
 }
 
-.load-error {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-
-.toolbar {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-}
-
-/* Filterknapparna ser ut som en sammanhängande knapprad */
-.segmented {
-  display: flex;
-  padding: 0.1875rem;
-  background: var(--admin-neutral-bg);
-  border-radius: var(--admin-radius);
-}
-
-.segment {
-  flex: 1;
-  min-height: 36px;
-  padding: 0 0.75rem;
-  font-size: 0.875rem;
-  color: var(--admin-muted);
-  white-space: nowrap;
-  border-radius: calc(var(--admin-radius) - 2px);
-}
-
-.segment.is-active {
-  color: var(--admin-text);
-  background: var(--admin-surface);
-  box-shadow: 0 1px 2px rgb(0 0 0 / 8%);
-}
-
-/* Ramen sitter på label, så att ikonen hamnar inuti fältet */
-.search {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-height: 40px;
-  padding: 0 0.75rem;
-  color: var(--admin-muted);
-  background: var(--admin-surface);
-  border: 1px solid var(--admin-border);
-  border-radius: var(--admin-radius);
-}
-
-.search:focus-within {
-  border-color: var(--admin-accent);
-  outline: 2px solid color-mix(in srgb, var(--admin-accent) 25%, transparent);
-}
-
-.search input {
-  flex: 1;
-  min-width: 0;
-  font: inherit;
-  color: var(--admin-text);
-  background: none;
-  border: none;
-  outline: none;
-}
-
-.list ul {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  padding: 0;
-  list-style: none;
-}
-
-.list-head {
-  display: none;
-}
-
 /* Kort på mobil: ordning och status överst, sedan frågan, antal svar och knappen */
-.row {
-  display: grid;
+.admin-row {
   grid-template-columns: 1fr auto;
   grid-template-areas:
     'order status'
     'question question'
     'answers answers'
     'actions actions';
-  gap: 0.5rem;
-  padding: 1rem;
-  background: var(--admin-surface);
-  border: 1px solid var(--admin-border);
-  border-radius: var(--admin-radius);
 }
 
 .cell-order {
@@ -429,9 +346,9 @@ onMounted(loadQuestions);
   color: var(--admin-muted);
 }
 
-.row.is-inactive .question-title,
-.row.is-inactive .scenario,
-.row.is-inactive .position {
+.admin-row.is-inactive .question-title,
+.admin-row.is-inactive .scenario,
+.admin-row.is-inactive .position {
   color: var(--admin-muted);
 }
 
@@ -443,68 +360,20 @@ onMounted(loadQuestions);
   .cell-actions .admin-button {
     flex: none;
   }
-
-  .toolbar {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .segment {
-    flex: none;
-  }
-
-  .search {
-    width: 275px;
-  }
 }
 
 /* Desktop: rubrikrad och raderna i samma kolumner */
 @media (min-width: 768px) {
-  .list {
-    overflow: hidden;
-    background: var(--admin-surface);
-    border: 1px solid var(--admin-border);
-    border-radius: var(--admin-radius);
-  }
-
   /* Rubrikraden och raderna är separata grids, så alla kolumner utom frågan har fast bredd.
      Med auto skulle sista kolumnen få olika bredd i rubriken och raderna, och de andra
      kolumnerna förskjutas. Åtgärder rymmer Redigera och statusknappen */
-  .list-head,
-  .row {
-    display: grid;
+  .admin-list-head,
+  .admin-row {
     grid-template-columns: 6.5rem minmax(0, 1fr) 3.5rem 6.5rem 13.5rem;
     grid-template-areas: 'order question answers status actions';
-    align-items: center;
-    column-gap: 1rem;
-    padding: 0.75rem 1rem;
   }
 
-  .list-head {
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--admin-muted);
-    border-bottom: 1px solid var(--admin-border);
-  }
-
-  .list ul {
-    gap: 0;
-  }
-
-  .row {
-    border: none;
-    border-bottom: 1px solid var(--admin-border);
-    border-radius: 0;
-  }
-
-  .row:last-child {
-    border-bottom: none;
-  }
-
-  .row.is-inactive {
+  .admin-row.is-inactive {
     background: var(--admin-bg);
   }
 
@@ -520,20 +389,12 @@ onMounted(loadQuestions);
     color: var(--admin-text);
   }
 
-  .mobile-label {
-    display: none;
-  }
-
   .cell-status {
     justify-self: start;
   }
 
   .cell-actions {
     margin-top: 0;
-  }
-
-  .align-end {
-    text-align: right;
   }
 
   /* Samma bredd för båda texterna, så att Redigera inte hoppar när texten byts */
