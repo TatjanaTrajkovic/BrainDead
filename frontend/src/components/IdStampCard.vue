@@ -4,6 +4,7 @@ import waxUnstamped from '@/assets/images/wax_unstamped.webp';
 import waxStamped from '@/assets/images/wax_stamped.webp';
 import { stampQuotes } from '@/utils/stampQuotes';
 import stampImg from '@/assets/images/stamp.webp';
+import thumbImg from '@/assets/images/thumb.webp';
 
 const props = defineProps({
   name: { type: String, default: 'OIDENTIFIERAD' },
@@ -15,10 +16,27 @@ const isRegistered = computed(() => props.name && props.name !== 'OIDENTIFIERAD'
 const isStamped = ref(false);
 const isMoving = ref(false);
 const isPressing = ref(false);
+const isWagging = ref(false);
+const hasRevealed = ref(false);
 
 const emit = defineEmits(['stamped']);
 
 const quote = computed(() => stampQuotes(props.health));
+
+function performWagging() {
+  if (isMoving.value || isStamped.value) return;
+
+  // Gör tummen synlig omedelbart om man klickar innan 3s-fade hunnit klart
+  hasRevealed.value = true;
+
+  if (isWagging.value) return;
+
+  isWagging.value = true;
+
+  setTimeout(() => {
+    isWagging.value = false;
+  }, 1000);
+}
 
 function performStamp() {
   // Tillåt stämpling endast en gång
@@ -43,18 +61,20 @@ function performStamp() {
     emit('stamped');
   }, 1700);
 }
+
+defineExpose({
+  performWagging,
+});
 </script>
 
 <template>
   <div class="stamp-area">
     <div
+      role="button"
       class="id-card"
       :class="{ 'can-stamp': !isStamped }"
-      tabindex="0"
-      role="button"
       aria-label="Klicka för att stämpla ID-kortet"
-      @click="performStamp"
-      @keydown.enter.space.prevent="performStamp"
+      @click="performWagging"
     >
       <div class="text">
         <h2>ID-KORT</h2>
@@ -73,6 +93,8 @@ function performStamp() {
         </div>
       </div>
       <img
+        role="button"
+        tabindex="0"
         :src="stampImg"
         alt="Stämpel"
         class="stamp-tool"
@@ -82,7 +104,16 @@ function performStamp() {
           moved: isStamped && !isPressing,
           pressing: isPressing,
         }"
+        @click.stop="performStamp"
+        @keydown.enter.space.stop.prevent="performStamp"
       />
+      <div
+        v-if="!isMoving && !isPressing && !isStamped"
+        class="thumb-wrap"
+        :class="{ revealed: hasRevealed }"
+      >
+        <img :src="thumbImg" alt="pekande finger" class="thumb" :class="{ wagging: isWagging }" />
+      </div>
     </div>
   </div>
 </template>
@@ -97,7 +128,9 @@ function performStamp() {
 
 .id-card {
   position: relative;
-  width: min(92vw, 550px);
+  width: 100%;
+  max-width: 550px;
+  margin: 0 auto;
   aspect-ratio: 550 / 357;
   container-type: inline-size;
   color: var(--color-ink);
@@ -204,11 +237,20 @@ h2 {
   width: 50%;
   aspect-ratio: 1 / 1;
   object-fit: contain;
-  pointer-events: none;
+  pointer-events: auto;
   z-index: 10;
+  cursor: pointer;
+  transform: translate(110%, 20%) scale(0.9) rotate(15deg);
+  filter: drop-shadow(8px 12px 8px rgba(0, 0, 0, 0.4));
   transition:
     transform 0.35s ease-out,
     filter 0.25s ease;
+}
+
+.stamp-tool.moving,
+.stamp-tool.pressing,
+.stamp-tool.moved {
+  pointer-events: none;
 }
 
 /* 1. Startposition, står vid sidan och väntar på klick */
@@ -230,5 +272,69 @@ h2 {
 .stamp-tool.moved {
   transform: translate(110%, 20%) scale(0.9) rotate(15deg);
   filter: drop-shadow(8px 12px 8px rgba(0, 0, 0, 0.4));
+}
+
+/* TUMME */
+.thumb-wrap {
+  position: absolute;
+  top: 130%;
+  right: 32%;
+  width: 50%;
+  aspect-ratio: 1 / 1;
+  pointer-events: none;
+  z-index: 20;
+  animation: thumbFadeIn 3s ease-in forwards;
+}
+
+.thumb-wrap.revealed {
+  animation: none;
+  opacity: 1;
+}
+
+.thumb {
+  width: 100%;
+  height: 100%;
+  transform-origin: top center;
+  rotate: -140deg;
+  object-fit: contain;
+  filter: drop-shadow(2px 4px 6px rgba(0, 0, 0, 0.5));
+  animation: point 1s ease-in-out infinite;
+}
+/* Rör sig fram och tillbaka mot stämpeln */
+@keyframes point {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(0, -40px) scale(1.1);
+  }
+}
+
+/* Vaggande tumme */
+.thumb.wagging {
+  transform-origin: top center;
+  animation: wag 1s ease-in-out;
+}
+@keyframes wag {
+  0% {
+    transform: rotate(0deg);
+  }
+  20% {
+    transform: rotate(-25deg);
+  }
+  40% {
+    transform: rotate(25deg);
+  }
+  60% {
+    transform: rotate(-25deg);
+  }
+  80% {
+    transform: rotate(8deg);
+    animation-timing-function: ease-out;
+  }
+  100% {
+    transform: rotate(0deg);
+  }
 }
 </style>
