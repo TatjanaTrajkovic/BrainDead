@@ -45,7 +45,7 @@ function handleMissClick() {
   display: grid;
   place-items: center;
   padding: 12px;
-  overflow-x: hidden;
+  overflow: hidden;
   box-sizing: border-box;
 }
 
