@@ -2,11 +2,18 @@
 import { computed, nextTick, ref, watch, onUnmounted } from 'vue';
 import { useAuth } from '@/composables/useAuth';
 import IdForm from '@/components/IdForm.vue';
+import waxStamped from '@/assets/images/wax_stamped.webp';
+import { stampQuotes } from '@/utils/stampQuotes';
 
 const props = defineProps({
   // Spelaren från useAuth, null för en ny besökare. Gäster har is_guest = true
   player: { type: Object, default: null },
   popup: { type: Boolean, default: false },
+});
+
+const survivorQuote = computed(() => {
+  if (!props.player?.has_survived || props.player?.survived_health == null) return '';
+  return stampQuotes(props.player.survived_health);
 });
 
 const expanded = ref(false);
@@ -139,6 +146,16 @@ emit('player-changed');
               <button v-else type="button" class="stamp logout" @click="handleLogout">
                 STÄMPLA UT
               </button>
+            </div>
+
+            <!-- Överlevarsigill om spelaren har klarat apokalypsen -->
+            <div v-if="player?.has_survived" class="wax-stamp">
+              <img class="wax-img" :src="waxStamped" alt="Överlevarsigill" />
+              <div class="stamp-text">
+                <span class="stamp-percent">{{ player.survived_health }}%</span>
+                <span class="stamp-capacity">HJÄRNKAPACITET</span>
+                <span class="stamp-quote">{{ survivorQuote }}</span>
+              </div>
             </div>
           </div>
 
@@ -304,5 +321,64 @@ h2 {
 
 .stamp:hover {
   background: rgb(201 162 39 / 20%);
+}
+
+/* Överlevarsigill på ID-kortets foto */
+.wax-stamp {
+  position: absolute;
+  top: 12%;
+  left: 1%;
+  width: 50%;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  user-select: none;
+  pointer-events: none;
+}
+
+.wax-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.4));
+}
+
+.stamp-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  background-color: #414141;
+  color: transparent;
+  transform: rotate(-6deg);
+  mix-blend-mode: multiply;
+  text-transform: uppercase;
+  text-shadow: 1px 1px 4px rgba(251, 251, 251, 0.7);
+  -webkit-background-clip: text;
+  -moz-background-clip: text;
+  background-clip: text;
+}
+
+.stamp-quote {
+  font-size: 5cqw;
+  font-weight: bold;
+  margin-top: 0.8cqw;
+  white-space: pre-line;
+}
+
+.stamp-capacity {
+  font-size: 4cqw;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.stamp-percent {
+  font-size: 10cqw;
+  font-weight: bold;
+  line-height: 1;
 }
 </style>
