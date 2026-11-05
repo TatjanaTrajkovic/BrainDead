@@ -106,14 +106,14 @@ main {
     min-height: 0;
   }
 
-  .content-wrapper {
+  main:has(> .content-wrapper) > .content-wrapper {
     height: 100%;
     /* centrera när panelen inte fyller höjden */
     justify-content: center;
   }
 
   /* Flytta tillbaka loggan om .content-wrapper finns */
-  #app:has(.content-wrapper) header {
+  #app:has(> main > .content-wrapper) header {
     position: static;
     flex-shrink: 0;
     width: var(--game-logo-w);
@@ -153,7 +153,7 @@ main {
 /* Telefonhöjd oavsett orientering: göm loggan så quizet får höjden.
    Startsidlänken försvinner med den — Avsluta-knappen tar spelaren hem */
 @media (max-height: 700px) {
-  #app:has(.content-wrapper) header {
+  #app:has(> main > .content-wrapper) header {
     display: none;
   }
 }

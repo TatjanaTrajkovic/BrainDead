@@ -1,7 +1,7 @@
 <script setup>
 import HandbookPage from './HandbookPage.vue';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
-import { useMediaQuery } from '../composables/useMediaQuery';
+import { useMediaQuery } from '@/composables/useMediaQuery';
 
 const props = defineProps({
   // Sidorna i boken, t.ex. handbookPages från data/handbook.js. Varje sida är { sections: [...] }
@@ -134,7 +134,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
   width: min(100%, calc((100dvh - 2rem) * 1000 / 1552));
   aspect-ratio: 1000 / 1552;
   /* Visa bara vänstra halvan av uppslagsbilden */
-  background: url('../assets/images/handbook_open.webp') left center / 200% 100% no-repeat;
+  background: url('@/assets/images/handbook_open.webp') left center / 200% 100% no-repeat;
   /* Gör att cqi nedan räknas i procent av bokens bredd, så texten skalar med boken */
   container-type: inline-size;
   color: var(--color-ink);

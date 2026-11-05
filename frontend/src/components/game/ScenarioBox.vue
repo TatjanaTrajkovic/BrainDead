@@ -1,6 +1,6 @@
 <script setup>
 import { nextTick, ref, watch } from 'vue';
-import { useScrollArrows } from '../composables/useScrollArrows';
+import { useScrollArrows } from '@/composables/useScrollArrows';
 
 const props = defineProps({
   text: {

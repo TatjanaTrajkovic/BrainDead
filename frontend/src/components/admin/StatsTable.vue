@@ -212,7 +212,7 @@ onMounted(load);
     </div>
 
     <p v-if="isLoading" class="admin-subtitle">Hämtar statistiken…</p>
-    <p v-else-if="error" class="stats-error" role="alert">{{ error }}</p>
+    <p v-else-if="error" class="admin-alert" role="alert">{{ error }}</p>
     <p v-else-if="questions.length === 0" class="admin-subtitle">Det finns inga frågor än.</p>
 
     <template v-else>
@@ -308,10 +308,10 @@ onMounted(load);
         >
           <div class="stats-card-head">
             <h2 class="stats-card-title">{{ questionLabel(question) }}</h2>
-            <span v-if="question.isHighestDamage" class="admin-badge stats-badge--danger">
+            <span v-if="question.isHighestDamage" class="admin-badge admin-badge--danger">
               Högst snittskada
             </span>
-            <span v-if="question.isLowestDamage" class="admin-badge stats-badge--info">
+            <span v-if="question.isLowestDamage" class="admin-badge admin-badge--info">
               Lägst snittskada
             </span>
             <span v-if="question.isInactive" class="admin-badge">Inaktiv</span>
@@ -388,10 +388,6 @@ onMounted(load);
   --stats-damage-high: #7a2e0b;
   --stats-warning-bg: #fff8c5;
   --stats-warning-text: #7d4e00;
-}
-
-.stats-error {
-  color: var(--admin-danger);
 }
 
 .stats-help {
@@ -554,16 +550,6 @@ onMounted(load);
   font-size: 0.8125rem;
   color: var(--admin-muted);
   white-space: nowrap;
-}
-
-.stats-badge--danger {
-  color: var(--admin-danger);
-  background: color-mix(in srgb, var(--admin-danger) 10%, var(--admin-surface));
-}
-
-.stats-badge--info {
-  color: var(--admin-accent);
-  background: color-mix(in srgb, var(--admin-accent) 10%, var(--admin-surface));
 }
 
 .stats-badge--warning {

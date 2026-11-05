@@ -1,7 +1,7 @@
 
 backend/node_modules
 .env
-
+ca.pem
 .vscode/*
 !.vscode/settings.json
 !.vscode/extensions.json

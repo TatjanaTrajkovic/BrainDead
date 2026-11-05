@@ -154,7 +154,7 @@ watch(
   /* Bildens proportioner, max 410px bred som i Figma */
   width: 100%;
   aspect-ratio: 1640 / 2292;
-  background: url('../assets/images/prologue_notebook.webp') center / contain no-repeat;
+  background: url('@/assets/images/prologue_notebook.webp') center / contain no-repeat;
   /* Gör att cqi nedan räknas i procent av blockets bredd, så texten skalar med blocket */
   container-type: inline-size;
   color: var(--color-ink);

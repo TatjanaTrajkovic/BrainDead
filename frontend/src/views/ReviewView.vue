@@ -3,7 +3,7 @@ import { onMounted } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
 import { useGame } from '../composables/useGame';
 import { useReview } from '../composables/useReview';
-import QuestionBox from '../components/QuestionBox.vue';
+import QuestionBox from '../components/game/QuestionBox.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -135,6 +135,12 @@ function playAgain() {
 .review {
   gap: 16px;
   width: 100%;
+  max-width: 768px;
+}
+
+/* override cqmin */
+.review :deep(.question-box p) {
+  font-size: 1rem;
 }
 
 .status {

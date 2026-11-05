@@ -360,6 +360,126 @@ async function handleLogout() {
   background: var(--admin-success-bg);
 }
 
+.admin .admin-badge--danger {
+  color: var(--admin-danger);
+  background: color-mix(in srgb, var(--admin-danger) 10%, var(--admin-surface));
+}
+
+.admin .admin-badge--info {
+  color: var(--admin-accent);
+  background: color-mix(in srgb, var(--admin-accent) 10%, var(--admin-surface));
+}
+
+/* Felruta med Försök igen-knapp bredvid texten */
+.admin .admin-load-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+/* Listorna i QuestionList och UserList: filterknappar och sökfält ovanför, sedan en lista
+   som är kort på mobil och tabell från 768 px. Kolumnerna (grid-template-columns och
+   grid-template-areas) sätts i komponenterna, eftersom de skiljer sig mellan listorna */
+.admin .admin-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+/* Filterknapparna ser ut som en sammanhängande knapprad */
+.admin .admin-segmented {
+  display: flex;
+  padding: 0.1875rem;
+  background: var(--admin-neutral-bg);
+  border-radius: var(--admin-radius);
+}
+
+.admin .admin-segment {
+  flex: 1;
+  min-height: 36px;
+  padding: 0 0.5rem;
+  font-size: 0.875rem;
+  color: var(--admin-muted);
+  white-space: nowrap;
+  border-radius: calc(var(--admin-radius) - 2px);
+}
+
+.admin .admin-segment.is-active {
+  color: var(--admin-text);
+  background: var(--admin-surface);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 8%);
+}
+
+/* Ramen sitter på label, så att ikonen hamnar inuti fältet */
+.admin .admin-search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 40px;
+  padding: 0 0.75rem;
+  color: var(--admin-muted);
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+}
+
+.admin .admin-search:focus-within {
+  border-color: var(--admin-accent);
+  outline: 2px solid color-mix(in srgb, var(--admin-accent) 25%, transparent);
+}
+
+.admin .admin-search input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  color: var(--admin-text);
+  background: none;
+  border: none;
+  outline: none;
+}
+
+.admin .admin-list ul {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0;
+  list-style: none;
+}
+
+/* Rubrikraden syns bara på desktop. På mobil förklarar korten sig själva */
+.admin .admin-list-head {
+  display: none;
+}
+
+.admin .admin-row {
+  display: grid;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+}
+
+@media (min-width: 600px) {
+  .admin .admin-toolbar {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .admin .admin-segment {
+    flex: none;
+    padding: 0 0.75rem;
+  }
+
+  .admin .admin-search {
+    width: 275px;
+  }
+}
+
 @media (min-width: 768px) {
   /* Desktop: en rad, flikarna 56 + ram 1 */
   .admin {
@@ -370,6 +490,54 @@ async function handleLogout() {
     flex-direction: row;
     justify-content: space-between;
     align-items: flex-end;
+  }
+
+  .admin .admin-list {
+    overflow: hidden;
+    background: var(--admin-surface);
+    border: 1px solid var(--admin-border);
+    border-radius: var(--admin-radius);
+  }
+
+  /* Rubrikraden och raderna är separata grids med samma kolumner från komponenten */
+  .admin .admin-list-head,
+  .admin .admin-row {
+    display: grid;
+    align-items: center;
+    column-gap: 1rem;
+    row-gap: 0;
+    padding: 0.75rem 1rem;
+  }
+
+  .admin .admin-list-head {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--admin-muted);
+    border-bottom: 1px solid var(--admin-border);
+  }
+
+  .admin .admin-list ul {
+    gap: 0;
+  }
+
+  .admin .admin-row {
+    border: none;
+    border-bottom: 1px solid var(--admin-border);
+    border-radius: 0;
+  }
+
+  .admin .admin-row:last-child {
+    border-bottom: none;
+  }
+
+  .admin .admin-mobile-label {
+    display: none;
+  }
+
+  .admin .admin-align-end {
+    text-align: right;
   }
 }
 </style>

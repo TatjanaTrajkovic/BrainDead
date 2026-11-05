@@ -36,7 +36,7 @@ onMounted(() => {
   container-type: inline-size;
   width: 100%;
   aspect-ratio: 1232 / 1552;
-  background: url('../assets/images/highscore.webp') center / contain no-repeat;
+  background: url('@/assets/images/highscore.webp') center / contain no-repeat;
   color: var(--color-ink);
   font-family: var(--font-main);
 }
