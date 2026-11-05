@@ -12,7 +12,7 @@ import QuestionBox from '../components/game/QuestionBox.vue';
 import AnswerBox from '../components/game/AnswerBox.vue';
 import HealthMeter from '../components/game/HealthMeter.vue';
 import { useAuth } from '@/composables/useAuth';
-import StampScreen from '@/components/StampScreen.vue';
+import StampScreen from '@/components/game/StampScreen.vue';
 
 const router = useRouter();
 
