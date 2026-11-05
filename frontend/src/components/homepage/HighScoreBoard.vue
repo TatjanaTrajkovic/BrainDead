@@ -4,12 +4,9 @@ import { useHighScores } from '@/composables/useHighscores';
 
 const { entries, isLoading, error, load } = useHighScores();
 
-// Visar redan hämtad lista direkt, hämtar om den saknas
-onMounted(() => {
-  if (isLoading.value) {
-    load();
-  }
-});
+// Visar den sparade listan direkt och hämtar en ny i bakgrunden,
+// så att ett resultat från en nyss avslutad omgång syns utan omladdning
+onMounted(load);
 </script>
 
 <template>
