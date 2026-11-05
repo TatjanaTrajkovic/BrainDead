@@ -197,7 +197,7 @@ function handleResume() {
 }
 
 .menu-overlay::backdrop {
-  background: rgb(0 0 0 / 90%);
+  background: var(--color-backdrop);
 }
 
 .menu-content {

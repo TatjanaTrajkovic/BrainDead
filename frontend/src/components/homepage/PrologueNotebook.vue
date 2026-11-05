@@ -138,7 +138,7 @@ watch(
   z-index: 100;
   display: grid;
   place-items: center;
-  background: rgb(0 0 0 / 85%);
+  background: var(--color-backdrop);
 }
 
 .expanded .notebook {
