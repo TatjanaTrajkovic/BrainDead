@@ -182,7 +182,6 @@ watch(
   font-size: 5.5cqi;
   line-height: 1;
   text-align: center;
-  text-decoration: underline overline;
 }
 
 /* Textytan, uppmätt i procent av bilden så att den följer med när blocket skalar */
