@@ -26,11 +26,7 @@ function handleMissClick() {
       <section class="stamp-modal-card">
         <IdStampCard ref="stampCardRef" :name="name" :health="health" @stamped="handleStamped" />
         <div v-if="hasStamped" class="actions">
-          <button
-            type="button"
-            class="btn-large"
-            @click.stop="emit('continue')"
-          >
+          <button type="button" class="btn-large" @click.stop="emit('continue')">
             <span>RESULTAT</span>
           </button>
         </div>
