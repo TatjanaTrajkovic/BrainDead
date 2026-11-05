@@ -70,6 +70,11 @@ main {
     width: clamp(900px, 60dvw, 1400px);
     max-width: 95dvw;
   }
+
+  .content-wrapper:has(> .end-card) {
+    width: fit-content;
+    height: auto;
+  }
 }
 
 /* Liten liggande skärm (mobil, och surfplatta med touch) */
