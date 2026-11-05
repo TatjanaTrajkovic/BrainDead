@@ -836,6 +836,10 @@ Varje kort, även för inaktiva frågor och frågor utan svar, har länken "Just
 - **Pull requests:** följ [PR-mallen](pull_request_template.md) och dess Definition of Done. Minst en annan gruppmedlem ska granska och godkänna.
 - **Kodstil:** Prettier formaterar, ESLint hittar fel – se [Kodstil och linting](#kodstil-och-linting).
 
+## Bildmaterial & AI-transparens
+Detta är ett studentprojekt med fokus på kodning, arkitektur och teknisk implementation. Därför har stora delar av bildmaterialet skapats med hjälp av AI-verktyg för att kunna spara tid på designarbetet och samtidigt leverera rätt känsla för vår vision.
+Vi ser inte AI som en ersättning för professionella designers eller mänskligt hantverk – i ett skarpt, kommersiellt projekt hade detta arbete utförts i samarbete med professionella formgivare och kreatörer.
+
 ## Team
 
 <!-- TODO: länka till github -->
