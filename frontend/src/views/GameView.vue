@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, watch } from 'vue';
+import { onMounted, watch, ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import QuizLayout from '@/components/QuizLayout.vue';
 import EndCard from '../components/EndCard.vue';
@@ -11,6 +11,8 @@ import ScenarioBox from '../components/ScenarioBox.vue';
 import QuestionBox from '../components/QuestionBox.vue';
 import AnswerBox from '../components/AnswerBox.vue';
 import HealthMeter from '../components/HealthMeter.vue';
+import { useAuth } from '@/composables/useAuth';
+import StampScreen from '@/components/StampScreen.vue';
 
 const router = useRouter();
 
@@ -35,7 +37,25 @@ const {
   answeredCount,
 } = useGame();
 
+// Används för stämpel-popup och rekordkontroll
+const { player, loadPlayer } = useAuth();
+const playerName = computed(() => player.value?.display_name || 'OIDENTIFIERAD');
+const showStampModal = ref(true);
+const previousBestHealth = ref(player.value?.survived_health ?? null);
+
+// Stämpeln ska bara visas om spelaren lever OCH har slagit sitt tidigare rekord
+const isNewRecord = computed(() => {
+  if (!isAlive.value) return false;
+  if (previousBestHealth.value === null) return true;
+  return health.value > previousBestHealth.value;
+});
+
 onMounted(async () => {
+  if (!player.value) {
+    await loadPlayer();
+  }
+  previousBestHealth.value = player.value?.survived_health ?? null;
+
   // Spelaren laddade om sidan på /game: försök återuppta, annars tillbaka hem
   if (phase.value === 'idle') {
     await resume();
@@ -50,7 +70,23 @@ watch(phase, (newPhase) => {
   if (newPhase === 'idle') {
     router.push({ name: 'home' });
   }
+  if (newPhase === 'question') {
+    showStampModal.value = true;
+  }
 });
+
+async function handleContinueFromStamp() {
+  showStampModal.value = false;
+  // Uppdatera spelardata så att det nya rekordet sparas i auth-state
+  await loadPlayer();
+  previousBestHealth.value = player.value?.survived_health ?? null;
+}
+
+async function handlePlayAgain() {
+  showStampModal.value = true;
+  previousBestHealth.value = player.value?.survived_health ?? null;
+  await start();
+}
 
 // Omgången är redan avslutad i backend, så det räcker att byta vy
 function goHome() {
@@ -112,12 +148,19 @@ function showReview() {
     <p v-if="phase === 'loading'">Laddar...</p>
 
     <EndCard
-      v-if="phase === 'finished'"
+      v-if="phase === 'finished' && (!isNewRecord || !showStampModal)"
       :health="health"
       :is-alive="isAlive"
-      @play-again="start"
+      @play-again="handlePlayAgain"
       @go-home="goHome"
       @show-review="showReview"
+    />
+
+    <StampScreen
+      v-if="phase === 'finished' && isNewRecord && showStampModal"
+      :name="playerName"
+      :health="health"
+      @continue="handleContinueFromStamp"
     />
   </div>
 </template>
